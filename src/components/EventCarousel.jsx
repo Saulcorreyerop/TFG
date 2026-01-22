@@ -1,52 +1,48 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Carousel } from 'primereact/carousel'
 import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 
 const EventCarousel = () => {
-  const [events, setEvents] = useState([])
-
-  // Datos simulados (Mock Data)
-  useEffect(() => {
-    setEvents([
-      {
-        id: 1,
-        name: 'EuroCrew Spain',
-        date: '15 MAY',
-        location: 'Valencia',
-        image:
-          'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&q=80&w=600',
-        status: 'CONFIRMADO',
-      },
-      {
-        id: 2,
-        name: 'Ruta de Montaña',
-        date: '22 MAY',
-        location: 'Sierra de Madrid',
-        image:
-          'https://images.unsplash.com/photo-1532974297617-c0f05fe48bff?auto=format&fit=crop&q=80&w=600',
-        status: 'PLAZAS LIMITADAS',
-      },
-      {
-        id: 3,
-        name: 'JDM Fest',
-        date: '05 JUN',
-        location: 'Barcelona',
-        image:
-          'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=600',
-        status: 'ABIERTO',
-      },
-      {
-        id: 4,
-        name: 'Clásicos del Sur',
-        date: '12 JUN',
-        location: 'Sevilla',
-        image:
-          'https://images.unsplash.com/photo-1469037784699-75dcff1cbf75?auto=format&fit=crop&q=80&w=600',
-        status: 'CONFIRMADO',
-      },
-    ])
-  }, [])
+  // CAMBIO: Iniciamos los datos directamente aquí (sin useEffect)
+  const [events] = useState([
+    {
+      id: 1,
+      name: 'EuroCrew Spain',
+      date: '15 MAY',
+      location: 'Valencia',
+      image:
+        'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&q=80&w=600',
+      status: 'CONFIRMADO',
+    },
+    {
+      id: 2,
+      name: 'Ruta de Montaña',
+      date: '22 MAY',
+      location: 'Sierra de Madrid',
+      image:
+        'https://images.unsplash.com/photo-1532974297617-c0f05fe48bff?auto=format&fit=crop&q=80&w=600',
+      status: 'PLAZAS LIMITADAS',
+    },
+    {
+      id: 3,
+      name: 'JDM Fest',
+      date: '05 JUN',
+      location: 'Barcelona',
+      image:
+        'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=600',
+      status: 'ABIERTO',
+    },
+    {
+      id: 4,
+      name: 'Clásicos del Sur',
+      date: '12 JUN',
+      location: 'Sevilla',
+      image:
+        'https://images.unsplash.com/photo-1469037784699-75dcff1cbf75?auto=format&fit=crop&q=80&w=600',
+      status: 'CONFIRMADO',
+    },
+  ])
 
   const responsiveOptions = [
     { breakpoint: '1199px', numVisible: 3, numScroll: 1 },
@@ -100,7 +96,7 @@ const EventCarousel = () => {
         Próximos Eventos Destacados
       </h3>
       <div className='card'>
-        {/* CORRECCIÓN AQUÍ: autoplayInterval en minúscula */}
+        {/* Corregido también el error de mayúsculas 'autoplayInterval' */}
         <Carousel
           value={events}
           numVisible={3}
