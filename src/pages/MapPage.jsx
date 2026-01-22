@@ -13,9 +13,8 @@ import { Calendar } from 'primereact/calendar'
 import { Dropdown } from 'primereact/dropdown'
 import { Card } from 'primereact/card'
 import Header from '../components/Header'
-import 'leaflet/dist/leaflet.css'
+// Los estilos de leaflet ya están en main.jsx
 
-// Fix de iconos de Leaflet
 import L from 'leaflet'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
@@ -28,7 +27,6 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-// Componente para detectar clics
 function LocationMarker({ setPosicion, setDialogVisible }) {
   useMapEvents({
     click(e) {
@@ -40,7 +38,6 @@ function LocationMarker({ setPosicion, setDialogVisible }) {
 }
 
 const MapPage = () => {
-  // Datos de ejemplo
   const [eventos, setEventos] = useState([
     {
       id: 1,
@@ -75,6 +72,13 @@ const MapPage = () => {
     { label: 'Clásicos', value: 'Clasicos' },
   ]
 
+  // --- CONFIGURACIÓN DE ESPAÑA ---
+  const centerSpain = [40.4637, -3.7492] // Centro de la península
+  const spainBounds = [
+    [27.0, -19.0], // Suroeste (Canarias)
+    [44.0, 5.0], // Noreste (Pirineos/Menorca)
+  ]
+
   const guardarEvento = () => {
     if (nuevoEvento.titulo && posicionTemp) {
       const eventoGuardar = {
@@ -93,9 +97,9 @@ const MapPage = () => {
     <div className='flex flex-column min-h-screen surface-ground'>
       <Header />
 
-      <div className='p-3 md:p-5 flex-grow-1 flex flex-column gap-3 max-w-7xl mx-auto w-full'>
-        {/* 1. Panel de Instrucciones (Responsive: Columna en móvil, Fila en PC) */}
-        <Card className='shadow-2 border-round-xl surface-card p-0'>
+      <div className='p-3 md:p-5 flex-grow-1 flex flex-column gap-3 max-w-7xl mx-auto w-full h-full'>
+        {/* Panel superior */}
+        <Card className='shadow-2 border-round-xl surface-card p-0 flex-none'>
           <div className='flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between gap-3'>
             <div>
               <h1 className='text-2xl md:text-3xl font-bold m-0 mb-2 text-white'>
@@ -105,31 +109,30 @@ const MapPage = () => {
                 Haz clic en el mapa para añadir tu evento.
               </p>
             </div>
-            {/* Ocultamos los pasos detallados en móviles muy pequeños para ahorrar espacio */}
-            <div className='surface-ground p-3 border-round-lg w-full md:w-auto hidden md:block'>
-              <div className='flex align-items-center gap-2 text-blue-400 font-bold mb-1'>
-                <i className='pi pi-plus-circle'></i> <span>Añadir Evento</span>
-              </div>
-              <small className='text-gray-400'>
-                Clic en mapa &gt; Rellenar datos &gt; Publicar
-              </small>
-            </div>
           </div>
         </Card>
 
-        {/* 2. Contenedor del Mapa */}
-        {/* En móvil: Altura fija de 60vh. En PC: flex-grow-1 para llenar pantalla */}
+        {/* --- CONTENEDOR DEL MAPA --- */}
+        {/* 'relative' es vital para que lo de dentro se posicione respecto a este cuadro */}
         <div
           className='flex-grow-1 w-full border-round-xl overflow-hidden shadow-4 border-1 surface-border relative'
-          style={{ minHeight: '50vh' }}
+          style={{ minHeight: '500px' }}
         >
-          {' '}
-          {/* minHeight asegura que se vea en móvil */}
           <MapContainer
-            center={[40.4167, -3.7032]}
+            center={centerSpain}
             zoom={6}
-            scrollWheelZoom={true}
-            style={{ height: '100%', width: '100%', minHeight: '100%' }} // Forzamos altura interna
+            minZoom={5}
+            maxBounds={spainBounds}
+            maxBoundsViscosity={1.0}
+            // --- EL TRUCO ESTÁ AQUÍ ---
+            // position: 'absolute' obliga al mapa a llenar el 100% del padre relative
+            style={{
+              height: '100%',
+              width: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -162,7 +165,6 @@ const MapPage = () => {
         </div>
       </div>
 
-      {/* Modal Formulario */}
       <Dialog
         header='Nuevo Evento'
         visible={dialogVisible}
@@ -184,7 +186,6 @@ const MapPage = () => {
               placeholder='Ej: KDD Nocturna'
             />
           </div>
-
           <div className='field'>
             <label className='block text-900 font-medium mb-2'>
               Tipo de Quedada
@@ -200,7 +201,6 @@ const MapPage = () => {
               className='w-full'
             />
           </div>
-
           <div className='field'>
             <label className='block text-900 font-medium mb-2'>
               Fecha y Hora
@@ -216,7 +216,6 @@ const MapPage = () => {
               className='w-full'
             />
           </div>
-
           <div className='flex gap-2 justify-content-end mt-2'>
             <Button
               label='Cancelar'
