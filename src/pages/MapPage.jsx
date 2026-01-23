@@ -52,7 +52,7 @@ const MapPage = ({ session }) => {
   const [posicionTemp, setPosicionTemp] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // --- CORRECCIÓN: Definimos la función ANTES de usarla en useEffect ---
+  // --- IMPORTANTE: Esta función debe estar AQUÍ, antes del useEffect ---
   const fetchEventos = async () => {
     const { data, error } = await supabase.from('events').select('*')
     if (error) {
@@ -60,19 +60,17 @@ const MapPage = ({ session }) => {
     } else {
       const eventosFormateados = data.map((ev) => ({
         ...ev,
-        fecha: new Date(ev.fecha), // Convertir texto a fecha real
+        fecha: new Date(ev.fecha),
       }))
       setEventos(eventosFormateados)
     }
   }
 
-  // --- 1. CARGAR EVENTOS DE SUPABASE ---
-  // Ahora sí podemos llamarla porque ya existe arriba
+  // --- Carga inicial ---
   useEffect(() => {
     fetchEventos()
   }, [])
 
-  // --- 2. GUARDAR EVENTO EN SUPABASE ---
   const guardarEvento = async () => {
     if (!nuevoEvento.titulo || !nuevoEvento.fecha)
       return alert('Rellena todos los campos')
@@ -85,7 +83,7 @@ const MapPage = ({ session }) => {
         fecha: nuevoEvento.fecha,
         lat: posicionTemp.lat,
         lng: posicionTemp.lng,
-        user_id: session.user.id, // Vinculamos evento al usuario
+        user_id: session.user.id,
       },
     ])
 
@@ -94,7 +92,7 @@ const MapPage = ({ session }) => {
     } else {
       setDialogVisible(false)
       setNuevoEvento({ titulo: '', tipo: '', fecha: null })
-      fetchEventos() // Recargar mapa para ver el nuevo evento
+      fetchEventos() // Recargamos el mapa
     }
     setLoading(false)
   }

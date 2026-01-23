@@ -8,6 +8,16 @@ import { Avatar } from 'primereact/avatar'
 const Header = ({ session }) => {
   const navigate = useNavigate()
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      navigate('/') // Te lleva al inicio para refrescar la vista
+    } catch (error) {
+      console.error('Error cerrando sesión:', error.message)
+    }
+  }
+
   const items = [
     {
       label: 'Mapa',
@@ -30,33 +40,31 @@ const Header = ({ session }) => {
   )
 
   const end = session ? (
-    // SI ESTÁ LOGUEADO:
-    <div className='flex align-items-center gap-3'>
+    <div className='flex align-items-center gap-2 md:gap-3'>
       <div className='flex align-items-center gap-2'>
+        {/* Esta línea oculta el email en móviles para que no rompa el diseño */}
+        <span className='font-bold text-sm hidden md:block text-700'>
+          {session.user.email?.split('@')[0]}
+        </span>
         <Avatar
           icon='pi pi-user'
           shape='circle'
           style={{ backgroundColor: '#2196F3', color: '#ffffff' }}
         />
-        <span className='font-bold text-sm hidden md:block text-700'>
-          {session.user.email}
-        </span>
       </div>
       <Button
-        label='Salir'
         icon='pi pi-power-off'
         severity='danger'
-        text
-        onClick={() => supabase.auth.signOut()}
+        onClick={handleLogout}
+        className='p-button-rounded p-button-text p-button-sm'
       />
     </div>
   ) : (
-    // SI NO ESTÁ LOGUEADO:
     <div className='flex align-items-center gap-2'>
       <Button
-        label='Acceder'
+        label='Entrar'
         icon='pi pi-user'
-        className='p-button-text text-700'
+        className='p-button-text text-700 p-button-sm'
         onClick={() => navigate('/login')}
       />
       <Button
