@@ -1,32 +1,21 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../supabaseClient'
 import { Menubar } from 'primereact/menubar'
 import { Button } from 'primereact/button'
+import { Avatar } from 'primereact/avatar'
 
-// import logoSrc from '../assets/logo.png'; // Descomentar cuando tengas el logo final
-
-const Header = () => {
+const Header = ({ session }) => {
   const navigate = useNavigate()
 
   const items = [
     {
       label: 'Mapa',
       icon: 'pi pi-map-marker',
-      command: () => navigate('/mapa'), // Navegación a la nueva página
+      command: () => navigate('/mapa'),
     },
-    {
-      label: 'Eventos',
-      icon: 'pi pi-calendar',
-      items: [
-        { label: 'Próximos', icon: 'pi pi-angle-right' },
-        { label: 'Finalizados', icon: 'pi pi-history' },
-      ],
-    },
-    {
-      label: 'Garaje',
-      icon: 'pi pi-car',
-      command: () => navigate('/'), // Por ahora lleva al inicio
-    },
+    { label: 'Eventos', icon: 'pi pi-calendar' },
+    { label: 'Garaje', icon: 'pi pi-car', command: () => navigate('/') },
   ]
 
   const start = (
@@ -34,35 +23,58 @@ const Header = () => {
       className='flex align-items-center mr-2 cursor-pointer'
       onClick={() => navigate('/')}
     >
-      {/* <img alt="logo" src={logoSrc} height="40" className="mr-2"></img> */}
-      <h2 className='text-xl font-bold text-white m-0'>
+      <h2 className='text-xl font-bold text-900 m-0'>
         CarMeet<span style={{ color: 'var(--blue-500)' }}>ESP</span>
       </h2>
     </div>
   )
 
-  const end = (
+  const end = session ? (
+    // SI ESTÁ LOGUEADO:
+    <div className='flex align-items-center gap-3'>
+      <div className='flex align-items-center gap-2'>
+        <Avatar
+          icon='pi pi-user'
+          shape='circle'
+          style={{ backgroundColor: '#2196F3', color: '#ffffff' }}
+        />
+        <span className='font-bold text-sm hidden md:block text-700'>
+          {session.user.email}
+        </span>
+      </div>
+      <Button
+        label='Salir'
+        icon='pi pi-power-off'
+        severity='danger'
+        text
+        onClick={() => supabase.auth.signOut()}
+      />
+    </div>
+  ) : (
+    // SI NO ESTÁ LOGUEADO:
     <div className='flex align-items-center gap-2'>
       <Button
-        label='Login'
+        label='Acceder'
         icon='pi pi-user'
-        className='p-button-text p-button-sm text-white'
+        className='p-button-text text-700'
+        onClick={() => navigate('/login')}
       />
-      <Button label='Registro' severity='info' size='small' />
+      <Button
+        label='Registro'
+        severity='info'
+        size='small'
+        onClick={() => navigate('/login')}
+      />
     </div>
   )
 
   return (
-    <div className='card sticky top-0 z-5 shadow-4'>
+    <div className='sticky top-0 z-5 shadow-1'>
       <Menubar
         model={items}
         start={start}
         end={end}
-        style={{
-          borderRadius: 0,
-          border: 'none',
-          background: 'rgba(26, 26, 46, 0.95)',
-        }}
+        style={{ border: 'none', background: 'rgba(255, 255, 255, 0.95)' }}
       />
     </div>
   )

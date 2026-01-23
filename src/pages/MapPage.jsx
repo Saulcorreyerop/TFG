@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 import {
   MapContainer,
   TileLayer,
@@ -12,9 +13,7 @@ import { InputText } from 'primereact/inputtext'
 import { Calendar } from 'primereact/calendar'
 import { Dropdown } from 'primereact/dropdown'
 import { Card } from 'primereact/card'
-import Header from '../components/Header'
-// Los estilos de leaflet ya están en main.jsx
-
+import { useNavigate } from 'react-router-dom'
 import L from 'leaflet'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
@@ -27,9 +26,13 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-function LocationMarker({ setPosicion, setDialogVisible }) {
+function LocationMarker({ setPosicion, setDialogVisible, session }) {
   useMapEvents({
     click(e) {
+      if (!session) {
+        alert('🔒 Debes iniciar sesión para añadir un evento.')
+        return
+      }
       setPosicion(e.latlng)
       setDialogVisible(true)
     },
@@ -37,26 +40,9 @@ function LocationMarker({ setPosicion, setDialogVisible }) {
   return null
 }
 
-const MapPage = () => {
-  const [eventos, setEventos] = useState([
-    {
-      id: 1,
-      titulo: 'KDD Stance Madrid',
-      lat: 40.4167,
-      lng: -3.7032,
-      tipo: 'Stance',
-      fecha: new Date(),
-    },
-    {
-      id: 2,
-      titulo: 'Ruta Costa Brava',
-      lat: 41.3851,
-      lng: 2.1734,
-      tipo: 'Ruta',
-      fecha: new Date(),
-    },
-  ])
-
+const MapPage = ({ session }) => {
+  const navigate = useNavigate()
+  const [eventos, setEventos] = useState([])
   const [dialogVisible, setDialogVisible] = useState(false)
   const [nuevoEvento, setNuevoEvento] = useState({
     titulo: '',
@@ -64,6 +50,54 @@ const MapPage = () => {
     fecha: null,
   })
   const [posicionTemp, setPosicionTemp] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  // --- CORRECCIÓN: Definimos la función ANTES de usarla en useEffect ---
+  const fetchEventos = async () => {
+    const { data, error } = await supabase.from('events').select('*')
+    if (error) {
+      console.error('Error cargando eventos:', error)
+    } else {
+      const eventosFormateados = data.map((ev) => ({
+        ...ev,
+        fecha: new Date(ev.fecha), // Convertir texto a fecha real
+      }))
+      setEventos(eventosFormateados)
+    }
+  }
+
+  // --- 1. CARGAR EVENTOS DE SUPABASE ---
+  // Ahora sí podemos llamarla porque ya existe arriba
+  useEffect(() => {
+    fetchEventos()
+  }, [])
+
+  // --- 2. GUARDAR EVENTO EN SUPABASE ---
+  const guardarEvento = async () => {
+    if (!nuevoEvento.titulo || !nuevoEvento.fecha)
+      return alert('Rellena todos los campos')
+
+    setLoading(true)
+    const { error } = await supabase.from('events').insert([
+      {
+        titulo: nuevoEvento.titulo,
+        tipo: nuevoEvento.tipo,
+        fecha: nuevoEvento.fecha,
+        lat: posicionTemp.lat,
+        lng: posicionTemp.lng,
+        user_id: session.user.id, // Vinculamos evento al usuario
+      },
+    ])
+
+    if (error) {
+      alert('Error al guardar: ' + error.message)
+    } else {
+      setDialogVisible(false)
+      setNuevoEvento({ titulo: '', tipo: '', fecha: null })
+      fetchEventos() // Recargar mapa para ver el nuevo evento
+    }
+    setLoading(false)
+  }
 
   const tiposEvento = [
     { label: 'Stance / Expo', value: 'Stance' },
@@ -72,48 +106,38 @@ const MapPage = () => {
     { label: 'Clásicos', value: 'Clasicos' },
   ]
 
-  // --- CONFIGURACIÓN DE ESPAÑA ---
-  const centerSpain = [40.4637, -3.7492] // Centro de la península
+  const centerSpain = [40.4637, -3.7492]
   const spainBounds = [
-    [27.0, -19.0], // Suroeste (Canarias)
-    [44.0, 5.0], // Noreste (Pirineos/Menorca)
+    [27.0, -19.0],
+    [44.0, 5.0],
   ]
-
-  const guardarEvento = () => {
-    if (nuevoEvento.titulo && posicionTemp) {
-      const eventoGuardar = {
-        id: Date.now(),
-        ...nuevoEvento,
-        lat: posicionTemp.lat,
-        lng: posicionTemp.lng,
-      }
-      setEventos([...eventos, eventoGuardar])
-      setDialogVisible(false)
-      setNuevoEvento({ titulo: '', tipo: '', fecha: null })
-    }
-  }
 
   return (
     <div className='flex flex-column min-h-screen surface-ground'>
-      <Header />
-
       <div className='p-3 md:p-5 flex-grow-1 flex flex-column gap-3 max-w-7xl mx-auto w-full h-full'>
-        {/* Panel superior */}
         <Card className='shadow-2 border-round-xl surface-card p-0 flex-none'>
           <div className='flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between gap-3'>
             <div>
-              <h1 className='text-2xl md:text-3xl font-bold m-0 mb-2 text-white'>
+              <h1 className='text-2xl md:text-3xl font-bold m-0 mb-2 text-900'>
                 Mapa en Vivo
               </h1>
-              <p className='text-gray-400 m-0 text-sm md:text-base'>
-                Haz clic en el mapa para añadir tu evento.
+              <p className='text-600 m-0 text-sm md:text-base'>
+                {session
+                  ? 'Haz clic en el mapa para añadir tu evento.'
+                  : 'Inicia sesión para poder publicar eventos.'}
               </p>
             </div>
+            {!session && (
+              <Button
+                label='Iniciar Sesión'
+                icon='pi pi-user'
+                severity='warning'
+                onClick={() => navigate('/login')}
+              />
+            )}
           </div>
         </Card>
 
-        {/* --- CONTENEDOR DEL MAPA --- */}
-        {/* 'relative' es vital para que lo de dentro se posicione respecto a este cuadro */}
         <div
           className='flex-grow-1 w-full border-round-xl overflow-hidden shadow-4 border-1 surface-border relative'
           style={{ minHeight: '500px' }}
@@ -124,8 +148,6 @@ const MapPage = () => {
             minZoom={5}
             maxBounds={spainBounds}
             maxBoundsViscosity={1.0}
-            // --- EL TRUCO ESTÁ AQUÍ ---
-            // position: 'absolute' obliga al mapa a llenar el 100% del padre relative
             style={{
               height: '100%',
               width: '100%',
@@ -135,7 +157,7 @@ const MapPage = () => {
             }}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              attribution='&copy; OpenStreetMap'
               url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             />
 
@@ -150,16 +172,20 @@ const MapPage = () => {
                       {ev.tipo}
                     </span>
                     <p className='m-0 text-xs text-gray-600'>
-                      {ev.fecha.toLocaleDateString()}
+                      {ev.fecha.toLocaleDateString()} -{' '}
+                      {ev.fecha.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </p>
                   </div>
                 </Popup>
               </Marker>
             ))}
-
             <LocationMarker
               setPosicion={setPosicionTemp}
               setDialogVisible={setDialogVisible}
+              session={session}
             />
           </MapContainer>
         </div>
@@ -183,13 +209,10 @@ const MapPage = () => {
                 setNuevoEvento({ ...nuevoEvento, titulo: e.target.value })
               }
               className='w-full'
-              placeholder='Ej: KDD Nocturna'
             />
           </div>
           <div className='field'>
-            <label className='block text-900 font-medium mb-2'>
-              Tipo de Quedada
-            </label>
+            <label className='block text-900 font-medium mb-2'>Tipo</label>
             <Dropdown
               value={nuevoEvento.tipo}
               onChange={(e) =>
@@ -197,7 +220,6 @@ const MapPage = () => {
               }
               options={tiposEvento}
               optionLabel='label'
-              placeholder='Selecciona el estilo'
               className='w-full'
             />
           </div>
@@ -212,7 +234,6 @@ const MapPage = () => {
               }
               showTime
               hourFormat='24'
-              placeholder='¿Cuándo es?'
               className='w-full'
             />
           </div>
@@ -221,13 +242,13 @@ const MapPage = () => {
               label='Cancelar'
               icon='pi pi-times'
               onClick={() => setDialogVisible(false)}
-              className='p-button-text'
+              text
             />
             <Button
               label='Publicar'
               icon='pi pi-check'
               onClick={guardarEvento}
-              autoFocus
+              loading={loading}
             />
           </div>
         </div>

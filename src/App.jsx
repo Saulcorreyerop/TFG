@@ -1,38 +1,65 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { supabase } from './supabaseClient'
 
-// Importamos componentes de la Landing Page
+// Componentes
 import Header from './components/Header'
 import Hero from './components/Hero'
 import Features from './components/Features'
 import EventCarousel from './components/EventCarousel'
 import Footer from './components/Footer'
 
-// Importamos la nueva página del mapa
+// Páginas
 import MapPage from './pages/MapPage'
+import AuthPage from './pages/AuthPage'
 
-// Componente "Home" que agrupa la landing page
 const Home = () => (
   <>
-    <Header />
     <Hero />
-    <EventCarousel />
+    <EventCarousel /> {/* Aquí deben salir las cartas, NO el mapa */}
     <Features />
-    <Footer />
   </>
 )
 
 function App() {
+  const [session, setSession] = useState(null)
+
+  useEffect(() => {
+    // Verificamos sesión al cargar
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    // Escuchamos cambios (login/logout)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
   return (
     <BrowserRouter>
-      <div className='app-container'>
+      <div className='flex flex-column min-h-screen'>
+        {/* Pasamos la sesión al Header para cambiar los botones */}
+        <Header session={session} />
+
         <Routes>
-          {/* Ruta Principal */}
           <Route path='/' element={<Home />} />
 
-          {/* Ruta del Mapa */}
-          <Route path='/mapa' element={<MapPage />} />
+          {/* ESTA LÍNEA ES LA CLAVE: Pasamos 'session' al Mapa */}
+          <Route path='/mapa' element={<MapPage session={session} />} />
+
+          {/* Rutas de autenticación */}
+          <Route
+            path='/login'
+            element={!session ? <AuthPage /> : <Navigate to='/' />}
+          />
         </Routes>
+
+        <Footer />
       </div>
     </BrowserRouter>
   )
