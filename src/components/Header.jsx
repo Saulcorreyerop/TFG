@@ -12,7 +12,7 @@ const Header = ({ session }) => {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      navigate('/') // Te lleva al inicio para refrescar la vista
+      navigate('/')
     } catch (error) {
       console.error('Error cerrando sesión:', error.message)
     }
@@ -40,9 +40,9 @@ const Header = ({ session }) => {
   )
 
   const end = session ? (
+    /* --- USUARIO LOGUEADO --- */
     <div className='flex align-items-center gap-2 md:gap-3'>
       <div className='flex align-items-center gap-2'>
-        {/* Esta línea oculta el email en móviles para que no rompa el diseño */}
         <span className='font-bold text-sm hidden md:block text-700'>
           {session.user.email?.split('@')[0]}
         </span>
@@ -60,19 +60,34 @@ const Header = ({ session }) => {
       />
     </div>
   ) : (
+    /* --- USUARIO NO LOGUEADO --- */
     <div className='flex align-items-center gap-2'>
+      {/* VISTA MÓVIL: Solo icono de usuario (redondo y simple) */}
       <Button
-        label='Entrar'
         icon='pi pi-user'
-        className='p-button-text text-700 p-button-sm'
+        rounded
+        text
+        severity='secondary'
+        aria-label='User'
+        className='md:hidden'
         onClick={() => navigate('/login')}
       />
-      <Button
-        label='Registro'
-        severity='info'
-        size='small'
-        onClick={() => navigate('/login')}
-      />
+
+      {/* VISTA ESCRITORIO: Botones completos (Ocultos en móvil) */}
+      <div className='hidden md:flex gap-2'>
+        <Button
+          label='Entrar'
+          icon='pi pi-user'
+          className='p-button-text text-700 p-button-sm'
+          onClick={() => navigate('/login')}
+        />
+        <Button
+          label='Registro'
+          severity='info'
+          size='small'
+          onClick={() => navigate('/login')}
+        />
+      </div>
     </div>
   )
 

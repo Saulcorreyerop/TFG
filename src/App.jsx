@@ -5,6 +5,7 @@ import { supabase } from './supabaseClient'
 // Componentes
 import Header from './components/Header'
 import Hero from './components/Hero'
+import HomeMap from './components/HomeMap' // <--- 1. IMPORTAMOS EL MAPA NUEVO
 import Features from './components/Features'
 import EventCarousel from './components/EventCarousel'
 import Footer from './components/Footer'
@@ -13,10 +14,15 @@ import Footer from './components/Footer'
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
 
+// Definimos la estructura de la página de Inicio
 const Home = () => (
   <>
     <Hero />
-    <EventCarousel /> {/* Aquí deben salir las cartas, NO el mapa */}
+
+    {/* <--- 2. LO INSERTAMOS AQUÍ (Debajo del Hero, encima del Carrusel) */}
+    <HomeMap />
+
+    <EventCarousel />
     <Features />
   </>
 )
@@ -49,7 +55,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Home />} />
 
-          {/* ESTA LÍNEA ES LA CLAVE: Pasamos 'session' al Mapa */}
+          {/* Pasamos 'session' al Mapa interactivo completo */}
           <Route path='/mapa' element={<MapPage session={session} />} />
 
           {/* Rutas de autenticación */}

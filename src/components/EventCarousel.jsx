@@ -9,21 +9,25 @@ const EventCarousel = () => {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      // Pedimos eventos a Supabase
+      const now = new Date().toISOString()
+
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .order('fecha', { ascending: true }) // Los más cercanos primero
-        .limit(9) // Traemos máximo 9
+        .gte('fecha', now)
+        .order('fecha', { ascending: true })
+        .limit(9)
 
       if (!error && data) {
-        // Preparamos los datos para que se vean bonitos
         const eventsWithImages = data.map((ev) => ({
           ...ev,
           date: new Date(ev.fecha).toLocaleDateString(),
-          location: 'España', // Ubicación genérica
-          // Foto aleatoria de coches
-          image: `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=600&q=80&random=${ev.id}`,
+          location: 'España',
+          // LÓGICA IMPORTANTE:
+          // Si ev.image_url existe, úsala. Si no, usa la de Unsplash aleatoria
+          image: ev.image_url
+            ? ev.image_url
+            : `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=600&q=80&random=${ev.id}`,
           status: 'CONFIRMADO',
         }))
         setEvents(eventsWithImages)
@@ -39,10 +43,9 @@ const EventCarousel = () => {
     { breakpoint: '767px', numVisible: 1, numScroll: 1 },
   ]
 
-  // Diseño de CADA TARJETA (Aquí no hay mapa, solo imagen y texto)
   const eventTemplate = (event) => {
     return (
-      <div className='border-1 surface-border border-round m-2 text-center py-5 px-3 bg-white shadow-1'>
+      <div className='border-1 surface-border border-round m-2 text-center py-5 px-3 bg-white shadow-1 h-full flex flex-column'>
         <div className='mb-3 relative'>
           <img
             src={event.image}
@@ -57,16 +60,36 @@ const EventCarousel = () => {
             style={{ left: '5px', top: '5px' }}
           />
         </div>
-        <div>
-          <h4 className='mb-1 text-900 font-bold'>{event.titulo}</h4>
-          <span className='text-blue-600 font-bold text-sm block mb-2'>
-            {event.tipo}
-          </span>
-          <h6 className='mt-0 mb-3 text-600 font-medium'>
-            <i className='pi pi-calendar mr-1'></i>
-            {event.date}
-          </h6>
-          <div className='mt-4 flex gap-2 justify-content-center'>
+        <div className='flex-grow-1 flex flex-column justify-content-between'>
+          <div>
+            <h4 className='mb-1 text-900 font-bold'>{event.titulo}</h4>
+            <span className='text-blue-600 font-bold text-sm block mb-2'>
+              {event.tipo}
+            </span>
+
+            {/* Mostramos un trocito de la descripción si existe */}
+            {event.description && (
+              <p
+                className='text-600 text-sm mb-3 line-clamp-2'
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  height: '2.5em',
+                }}
+              >
+                {event.description}
+              </p>
+            )}
+
+            <h6 className='mt-0 mb-3 text-600 font-medium'>
+              <i className='pi pi-calendar mr-1'></i>
+              {event.date}
+            </h6>
+          </div>
+
+          <div className='mt-2 flex gap-2 justify-content-center'>
             <Button
               icon='pi pi-search'
               className='p-button-rounded p-button-text'
@@ -86,7 +109,7 @@ const EventCarousel = () => {
   return (
     <section className='py-6 surface-ground'>
       <h3 className='text-center text-900 text-3xl mb-4 font-bold'>
-        Últimos Eventos Creados
+        Próximos Eventos
       </h3>
       <div className='card'>
         {events.length > 0 ? (
@@ -101,8 +124,8 @@ const EventCarousel = () => {
           />
         ) : (
           <div className='text-center py-5'>
-            <i className='pi pi-spin pi-spinner text-4xl text-blue-500 mb-3'></i>
-            <p className='text-600'>Cargando eventos de la comunidad...</p>
+            <i className='pi pi-calendar-times text-4xl text-gray-400 mb-3'></i>
+            <p className='text-600'>No hay eventos próximos programados.</p>
           </div>
         )}
       </div>

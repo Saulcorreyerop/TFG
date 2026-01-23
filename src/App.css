@@ -49,3 +49,16 @@ body {
   background-color: #e9ecef; /* Gris claro mientras carga */
   z-index: 1;
 }
+
+@media screen and (max-width: 960px) {
+  /* Alineamos el botón hamburguesa y el logo */
+  .p-menubar .p-menubar-button {
+    order: 3; /* Pone la hamburguesa a la derecha del todo si quieres, o déjalo por defecto */
+    margin-left: 0.5rem;
+  }
+
+  /* Asegura que el icono de usuario no se pegue demasiado */
+  .p-menubar-end {
+    margin-left: auto;
+  }
+}

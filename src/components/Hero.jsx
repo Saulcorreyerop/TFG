@@ -2,49 +2,53 @@ import React, { useState } from 'react'
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
-import { useNavigate } from 'react-router-dom'
 
 const Hero = () => {
   const [visible, setVisible] = useState(false)
-  const navigate = useNavigate()
 
   return (
     <main
       className='hero-bg flex flex-column align-items-center justify-content-center text-center relative'
       style={{ minHeight: '85vh' }}
     >
-      <div className='hero-content z-1 p-4' style={{ maxWidth: '900px' }}>
-        {/* Texto Blanco Puro y Sombra suave para resaltar sobre la imagen */}
+      {/* Añadimos padding-x (px-4) para que no toque los bordes en móvil */}
+      <div
+        className='hero-content z-1 p-4 w-full'
+        style={{ maxWidth: '900px' }}
+      >
         <h1
-          className='text-6xl font-bold mb-3 text-white'
+          className='text-5xl md:text-6xl font-bold mb-3 text-white'
           style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
         >
           LA CARRETERA TE LLAMA
         </h1>
 
-        {/* Descripción en gris muy claro (casi blanco) para que se lea perfecto */}
-        <p className='text-xl text-100 mb-6 line-height-3 font-medium'>
+        {/* CAMBIO COLOR TEXTO: Ahora es text-white con sombra suave */}
+        <p
+          className='text-xl text-white mb-6 line-height-3 font-medium'
+          style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+        >
           Únete a la mayor comunidad de motor en España. Localiza KDDs, gestiona
           tu garaje y conecta con otros apasionados.
         </p>
 
-        <div className='flex justify-content-center gap-3'>
-          {/* Botón Principal: Ahora es Blanco (más limpio) */}
+        {/* CAMBIO BOTONES: flex-column en móvil, flex-row en desktop */}
+        <div className='flex flex-column md:flex-row justify-content-center gap-3 w-full md:w-auto'>
           <Button
             label='Ver Mapa en Vivo'
             icon='pi pi-map'
             size='large'
-            className='p-button-raised p-button-text bg-white text-blue-600 border-white hover:bg-blue-50'
-            onClick={() => navigate('/mapa')}
+            /* w-full en móvil, w-auto en PC */
+            className='p-button-raised p-button-text bg-white text-blue-600 border-white hover:bg-blue-50 w-full md:w-auto'
           />
 
-          {/* Botón Secundario: Transparente con borde blanco */}
           <Button
             label='Unirse a la Comunidad'
             icon='pi pi-users'
             size='large'
             outlined
-            className='text-white border-white hover:bg-white-alpha-10'
+            /* w-full en móvil, w-auto en PC */
+            className='text-white border-white hover:bg-white-alpha-10 w-full md:w-auto'
             onClick={() => setVisible(true)}
           />
         </div>
