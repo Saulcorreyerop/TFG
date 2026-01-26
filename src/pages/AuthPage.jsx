@@ -5,34 +5,129 @@ import { Password } from 'primereact/password'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { TabView, TabPanel } from 'primereact/tabview'
+import { Toast } from 'primereact/toast' // Para mensajes más bonitos
+import { useRef } from 'react'
 
 const AuthPage = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const toast = useRef(null)
   const [loading, setLoading] = useState(false)
 
+  // Estados para Login
+  const [loginInput, setLoginInput] = useState('') // Puede ser email o usuario
+  const [loginPassword, setLoginPassword] = useState('')
+
+  // Estados para Registro
+  const [regUsername, setRegUsername] = useState('')
+  const [regEmail, setRegEmail] = useState('')
+  const [regPassword, setRegPassword] = useState('')
+  const [regConfirmPassword, setRegConfirmPassword] = useState('')
+
+  // --- LÓGICA DE LOGIN ---
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (error) alert(error.message)
-    setLoading(false)
+
+    try {
+      let emailToUse = loginInput.trim()
+
+      // 1. Si NO parece un email, asumimos que es un nombre de usuario
+      if (!loginInput.includes('@')) {
+        // Buscamos el email asociado a este usuario en la tabla 'profiles'
+        // NOTA: Debes tener una tabla 'profiles' con columnas 'username' y 'email'
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('username', loginInput)
+          .single()
+
+        if (error || !data) {
+          throw new Error('Usuario no encontrado. Intenta con tu correo.')
+        }
+        emailToUse = data.email
+      }
+
+      // 2. Iniciamos sesión con el email (sea el escrito o el encontrado)
+      const { error } = await supabase.auth.signInWithPassword({
+        email: emailToUse,
+        password: loginPassword,
+      })
+
+      if (error) throw error
+
+      // Si usas react-router, aquí harías navigate('/mapa')
+      // window.location.href = '/'
+    } catch (error) {
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: error.message,
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // --- LÓGICA DE REGISTRO ---
   const handleRegister = async (e) => {
     e.preventDefault()
+
+    // 1. Validar contraseñas
+    if (regPassword !== regConfirmPassword) {
+      toast.current.show({
+        severity: 'warn',
+        summary: 'Cuidado',
+        detail: 'Las contraseñas no coinciden',
+      })
+      return
+    }
+
+    if (!regUsername) {
+      toast.current.show({
+        severity: 'warn',
+        summary: 'Falta datos',
+        detail: 'El nombre de usuario es obligatorio',
+      })
+      return
+    }
+
     setLoading(true)
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) alert(error.message)
-    else alert('¡Registro exitoso! Revisa tu correo para confirmar.')
+
+    // 2. Crear usuario en Supabase Auth
+    // Guardamos el username en 'options.data' para que vaya a la metadata
+    const { error } = await supabase.auth.signUp({
+      email: regEmail,
+      password: regPassword,
+      options: {
+        data: {
+          username: regUsername,
+        },
+      },
+    })
+
+    if (error) {
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: error.message,
+      })
+    } else {
+      toast.current.show({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Registro exitoso! Revisa tu correo.',
+      })
+      // Limpiar formulario
+      setRegEmail('')
+      setRegPassword('')
+      setRegConfirmPassword('')
+      setRegUsername('')
+    }
     setLoading(false)
   }
 
   return (
     <div className='flex justify-content-center align-items-center min-h-screen surface-ground p-4'>
+      <Toast ref={toast} />
       <Card className='w-full md:w-30rem shadow-4 border-round-xl'>
         <div className='text-center mb-5'>
           <h2 className='text-900 font-bold mb-2'>Bienvenido a CarMeet ESP</h2>
@@ -40,22 +135,24 @@ const AuthPage = () => {
         </div>
 
         <TabView>
+          {/* --- PANEL DE INICIO DE SESIÓN --- */}
           <TabPanel header='Iniciar Sesión'>
             <form onSubmit={handleLogin} className='flex flex-column gap-3'>
               <span className='p-float-label mt-3'>
                 <InputText
-                  id='login-email'
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id='login-input'
+                  value={loginInput}
+                  onChange={(e) => setLoginInput(e.target.value)}
                   className='w-full'
                 />
-                <label htmlFor='login-email'>Correo Electrónico</label>
+                <label htmlFor='login-input'>Correo o Nombre de Usuario</label>
               </span>
+
               <span className='p-float-label'>
                 <Password
                   id='login-pass'
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
                   toggleMask
                   feedback={false}
                   className='w-full'
@@ -63,8 +160,9 @@ const AuthPage = () => {
                 />
                 <label htmlFor='login-pass'>Contraseña</label>
               </span>
+
               <Button
-                label={loading ? 'Cargando...' : 'Entrar'}
+                label={loading ? 'Verificando...' : 'Entrar'}
                 icon='pi pi-sign-in'
                 className='w-full mt-2'
                 loading={loading}
@@ -72,28 +170,58 @@ const AuthPage = () => {
             </form>
           </TabPanel>
 
+          {/* --- PANEL DE REGISTRO --- */}
           <TabPanel header='Registrarse'>
             <form onSubmit={handleRegister} className='flex flex-column gap-3'>
               <span className='p-float-label mt-3'>
                 <InputText
+                  id='reg-user'
+                  value={regUsername}
+                  onChange={(e) => setRegUsername(e.target.value)}
+                  className='w-full'
+                />
+                <label htmlFor='reg-user'>Nombre de Usuario</label>
+              </span>
+
+              <span className='p-float-label'>
+                <InputText
                   id='reg-email'
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
                   className='w-full'
                 />
                 <label htmlFor='reg-email'>Correo Electrónico</label>
               </span>
+
               <span className='p-float-label'>
                 <Password
                   id='reg-pass'
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
                   toggleMask
+                  promptLabel='Introduce una contraseña'
+                  weakLabel='Débil'
+                  mediumLabel='Media'
+                  strongLabel='Fuerte'
                   className='w-full'
                   inputClassName='w-full'
                 />
                 <label htmlFor='reg-pass'>Contraseña</label>
               </span>
+
+              <span className='p-float-label'>
+                <Password
+                  id='reg-confirm'
+                  value={regConfirmPassword}
+                  onChange={(e) => setRegConfirmPassword(e.target.value)}
+                  toggleMask
+                  feedback={false} // No mostramos fortaleza en la confirmación
+                  className='w-full'
+                  inputClassName='w-full'
+                />
+                <label htmlFor='reg-confirm'>Confirmar Contraseña</label>
+              </span>
+
               <Button
                 label={loading ? 'Creando cuenta...' : 'Crear Cuenta'}
                 icon='pi pi-user-plus'
