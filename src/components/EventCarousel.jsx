@@ -120,7 +120,7 @@ const EventCarousel = () => {
           minute: '2-digit',
         }),
         location: 'España',
-        // CAMBIO AQUÍ: Aumentamos calidad (q=90) y tamaño (w=1200) de la imagen por defecto
+        // Usamos una imagen de alta resolución (w=1200) y calidad (q=90) para evitar pixelado en Unsplash
         image: ev.image_url
           ? ev.image_url
           : `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=90&random=${ev.id}`,
@@ -304,104 +304,102 @@ const EventCarousel = () => {
     { label: 'Off-road / 4x4', value: 'Offroad' },
   ]
 
-  // --- DISEÑO DE TARJETA MEJORADO ---
+  // --- DISEÑO DE TARJETA CORREGIDO ---
   const eventTemplate = (event) => {
     return (
-      <div className='surface-card shadow-2 border-round-xl m-2 overflow-hidden hover:shadow-5 transition-all transition-duration-300 h-full flex flex-column'>
-        {/* CABECERA DE IMAGEN */}
-        <div className='relative h-15rem w-full'>
-          <img
-            src={event.image}
-            alt={event.titulo}
-            className='w-full h-full object-cover'
-            style={{ display: 'block' }}
-          />
-
-          {/* CAMBIO: Se eliminó la etiqueta "CONFIRMADO" de aquí */}
-
-          {/* Etiqueta de TIPO abajo a la derecha */}
-          <div className='absolute bottom-0 right-0 m-3'>
-            <Tag
-              value={event.tipo}
-              severity='info'
-              className='shadow-2'
-              icon='pi pi-tag'
+      // ENVOLTORIO CON PADDING: Esto evita que la sombra se corte por abajo (soluciona el solapamiento)
+      <div className='p-3 h-full'>
+        <div className='surface-card shadow-2 border-round-xl overflow-hidden hover:shadow-5 transition-all transition-duration-300 h-full flex flex-column'>
+          {/* CABECERA DE IMAGEN */}
+          <div className='relative h-15rem w-full bg-gray-200'>
+            <img
+              src={event.image}
+              alt={event.titulo}
+              // IMPORTANTE: objectFit: 'cover' arregla el estiramiento. w-full h-full llena el contenedor.
+              className='w-full h-full'
+              style={{ objectFit: 'cover', display: 'block' }}
             />
-          </div>
 
-          {/* Gradiente sutil abajo */}
-          <div
-            className='absolute bottom-0 left-0 w-full h-3rem'
-            style={{
-              background:
-                'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
-            }}
-          ></div>
-        </div>
-
-        {/* CUERPO DE LA TARJETA */}
-        <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
-          <div>
-            {/* Fecha */}
-            <div className='flex align-items-center gap-2 text-500 text-sm font-semibold mb-2 uppercase tracking-wide'>
-              <i className='pi pi-calendar text-blue-500'></i>
-              <span>{event.date}</span>
+            {/* Etiquetas sobre la imagen (SIN CONFIRMADO) */}
+            <div className='absolute bottom-0 right-0 m-3'>
+              <Tag
+                value={event.tipo}
+                severity='info'
+                className='shadow-2'
+                icon='pi pi-tag'
+              />
             </div>
 
-            {/* Título */}
-            <h4 className='text-xl font-bold text-900 mt-0 mb-2 line-height-3'>
-              {event.titulo}
-            </h4>
-
-            {/* Descripción */}
-            {event.description && (
-              <p
-                className='text-600 text-sm line-height-3 m-0 mb-4 line-clamp-2'
-                style={{
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  height: '3em',
-                }}
-              >
-                {event.description}
-              </p>
-            )}
+            <div
+              className='absolute bottom-0 left-0 w-full h-3rem'
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
+              }}
+            ></div>
           </div>
 
-          {/* FOOTER */}
-          <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
-            <div className='flex align-items-center gap-2 text-600 text-sm'>
-              <div
-                className='border-circle surface-300 flex align-items-center justify-content-center'
-                style={{ width: '24px', height: '24px' }}
-              >
-                <i className='pi pi-user text-xs'></i>
+          {/* CUERPO DE LA TARJETA */}
+          <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
+            <div>
+              <div className='flex align-items-center gap-2 text-500 text-sm font-semibold mb-2 uppercase tracking-wide'>
+                <i className='pi pi-calendar text-blue-500'></i>
+                <span>{event.date}</span>
               </div>
-              <span
-                className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
-                style={{ maxWidth: '80px' }}
-              >
-                {event.profiles?.username || 'Anónimo'}
-              </span>
+
+              <h4 className='text-xl font-bold text-900 mt-0 mb-2 line-height-3'>
+                {event.titulo}
+              </h4>
+
+              {event.description && (
+                <p
+                  className='text-600 text-sm line-height-3 m-0 mb-4 line-clamp-2'
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    height: '3em',
+                  }}
+                >
+                  {event.description}
+                </p>
+              )}
             </div>
 
-            <div className='flex gap-2'>
-              <Button
-                icon='pi pi-heart'
-                rounded
-                outlined
-                severity='danger'
-                aria-label='Like'
-                className='w-2rem h-2rem'
-              />
-              <Button
-                icon='pi pi-arrow-right'
-                rounded
-                aria-label='Ver'
-                className='w-2rem h-2rem'
-              />
+            {/* FOOTER */}
+            <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
+              <div className='flex align-items-center gap-2 text-600 text-sm'>
+                <div
+                  className='border-circle surface-300 flex align-items-center justify-content-center'
+                  style={{ width: '24px', height: '24px' }}
+                >
+                  <i className='pi pi-user text-xs'></i>
+                </div>
+                <span
+                  className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
+                  style={{ maxWidth: '80px' }}
+                >
+                  {event.profiles?.username || 'Anónimo'}
+                </span>
+              </div>
+
+              <div className='flex gap-2'>
+                <Button
+                  icon='pi pi-heart'
+                  rounded
+                  outlined
+                  severity='danger'
+                  aria-label='Like'
+                  className='w-2rem h-2rem'
+                />
+                <Button
+                  icon='pi pi-arrow-right'
+                  rounded
+                  aria-label='Ver'
+                  className='w-2rem h-2rem'
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -454,6 +452,7 @@ const EventCarousel = () => {
         )}
       </div>
 
+      {/* --- MODALES (IGUAL QUE ANTES) --- */}
       <Dialog
         header='Publicar Nuevo Evento'
         visible={showModal}
