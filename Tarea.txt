@@ -1,0 +1,3 @@
+Añadir botón para añadir eventos en la sección de eventos del index, que tenga el mismo menú que cuando haces click en el mapa pero que contenga un input donde meter las coordenadas o dirección y que tenga también la opción de abrir un mapa para poder marcarlo directamente como el mapa
+
+Y luego una opción para poder exportar los eventos a un formato PDF o Excel (hoja de cálculo) 
