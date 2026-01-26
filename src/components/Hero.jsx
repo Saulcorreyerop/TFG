@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
-import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 
 const Hero = () => {

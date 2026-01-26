@@ -33,7 +33,11 @@ const Header = ({ session }) => {
       icon: 'pi pi-map-marker',
       command: () => navigate('/mapa'),
     },
-    { label: 'Eventos', icon: 'pi pi-calendar' },
+    {
+      label: 'Eventos',
+      icon: 'pi pi-calendar',
+      command: () => navigate('/eventos'),
+    },
     { label: 'Garaje', icon: 'pi pi-car', command: () => navigate('/') },
   ]
 

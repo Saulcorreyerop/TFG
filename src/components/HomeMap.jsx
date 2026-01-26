@@ -38,6 +38,7 @@ const HomeMap = () => {
 
   useEffect(() => {
     fetchEventos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const centerSpain = [40.4637, -3.7492]
