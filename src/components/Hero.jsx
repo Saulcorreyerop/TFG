@@ -2,9 +2,13 @@ import React, { useState } from 'react'
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
+import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const Hero = () => {
   const [visible, setVisible] = useState(false)
+
+  const navigate = useNavigate()
 
   return (
     <main
@@ -38,7 +42,9 @@ const Hero = () => {
             label='Ver Mapa en Vivo'
             icon='pi pi-map'
             size='large'
-            /* w-full en móvil, w-auto en PC */
+            /* Usamos onClick y navigate en lugar de Link */
+            onClick={() => navigate('/mapa')}
+            /* Tus clases originales se mantendrán perfectas */
             className='p-button-raised p-button-text bg-white text-blue-600 border-white hover:bg-blue-50 w-full md:w-auto'
           />
 

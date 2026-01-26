@@ -18,6 +18,15 @@ const Header = ({ session }) => {
     }
   }
 
+  // --- CORRECCIÓN: Lógica para obtener el nombre de usuario ---
+  // 1. Busca en los metadatos (donde lo guardamos al registrar)
+  // 2. Si no hay, usa el email cortado
+  // 3. Si falla todo, pone 'Usuario'
+  const displayName =
+    session?.user?.user_metadata?.username ||
+    session?.user?.email?.split('@')[0] ||
+    'Usuario'
+
   const items = [
     {
       label: 'Mapa',
@@ -44,7 +53,7 @@ const Header = ({ session }) => {
     <div className='flex align-items-center gap-2 md:gap-3'>
       <div className='flex align-items-center gap-2'>
         <span className='font-bold text-sm hidden md:block text-700'>
-          {session.user.email?.split('@')[0]}
+          {displayName} {/* <--- AQUI MOSTRAMOS EL NOMBRE REAL */}
         </span>
         <Avatar
           icon='pi pi-user'
