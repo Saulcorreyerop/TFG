@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import {
   MapContainer,
@@ -10,14 +10,62 @@ import {
 import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea' // <--- IMPORTANTE
+import { InputTextarea } from 'primereact/inputtextarea'
 import { Calendar } from 'primereact/calendar'
 import { Dropdown } from 'primereact/dropdown'
 import { Card } from 'primereact/card'
+import { Toast } from 'primereact/toast'
 import { useNavigate } from 'react-router-dom'
+import { addLocale } from 'primereact/api'
 import L from 'leaflet'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
+
+// Configuración Español
+addLocale('es', {
+  firstDayOfWeek: 1,
+  dayNames: [
+    'domingo',
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+  ],
+  dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
+  dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
+  monthNames: [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ],
+  monthNamesShort: [
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sep',
+    'oct',
+    'nov',
+    'dic',
+  ],
+  today: 'Hoy',
+  clear: 'Limpiar',
+})
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -27,14 +75,23 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-function LocationMarker({ setPosicion, setDialogVisible, session }) {
+// Componente para capturar clicks en el mapa
+function LocationMarker({ setNuevoEvento, setDialogVisible, session, toast }) {
   useMapEvents({
     click(e) {
       if (!session) {
-        alert('🔒 Debes iniciar sesión para añadir un evento.')
+        toast.current.show({
+          severity: 'warn',
+          summary: 'Acceso',
+          detail: 'Inicia sesión para añadir eventos.',
+        })
         return
       }
-      setPosicion(e.latlng)
+      setNuevoEvento((prev) => ({
+        ...prev,
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+      }))
       setDialogVisible(true)
     },
   })
@@ -43,26 +100,28 @@ function LocationMarker({ setPosicion, setDialogVisible, session }) {
 
 const MapPage = ({ session }) => {
   const navigate = useNavigate()
+  const toast = useRef(null)
   const [eventos, setEventos] = useState([])
   const [dialogVisible, setDialogVisible] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  // Estado actualizado con los nuevos campos
+  // Estado unificado
   const [nuevoEvento, setNuevoEvento] = useState({
     titulo: '',
     tipo: '',
     fecha: null,
-    descripcion: '', // Nuevo campo
-    imagen: null, // Nuevo campo (archivo)
+    descripcion: '',
+    imagen: null,
+    lat: null,
+    lng: null,
+    direccion: '',
   })
-
-  const [posicionTemp, setPosicionTemp] = useState(null)
-  const [loading, setLoading] = useState(false)
 
   const fetchEventos = async () => {
     const now = new Date().toISOString()
     const { data, error } = await supabase
       .from('events')
-      .select('*')
+      .select('*, profiles(username)')
       .gte('fecha', now)
 
     if (error) {
@@ -80,24 +139,72 @@ const MapPage = ({ session }) => {
     fetchEventos()
   }, [])
 
-  // Función para subir la imagen al Storage
+  // --- FUNCIÓN: Abrir modal desde el botón ---
+  const handleOpenModalButton = () => {
+    if (!session) {
+      toast.current.show({
+        severity: 'warn',
+        summary: 'Acceso',
+        detail: 'Inicia sesión para añadir eventos.',
+      })
+      return
+    }
+    setNuevoEvento((prev) => ({ ...prev, lat: null, lng: null, direccion: '' }))
+    setDialogVisible(true)
+  }
+
+  // --- LÓGICA GEOCODING ---
+  const buscarDireccion = async () => {
+    if (!nuevoEvento.direccion) return
+    try {
+      setLoading(true)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          nuevoEvento.direccion,
+        )}`,
+      )
+      const data = await response.json()
+
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat)
+        const lon = parseFloat(data[0].lon)
+        setNuevoEvento((prev) => ({ ...prev, lat: lat, lng: lon }))
+        toast.current.show({
+          severity: 'success',
+          summary: 'Encontrado',
+          detail: 'Ubicación actualizada.',
+        })
+      } else {
+        toast.current.show({
+          severity: 'warn',
+          summary: 'No encontrada',
+          detail: 'Intenta ser más específico.',
+        })
+      }
+    } catch (error) {
+      console.error(error)
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Fallo al buscar dirección.',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const uploadImage = async (file) => {
     try {
-      // 1. Crear nombre único: fecha + nombre_archivo (limpiando espacios)
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}.${fileExt}`
       const filePath = `${fileName}`
 
-      // 2. Subir a Supabase Storage (bucket 'event-images')
       const { error: uploadError } = await supabase.storage
         .from('event-images')
         .upload(filePath, file)
 
-      if (uploadError) {
-        throw uploadError
-      }
+      if (uploadError) throw uploadError
 
-      // 3. Obtener la URL pública
       const { data } = supabase.storage
         .from('event-images')
         .getPublicUrl(filePath)
@@ -105,54 +212,71 @@ const MapPage = ({ session }) => {
       return data.publicUrl
     } catch (error) {
       console.error('Error subiendo imagen:', error)
-      alert('Error al subir la imagen')
       return null
     }
   }
 
   const guardarEvento = async () => {
-    if (!nuevoEvento.titulo || !nuevoEvento.fecha || !nuevoEvento.tipo)
-      return alert('Rellena los campos obligatorios (Título, Tipo, Fecha)')
+    if (
+      !nuevoEvento.titulo ||
+      !nuevoEvento.fecha ||
+      !nuevoEvento.tipo ||
+      !nuevoEvento.lat
+    )
+      return toast.current.show({
+        severity: 'warn',
+        summary: 'Faltan datos',
+        detail: 'Título, Tipo, Fecha y Ubicación son obligatorios.',
+      })
 
     setLoading(true)
     let imageUrl = null
 
-    // Si hay imagen seleccionada, la subimos primero
     if (nuevoEvento.imagen) {
       imageUrl = await uploadImage(nuevoEvento.imagen)
       if (!imageUrl) {
         setLoading(false)
-        return // Paramos si falló la subida
+        return
       }
     }
 
-    // Insertamos en base de datos
     const { error } = await supabase.from('events').insert([
       {
         titulo: nuevoEvento.titulo,
         tipo: nuevoEvento.tipo,
         fecha: nuevoEvento.fecha,
-        description: nuevoEvento.descripcion, // Guardamos descripción
-        image_url: imageUrl, // Guardamos URL de la foto
-        lat: posicionTemp.lat,
-        lng: posicionTemp.lng,
+        description: nuevoEvento.descripcion,
+        image_url: imageUrl,
+        lat: nuevoEvento.lat,
+        lng: nuevoEvento.lng,
         user_id: session.user.id,
       },
     ])
 
     if (error) {
-      alert('Error al guardar: ' + error.message)
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: error.message,
+      })
     } else {
       setDialogVisible(false)
-      // Reiniciamos el formulario
       setNuevoEvento({
         titulo: '',
         tipo: '',
         fecha: null,
         descripcion: '',
         imagen: null,
+        lat: null,
+        lng: null,
+        direccion: '',
       })
       fetchEventos()
+      toast.current.show({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Evento publicado.',
+      })
     }
     setLoading(false)
   }
@@ -165,7 +289,6 @@ const MapPage = ({ session }) => {
     { label: 'Off-road / 4x4', value: 'Offroad' },
   ]
 
-  // Manejador para el input de archivo
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setNuevoEvento({ ...nuevoEvento, imagen: e.target.files[0] })
@@ -180,27 +303,29 @@ const MapPage = ({ session }) => {
 
   return (
     <div className='flex flex-column min-h-screen surface-ground'>
-      {/* ... (Header y Card superior igual que antes) ... */}
+      <Toast ref={toast} />
       <div className='p-3 md:p-5 flex-grow-1 flex flex-column gap-3 max-w-7xl mx-auto w-full h-full'>
-        {/* ... Código del Card de Bienvenida (igual que tenías) ... */}
+        {/* CARD DE BIENVENIDA CENTRADA */}
         <Card className='shadow-2 border-round-xl surface-card p-0 flex-none'>
-          <div className='flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between gap-3'>
-            <div className='flex flex-column gap-1'>
+          {/* Usamos flex-column y align-items-center para centrar todo */}
+          <div className='flex flex-column align-items-center justify-content-center text-center gap-3'>
+            <div
+              className='flex flex-column gap-1 w-full'
+              style={{ maxWidth: '800px' }}
+            >
               <h1 className='text-3xl font-extrabold m-0 text-900 tracking-tight'>
                 Mapa en Vivo
               </h1>
 
               <div className='text-600 m-0 text-base'>
                 {session ? (
-                  /* Usamos un div contenedor en lugar de fragmento para manejar el espaciado */
                   <div className='flex flex-column gap-3 mt-2'>
-                    {/* Título de la instrucción con icono */}
-                    <div className='flex align-items-center gap-2 text-900 font-semibold text-lg'>
+                    {/* Título de instrucción centrado */}
+                    <div className='flex align-items-center justify-content-center gap-2 text-900 font-semibold text-lg'>
                       <i className='pi pi-map-marker text-blue-600 text-xl' />
                       <span>Añadir nuevo evento</span>
                     </div>
 
-                    {/* Texto descriptivo más legible */}
                     <p className='m-0 line-height-3 text-700'>
                       Navega por el mapa, haz zoom en la zona exacta y
                       <span className='font-bold text-900'>
@@ -210,8 +335,7 @@ const MapPage = ({ session }) => {
                       donde comenzará el evento para crearlo.
                     </p>
 
-                    {/* Nota informativa con estilo de "alerta" suave */}
-                    <div className='surface-100 p-3 border-round-md flex align-items-start gap-2 text-sm text-600'>
+                    <div className='surface-100 p-3 border-round-md flex align-items-center justify-content-center gap-2 text-sm text-600 mx-auto w-full md:w-10'>
                       <i className='pi pi-info-circle mt-1 text-blue-500' />
                       <span>
                         <strong>Nota:</strong> Una vez que la fecha y hora del
@@ -219,10 +343,19 @@ const MapPage = ({ session }) => {
                         automáticamente en el mapa.
                       </span>
                     </div>
+
+                    {/* --- BOTÓN AÑADIDO Y CENTRADO --- */}
+                    <div className='flex justify-content-center mt-2'>
+                      <Button
+                        label='Agregar Evento por Dirección'
+                        icon='pi pi-plus'
+                        className='p-button-primary shadow-2'
+                        onClick={handleOpenModalButton}
+                      />
+                    </div>
                   </div>
                 ) : (
-                  /* Mensaje para no logueados */
-                  <div className='flex align-items-center gap-2 mt-2 text-orange-600 surface-50 p-2 border-round'>
+                  <div className='flex align-items-center justify-content-center gap-2 mt-2 text-orange-600 surface-50 p-2 border-round mx-auto w-fit'>
                     <i className='pi pi-lock' />
                     <span className='font-medium'>
                       Inicia sesión para poder publicar tus propios eventos.
@@ -231,6 +364,7 @@ const MapPage = ({ session }) => {
                 )}
               </div>
             </div>
+
             {!session && (
               <Button
                 label='Iniciar Sesión'
@@ -242,7 +376,7 @@ const MapPage = ({ session }) => {
           </div>
         </Card>
 
-        {/* Mapa */}
+        {/* MAPA */}
         <div
           className='flex-grow-1 w-full border-round-xl overflow-hidden shadow-4 border-1 surface-border relative'
           style={{ minHeight: '500px' }}
@@ -263,7 +397,6 @@ const MapPage = ({ session }) => {
               <Marker key={ev.id} position={[ev.lat, ev.lng]}>
                 <Popup>
                   <div className='text-center' style={{ maxWidth: '200px' }}>
-                    {/* Mostrar imagen en miniatura en el popup si existe */}
                     {ev.image_url && (
                       <img
                         src={ev.image_url}
@@ -279,26 +412,31 @@ const MapPage = ({ session }) => {
                       {ev.tipo}
                     </span>
                     <p className='m-0 text-xs text-gray-600'>
-                      {ev.fecha.toLocaleDateString()} -{' '}
-                      {ev.fecha.toLocaleTimeString([], {
+                      {ev.fecha.toLocaleDateString('es-ES')} -{' '}
+                      {ev.fecha.toLocaleTimeString('es-ES', {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
+                    </p>
+                    <p className='text-xs text-500 mt-1'>
+                      Por: {ev.profiles?.username || 'Anónimo'}
                     </p>
                   </div>
                 </Popup>
               </Marker>
             ))}
+
             <LocationMarker
-              setPosicion={setPosicionTemp}
+              setNuevoEvento={setNuevoEvento}
               setDialogVisible={setDialogVisible}
               session={session}
+              toast={toast}
             />
           </MapContainer>
         </div>
       </div>
 
-      {/* DIÁLOGO DE NUEVO EVENTO ACTUALIZADO */}
+      {/* DIÁLOGO CON GEOCODING */}
       <Dialog
         header='Nuevo Evento'
         visible={dialogVisible}
@@ -306,7 +444,6 @@ const MapPage = ({ session }) => {
         onHide={() => setDialogVisible(false)}
       >
         <div className='flex flex-column gap-4 pt-2'>
-          {/* Título */}
           <div className='field'>
             <label htmlFor='titulo' className='block text-900 font-medium mb-2'>
               Nombre del Evento *
@@ -322,7 +459,6 @@ const MapPage = ({ session }) => {
             />
           </div>
 
-          {/* Tipo */}
           <div className='field'>
             <label className='block text-900 font-medium mb-2'>Tipo *</label>
             <Dropdown
@@ -337,7 +473,6 @@ const MapPage = ({ session }) => {
             />
           </div>
 
-          {/* Fecha */}
           <div className='field'>
             <label className='block text-900 font-medium mb-2'>
               Fecha y Hora *
@@ -348,12 +483,61 @@ const MapPage = ({ session }) => {
                 setNuevoEvento({ ...nuevoEvento, fecha: e.value })
               }
               showTime
+              locale='es'
+              dateFormat='dd/mm/yy'
               hourFormat='24'
               className='w-full'
             />
           </div>
 
-          {/* IMAGEN DEL CARTEL */}
+          <div className='field surface-100 p-3 border-round'>
+            <label className='block text-900 font-bold mb-2'>
+              <i className='pi pi-map-marker mr-2 text-blue-600'></i>Ubicación
+            </label>
+
+            <div className='p-inputgroup mb-2'>
+              <InputText
+                placeholder='Escribe dirección (Ej: Madrid)'
+                value={nuevoEvento.direccion}
+                onChange={(e) =>
+                  setNuevoEvento({ ...nuevoEvento, direccion: e.target.value })
+                }
+              />
+              <Button
+                icon='pi pi-search'
+                severity='secondary'
+                onClick={buscarDireccion}
+                loading={loading && !nuevoEvento.lat}
+                tooltip='Buscar coordenadas'
+              />
+            </div>
+
+            <small className='block mb-2 text-600'>
+              O haz click en el mapa de fondo para marcar.
+            </small>
+
+            <div className='flex gap-2'>
+              <div className='flex-1'>
+                <label className='text-xs'>Latitud</label>
+                <InputText
+                  value={nuevoEvento.lat || ''}
+                  readOnly
+                  className='w-full p-inputtext-sm surface-50'
+                  placeholder='Lat'
+                />
+              </div>
+              <div className='flex-1'>
+                <label className='text-xs'>Longitud</label>
+                <InputText
+                  value={nuevoEvento.lng || ''}
+                  readOnly
+                  className='w-full p-inputtext-sm surface-50'
+                  placeholder='Lng'
+                />
+              </div>
+            </div>
+          </div>
+
           <div className='field'>
             <label className='block text-900 font-medium mb-2'>
               Cartel / Foto (Opcional)
@@ -377,7 +561,6 @@ const MapPage = ({ session }) => {
             </div>
           </div>
 
-          {/* DESCRIPCIÓN */}
           <div className='field'>
             <label htmlFor='desc' className='block text-900 font-medium mb-2'>
               Descripción

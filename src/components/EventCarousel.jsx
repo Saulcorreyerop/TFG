@@ -9,6 +9,7 @@ import { InputTextarea } from 'primereact/inputtextarea'
 import { Calendar } from 'primereact/calendar'
 import { Dropdown } from 'primereact/dropdown'
 import { Toast } from 'primereact/toast'
+import { addLocale } from 'primereact/api'
 
 // Importaciones para el Mapa
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
@@ -16,6 +17,52 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
+
+// --- CONFIGURACIÓN IDIOMA ESPAÑOL ---
+addLocale('es', {
+  firstDayOfWeek: 1,
+  dayNames: [
+    'domingo',
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+  ],
+  dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
+  dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
+  monthNames: [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ],
+  monthNamesShort: [
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sep',
+    'oct',
+    'nov',
+    'dic',
+  ],
+  today: 'Hoy',
+  clear: 'Limpiar',
+})
 
 let DefaultIcon = L.icon({
   iconUrl: icon,
@@ -57,7 +104,7 @@ const EventCarousel = () => {
     const now = new Date().toISOString()
     const { data, error } = await supabase
       .from('events')
-      .select('*')
+      .select('*, profiles(username)')
       .gte('fecha', now)
       .order('fecha', { ascending: true })
       .limit(9)
@@ -65,11 +112,18 @@ const EventCarousel = () => {
     if (!error && data) {
       const eventsWithImages = data.map((ev) => ({
         ...ev,
-        date: new Date(ev.fecha).toLocaleDateString(),
+        date: new Date(ev.fecha).toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
         location: 'España',
+        // CAMBIO AQUÍ: Aumentamos calidad (q=90) y tamaño (w=1200) de la imagen por defecto
         image: ev.image_url
           ? ev.image_url
-          : `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=600&q=80&random=${ev.id}`,
+          : `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=90&random=${ev.id}`,
         status: 'CONFIRMADO',
       }))
       setEvents(eventsWithImages)
@@ -80,29 +134,22 @@ const EventCarousel = () => {
     fetchEvents()
   }, [])
 
-  // --- NUEVA FUNCIÓN: VALIDAR SESIÓN ANTES DE ABRIR ---
   const handleOpenModal = async () => {
-    // Verificamos si hay usuario logueado
     const {
       data: { session },
     } = await supabase.auth.getSession()
-
     if (!session) {
-      // Si no hay sesión, mostramos aviso y NO abrimos el modal
       toast.current.show({
         severity: 'warn',
         summary: 'Acceso restringido',
-        detail: 'Debes iniciar sesión para publicar un evento.',
+        detail: 'Debes iniciar sesión para publicar.',
         life: 3000,
       })
       return
     }
-
-    // Si hay sesión, abrimos el formulario
     setShowModal(true)
   }
 
-  // --- LÓGICA DE GEOCODING ---
   const buscarDireccion = async () => {
     if (!nuevoEvento.direccion) return
     try {
@@ -140,19 +187,15 @@ const EventCarousel = () => {
     }
   }
 
-  // --- SUBIDA DE IMAGEN ---
   const uploadImage = async (file) => {
     try {
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}.${fileExt}`
       const filePath = `${fileName}`
-
       const { error: uploadError } = await supabase.storage
         .from('event-images')
         .upload(filePath, file)
-
       if (uploadError) throw uploadError
-
       const { data } = supabase.storage
         .from('event-images')
         .getPublicUrl(filePath)
@@ -163,13 +206,10 @@ const EventCarousel = () => {
     }
   }
 
-  // --- GUARDAR EVENTO ---
   const handleSave = async () => {
     const {
       data: { session },
     } = await supabase.auth.getSession()
-
-    // Doble comprobación de seguridad
     if (!session) {
       toast.current.show({
         severity: 'error',
@@ -178,7 +218,6 @@ const EventCarousel = () => {
       })
       return
     }
-
     if (
       !nuevoEvento.titulo ||
       !nuevoEvento.fecha ||
@@ -265,59 +304,105 @@ const EventCarousel = () => {
     { label: 'Off-road / 4x4', value: 'Offroad' },
   ]
 
+  // --- DISEÑO DE TARJETA MEJORADO ---
   const eventTemplate = (event) => {
     return (
-      <div className='border-1 surface-border border-round m-2 text-center py-5 px-3 bg-white shadow-1 h-full flex flex-column'>
-        <div className='mb-3 relative'>
+      <div className='surface-card shadow-2 border-round-xl m-2 overflow-hidden hover:shadow-5 transition-all transition-duration-300 h-full flex flex-column'>
+        {/* CABECERA DE IMAGEN */}
+        <div className='relative h-15rem w-full'>
           <img
             src={event.image}
             alt={event.titulo}
-            className='w-full border-round shadow-2'
-            style={{ height: '200px', objectFit: 'cover' }}
+            className='w-full h-full object-cover'
+            style={{ display: 'block' }}
           />
-          <Tag
-            value={event.status}
-            severity='success'
-            className='absolute'
-            style={{ left: '5px', top: '5px' }}
-          />
+
+          {/* CAMBIO: Se eliminó la etiqueta "CONFIRMADO" de aquí */}
+
+          {/* Etiqueta de TIPO abajo a la derecha */}
+          <div className='absolute bottom-0 right-0 m-3'>
+            <Tag
+              value={event.tipo}
+              severity='info'
+              className='shadow-2'
+              icon='pi pi-tag'
+            />
+          </div>
+
+          {/* Gradiente sutil abajo */}
+          <div
+            className='absolute bottom-0 left-0 w-full h-3rem'
+            style={{
+              background:
+                'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
+            }}
+          ></div>
         </div>
-        <div className='flex-grow-1 flex flex-column justify-content-between'>
+
+        {/* CUERPO DE LA TARJETA */}
+        <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
           <div>
-            <h4 className='mb-1 text-900 font-bold'>{event.titulo}</h4>
-            <span className='text-blue-600 font-bold text-sm block mb-2'>
-              {event.tipo}
-            </span>
+            {/* Fecha */}
+            <div className='flex align-items-center gap-2 text-500 text-sm font-semibold mb-2 uppercase tracking-wide'>
+              <i className='pi pi-calendar text-blue-500'></i>
+              <span>{event.date}</span>
+            </div>
+
+            {/* Título */}
+            <h4 className='text-xl font-bold text-900 mt-0 mb-2 line-height-3'>
+              {event.titulo}
+            </h4>
+
+            {/* Descripción */}
             {event.description && (
               <p
-                className='text-600 text-sm mb-3 line-clamp-2'
+                className='text-600 text-sm line-height-3 m-0 mb-4 line-clamp-2'
                 style={{
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  height: '2.5em',
+                  height: '3em',
                 }}
               >
                 {event.description}
               </p>
             )}
-            <h6 className='mt-0 mb-3 text-600 font-medium'>
-              <i className='pi pi-calendar mr-1'></i>
-              {event.date}
-            </h6>
           </div>
-          <div className='mt-2 flex gap-2 justify-content-center'>
-            <Button
-              icon='pi pi-search'
-              className='p-button-rounded p-button-text'
-              tooltip='Ver Detalles'
-            />
-            <Button
-              icon='pi pi-heart'
-              className='p-button-rounded p-button-outlined p-button-danger'
-              tooltip='Me gusta'
-            />
+
+          {/* FOOTER */}
+          <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
+            <div className='flex align-items-center gap-2 text-600 text-sm'>
+              <div
+                className='border-circle surface-300 flex align-items-center justify-content-center'
+                style={{ width: '24px', height: '24px' }}
+              >
+                <i className='pi pi-user text-xs'></i>
+              </div>
+              <span
+                className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
+                style={{ maxWidth: '80px' }}
+              >
+                {event.profiles?.username || 'Anónimo'}
+              </span>
+            </div>
+
+            <div className='flex gap-2'>
+              <Button
+                icon='pi pi-heart'
+                rounded
+                outlined
+                severity='danger'
+                aria-label='Like'
+                className='w-2rem h-2rem'
+              />
+              <Button
+                icon='pi pi-arrow-right'
+                rounded
+                aria-label='Ver'
+                className='w-2rem h-2rem'
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -327,17 +412,21 @@ const EventCarousel = () => {
   return (
     <section className='py-6 surface-ground relative'>
       <Toast ref={toast} />
-      <h3 className='text-center text-900 text-3xl mb-4 font-bold'>
-        Próximos Eventos
-      </h3>
 
-      <div className='flex justify-content-center mb-4'>
-        {/* BOTÓN PROTEGIDO: Llama a handleOpenModal en vez de setShowModal directo */}
+      <div className='text-center mb-5'>
+        <h3 className='text-900 text-3xl font-bold mb-2'>Próximos Eventos</h3>
+        <p className='text-600'>
+          Descubre las mejores concentraciones cerca de ti
+        </p>
+      </div>
+
+      <div className='flex justify-content-center mb-5'>
         <Button
-          label='Agregar Evento'
+          label='Publicar Evento'
           icon='pi pi-plus'
-          className='p-button-rounded p-button-primary shadow-2'
-          tooltip='Publicar un nuevo evento'
+          rounded
+          raised
+          className='px-4 py-2 font-bold'
           onClick={handleOpenModal}
         />
       </div>
@@ -351,22 +440,26 @@ const EventCarousel = () => {
             responsiveOptions={responsiveOptions}
             itemTemplate={eventTemplate}
             circular
-            autoplayInterval={3000}
+            autoplayInterval={4000}
+            showIndicators={false}
           />
         ) : (
-          <div className='text-center py-5'>
-            <i className='pi pi-calendar-times text-4xl text-gray-400 mb-3'></i>
-            <p className='text-600'>No hay eventos próximos programados.</p>
+          <div className='text-center py-8 surface-card border-round shadow-1 mx-3'>
+            <i className='pi pi-calendar-times text-6xl text-gray-300 mb-4'></i>
+            <p className='text-700 text-xl font-medium'>
+              No hay eventos próximos.
+            </p>
+            <p className='text-500'>¡Sé el primero en crear uno!</p>
           </div>
         )}
       </div>
 
-      {/* --- MODAL FORMULARIO --- */}
       <Dialog
         header='Publicar Nuevo Evento'
         visible={showModal}
         className='w-11 md:w-30rem'
         onHide={() => setShowModal(false)}
+        maximizable
       >
         <div className='flex flex-column gap-4 pt-2'>
           <div className='field'>
@@ -403,11 +496,12 @@ const EventCarousel = () => {
                 setNuevoEvento({ ...nuevoEvento, fecha: e.value })
               }
               showTime
+              locale='es'
+              dateFormat='dd/mm/yy'
               hourFormat='24'
               className='w-full'
             />
           </div>
-
           <div className='field surface-100 p-3 border-round'>
             <label className='block text-900 font-bold mb-2'>
               <i className='pi pi-map-marker mr-2 text-blue-600'></i>Ubicación
@@ -456,7 +550,6 @@ const EventCarousel = () => {
               </div>
             </div>
           </div>
-
           <div className='field'>
             <label className='block text-900 font-medium mb-2'>
               Imagen (Opcional)
@@ -464,7 +557,7 @@ const EventCarousel = () => {
             <div className='flex align-items-center gap-3'>
               <label className='p-button p-button-outlined p-button-secondary cursor-pointer'>
                 <i className='pi pi-image mr-2'></i>{' '}
-                {nuevoEvento.imagen ? 'Imagen Lista' : 'Subir Foto'}
+                {nuevoEvento.imagen ? 'Imagen Lista' : 'Subir Foto'}{' '}
                 <input
                   type='file'
                   accept='image/*'
@@ -486,7 +579,6 @@ const EventCarousel = () => {
               )}
             </div>
           </div>
-
           <div className='field'>
             <label className='block text-900 font-medium mb-2'>
               Descripción
@@ -500,7 +592,6 @@ const EventCarousel = () => {
               className='w-full'
             />
           </div>
-
           <div className='flex gap-2 justify-content-end'>
             <Button
               label='Cancelar'
@@ -518,7 +609,6 @@ const EventCarousel = () => {
         </div>
       </Dialog>
 
-      {/* --- MODAL MAPA --- */}
       <Dialog
         header='Elige la ubicación'
         visible={showMapModal}
