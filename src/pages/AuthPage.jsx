@@ -1,19 +1,21 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react' // Asegúrate de importar useRef y useState
 import { supabase } from '../supabaseClient'
 import { InputText } from 'primereact/inputtext'
 import { Password } from 'primereact/password'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { TabView, TabPanel } from 'primereact/tabview'
-import { Toast } from 'primereact/toast' // Para mensajes más bonitos
-import { useRef } from 'react'
+import { Toast } from 'primereact/toast'
 
 const AuthPage = () => {
   const toast = useRef(null)
   const [loading, setLoading] = useState(false)
 
+  // NUEVO: Estado para controlar qué pestaña está activa (0 = Login, 1 = Registro)
+  const [activeIndex, setActiveIndex] = useState(0)
+
   // Estados para Login
-  const [loginInput, setLoginInput] = useState('') // Puede ser email o usuario
+  const [loginInput, setLoginInput] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
 
   // Estados para Registro
@@ -30,10 +32,7 @@ const AuthPage = () => {
     try {
       let emailToUse = loginInput.trim()
 
-      // 1. Si NO parece un email, asumimos que es un nombre de usuario
       if (!loginInput.includes('@')) {
-        // Buscamos el email asociado a este usuario en la tabla 'profiles'
-        // NOTA: Debes tener una tabla 'profiles' con columnas 'username' y 'email'
         const { data, error } = await supabase
           .from('profiles')
           .select('email')
@@ -46,7 +45,6 @@ const AuthPage = () => {
         emailToUse = data.email
       }
 
-      // 2. Iniciamos sesión con el email (sea el escrito o el encontrado)
       const { error } = await supabase.auth.signInWithPassword({
         email: emailToUse,
         password: loginPassword,
@@ -54,8 +52,7 @@ const AuthPage = () => {
 
       if (error) throw error
 
-      // Si usas react-router, aquí harías navigate('/mapa')
-      // window.location.href = '/'
+      // Redirección aquí si es necesario
     } catch (error) {
       toast.current.show({
         severity: 'error',
@@ -71,7 +68,6 @@ const AuthPage = () => {
   const handleRegister = async (e) => {
     e.preventDefault()
 
-    // 1. Validar contraseñas
     if (regPassword !== regConfirmPassword) {
       toast.current.show({
         severity: 'warn',
@@ -92,8 +88,6 @@ const AuthPage = () => {
 
     setLoading(true)
 
-    // 2. Crear usuario en Supabase Auth
-    // Guardamos el username en 'options.data' para que vaya a la metadata
     const { error } = await supabase.auth.signUp({
       email: regEmail,
       password: regPassword,
@@ -116,11 +110,12 @@ const AuthPage = () => {
         summary: 'Éxito',
         detail: 'Registro exitoso! Revisa tu correo.',
       })
-      // Limpiar formulario
       setRegEmail('')
       setRegPassword('')
       setRegConfirmPassword('')
       setRegUsername('')
+      // Opcional: Cambiar a la pestaña de login tras registro exitoso
+      // setActiveIndex(0)
     }
     setLoading(false)
   }
@@ -134,7 +129,11 @@ const AuthPage = () => {
           <p className='text-600'>Tu comunidad de motor te espera</p>
         </div>
 
-        <TabView>
+        {/* NUEVO: TabView controlado mediante activeIndex y onTabChange */}
+        <TabView
+          activeIndex={activeIndex}
+          onTabChange={(e) => setActiveIndex(e.index)}
+        >
           {/* --- PANEL DE INICIO DE SESIÓN --- */}
           <TabPanel header='Iniciar Sesión'>
             <form onSubmit={handleLogin} className='flex flex-column gap-3'>
@@ -167,6 +166,17 @@ const AuthPage = () => {
                 className='w-full mt-2'
                 loading={loading}
               />
+
+              {/* NUEVO: Texto y enlace para cambiar al registro */}
+              <div className='text-center mt-3 text-600'>
+                ¿No tienes cuenta aún?{' '}
+                <span
+                  className='font-bold text-primary cursor-pointer hover:underline'
+                  onClick={() => setActiveIndex(1)} // Cambia al índice 1 (Registro)
+                >
+                  Regístrate aquí
+                </span>
+              </div>
             </form>
           </TabPanel>
 
@@ -215,7 +225,7 @@ const AuthPage = () => {
                   value={regConfirmPassword}
                   onChange={(e) => setRegConfirmPassword(e.target.value)}
                   toggleMask
-                  feedback={false} // No mostramos fortaleza en la confirmación
+                  feedback={false}
                   className='w-full'
                   inputClassName='w-full'
                 />
@@ -229,6 +239,17 @@ const AuthPage = () => {
                 className='w-full mt-2'
                 loading={loading}
               />
+
+              {/* Opcional: Botón para volver al login desde registro */}
+              <div className='text-center mt-3 text-600'>
+                ¿Ya tienes cuenta?{' '}
+                <span
+                  className='font-bold text-primary cursor-pointer hover:underline'
+                  onClick={() => setActiveIndex(0)}
+                >
+                  Inicia sesión
+                </span>
+              </div>
             </form>
           </TabPanel>
         </TabView>
