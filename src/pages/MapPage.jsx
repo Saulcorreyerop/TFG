@@ -92,7 +92,7 @@ function MapController({ selectedEvent }) {
       }
     }
 
-    // Forzamos el ajuste de tamaño
+    // Forzamos el redibujado
     setTimeout(() => {
       map.invalidateSize()
     }, 200)
@@ -190,9 +190,22 @@ const MapPage = ({ session }) => {
         }
       `}</style>
 
-      {/* 2. BARRA LATERAL (LISTA) */}
-      {/* CAMBIO: order-1 (primero en móvil), md:order-2 (segundo en PC) */}
-      <aside className='w-full md:w-26rem bg-white shadow-4 flex flex-column z-2 flex-1 md:flex-none md:h-full border-bottom-1 md:border-bottom-0 md:border-left-1 border-200 order-1 md:order-2 overflow-hidden'>
+      {/* 2. BARRA LATERAL (LISTA DE EVENTOS) */}
+      {/* - Móvil: order-1 (Arriba). 'flex-1' (Ocupa todo el espacio que deja el mapa).
+          - PC: order-2 (Derecha). Anchura fija 'w-26rem'.
+      */}
+      <aside
+        className='
+            order-1 md:order-2 
+            w-full md:w-26rem 
+            flex-1 md:flex-none md:h-full 
+            flex flex-column 
+            bg-white shadow-4 z-2 
+            border-bottom-1 md:border-bottom-0 md:border-left-1 border-200 
+            overflow-hidden
+        '
+      >
+        {/* Header Fijo */}
         <div className='p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none'>
           <h1 className='text-xl md:text-2xl font-extrabold m-0 text-900 tracking-tight'>
             Mapa en Vivo
@@ -202,34 +215,30 @@ const MapPage = ({ session }) => {
           </p>
         </div>
 
-        <div className='flex-1 overflow-y-auto p-3 md:p-4 flex flex-column gap-3 md:gap-4'>
-          {/* AVISO E INSTRUCCIONES */}
-          <div className='surface-ground p-3 md:p-4 border-round-xl border-left-3 border-blue-500 shadow-1 flex-none'>
+        {/* Contenido Scrolleable (Aquí es donde está tu lista e info) */}
+        <div className='flex-1 overflow-y-auto p-3 md:p-4 flex flex-column gap-3'>
+          {/* AVISO */}
+          <div className='surface-ground p-3 border-round-xl border-left-3 border-blue-500 shadow-1 flex-none'>
             <div className='flex align-items-center gap-2 text-900 font-semibold text-lg mb-2'>
               <i className='pi pi-map-marker text-blue-600 text-xl' />
               <span>Añadir nuevo evento</span>
             </div>
 
-            <p className='m-0 line-height-3 text-700 text-sm mb-2 md:mb-3'>
-              Navega por el mapa, haz zoom en la zona exacta y
-              <span className='font-bold text-900'>
-                {' '}
-                haz click sobre el lugar{' '}
-              </span>
-              donde comenzará el evento para crearlo.
+            <p className='m-0 line-height-3 text-700 text-sm mb-2'>
+              Navega por el mapa y haz click para crear evento.
             </p>
 
-            <p className='m-0 line-height-3 text-700 text-sm mb-2 md:mb-3 hidden md:block'>
+            <p className='m-0 line-height-3 text-700 text-sm mb-2 hidden md:block'>
               - También puedes utilizar el
               <span className='font-bold text-900'> botón de abajo </span>
               para añadirlo de una manera mas sencilla.
             </p>
 
-            <div className='surface-0 p-2 md:p-3 border-round-md flex align-items-start gap-2 text-xs text-600 border-1 border-200'>
+            <div className='surface-0 p-2 border-round-md flex align-items-start gap-2 text-xs text-600 border-1 border-200'>
               <i className='pi pi-info-circle mt-1 text-blue-500' />
               <span>
-                <strong>Nota:</strong> Una vez que la fecha y hora del evento
-                hayan pasado, este dejará de mostrarse automáticamente.
+                <strong>Nota:</strong> Los eventos pasados se eliminan
+                automáticamente.
               </span>
             </div>
           </div>
@@ -250,12 +259,8 @@ const MapPage = ({ session }) => {
             </div>
           )}
 
-          {/* LISTA DE EVENTOS */}
-          <div className='flex flex-column gap-3 mt-1 pb-4'>
-            <h3 className='text-900 font-bold m-0 text-lg hidden md:block'>
-              Próximos Eventos
-            </h3>
-
+          {/* LISTA */}
+          <div className='flex flex-column gap-3 pb-2'>
             {eventos.length === 0 && (
               <div className='text-center p-4 text-600 bg-gray-50 border-round'>
                 No hay eventos próximos.
@@ -267,12 +272,12 @@ const MapPage = ({ session }) => {
                 key={ev.id}
                 onClick={() => setSelectedEvent(ev)}
                 className={`
-                    surface-card p-2 md:p-3 shadow-1 border-round-xl cursor-pointer 
+                    surface-card p-2 shadow-1 border-round-xl cursor-pointer 
                     transition-all hover:shadow-3 border-left-4 flex gap-3 align-items-center
                     ${selectedEvent?.id === ev.id ? 'border-blue-500 surface-50' : 'border-transparent'}
                   `}
               >
-                <div className='w-3rem h-3rem md:w-4rem md:h-4rem border-round overflow-hidden flex-none shadow-1'>
+                <div className='w-3rem h-3rem border-round overflow-hidden flex-none shadow-1'>
                   <img
                     src={ev.image_url || 'https://via.placeholder.com/150'}
                     alt='mini'
@@ -295,7 +300,6 @@ const MapPage = ({ session }) => {
                     </span>
                   </div>
                 </div>
-
                 <i
                   className={`pi pi-chevron-right text-400 ${selectedEvent?.id === ev.id ? 'text-blue-500' : ''}`}
                 ></i>
@@ -306,9 +310,19 @@ const MapPage = ({ session }) => {
       </aside>
 
       {/* 1. SECCIÓN DEL MAPA */}
-      {/* CAMBIO: order-2 (segundo en móvil, abajo), md:order-1 (primero en PC, izq) */}
-      {/* Altura: h-[40vh] en móvil (fijo abajo), h-full en PC */}
-      <div className='w-full md:flex-1 h-[40vh] md:h-full relative z-0 order-2 md:order-1 border-top-1 md:border-top-0 border-200'>
+      {/* - Móvil: order-2 (Abajo). ALTURA FIJA: 'h-[35vh]'. 
+                   Esto garantiza que el mapa sea pequeño (aprox 1/3 pantalla).
+          - PC: order-1 (Izquierda). ALTURA TOTAL: 'h-full'. Flex-1.
+      */}
+      <div
+        className='
+            order-2 md:order-1 
+            w-full md:flex-1 
+            h-[35vh] md:h-full 
+            relative z-0 
+            border-top-1 md:border-top-0 border-200
+        '
+      >
         <MapContainer
           center={centerSpain}
           zoom={6}
