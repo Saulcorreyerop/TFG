@@ -208,7 +208,7 @@ const EventsPage = ({ session }) => {
 
   return (
     <div className='min-h-screen surface-ground p-3 md:p-5'>
-      <Toast ref={toast} />
+      <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
       <div className='text-center mb-6'>
         <h1 className='text-4xl font-extrabold text-900 mb-2'>

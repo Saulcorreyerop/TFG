@@ -138,7 +138,7 @@ const MapPage = ({ session }) => {
 
   return (
     <div className='flex flex-column min-h-screen surface-ground'>
-      <Toast ref={toast} />
+      <Toast ref={toast} position='top-center' className='mt-6 z-5' />
       <div className='p-3 md:p-5 flex-grow-1 flex flex-column gap-3 max-w-7xl mx-auto w-full h-full'>
         {/* CARD SUPERIOR CON TEXTO ORIGINAL */}
         <Card className='shadow-2 border-round-xl surface-card p-0 flex-none'>

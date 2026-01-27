@@ -212,7 +212,7 @@ const EventCarousel = () => {
 
   return (
     <section className='py-6 surface-ground relative'>
-      <Toast ref={toast} />
+      <Toast ref={toast} position='top-center' className='mt-6 z-5' />
       <div className='text-center mb-5'>
         <h3 className='text-900 text-3xl font-bold mb-2'>Próximos Eventos</h3>
         <p className='text-600'>

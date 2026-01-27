@@ -18,12 +18,16 @@ const Header = ({ session }) => {
       rejectLabel: 'Cancelar',
       acceptClassName: 'p-button-danger',
       accept: async () => {
+        // CORRECCIÓN: Usamos finally para redirigir SIEMPRE, incluso si da error
         try {
           const { error } = await supabase.auth.signOut()
           if (error) throw error
-          navigate('/')
         } catch (error) {
-          console.error('Error cerrando sesión:', error.message)
+          console.warn('Aviso al cerrar sesión:', error.message)
+        } finally {
+          // Forzamos la navegación al home y recargamos el estado visual
+          navigate('/')
+          window.location.reload() // Opcional: asegura limpieza total de caché
         }
       },
     })
@@ -76,6 +80,8 @@ const Header = ({ session }) => {
         severity='danger'
         onClick={handleLogoutConfirmation}
         className='p-button-rounded p-button-text p-button-sm'
+        tooltip='Cerrar Sesión'
+        tooltipOptions={{ position: 'bottom', className: 'hidden md:block' }}
       />
     </div>
   ) : (
@@ -108,9 +114,11 @@ const Header = ({ session }) => {
 
   return (
     <div className='sticky top-0 z-5 shadow-1'>
-      {/* AÑADIDO: draggable={false} bloquea el movimiento */}
-      <ConfirmDialog draggable={false} />
-
+      <ConfirmDialog
+        draggable={false}
+        style={{ width: '50vw' }}
+        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
+      />
       <Menubar
         model={items}
         start={start}
