@@ -91,8 +91,11 @@ function MapController({ selectedEvent }) {
         })
       }
     }
-    // Forzamos un ajuste de tamaño al cargar por si el contenedor cambió
-    map.invalidateSize()
+
+    // Forzamos el ajuste de tamaño
+    setTimeout(() => {
+      map.invalidateSize()
+    }, 200)
   }, [selectedEvent, map])
 
   return null
@@ -174,15 +177,12 @@ const MapPage = ({ session }) => {
   ]
 
   return (
-    // Usamos style inline para asegurar la altura correcta descontando el header.
-    // Si tienes un footer grande, aumenta los '70px' a algo como '120px'.
     <div
-      className='flex flex-row w-full overflow-hidden surface-ground'
+      className='flex flex-column md:flex-row w-full overflow-hidden surface-ground'
       style={{ height: 'calc(100vh - 70px)' }}
     >
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-      {/* Forzamos height 100% en el contenedor de Leaflet con CSS puro */}
       <style>{`
         .leaflet-container {
           height: 100% !important;
@@ -190,18 +190,132 @@ const MapPage = ({ session }) => {
         }
       `}</style>
 
-      {/* 1. SECCIÓN IZQUIERDA (MAPA) */}
-      {/* Añadido 'flex flex-col' para asegurar que los hijos llenen el alto */}
-      <div className='flex-1 flex flex-col relative h-full z-0'>
+      {/* 2. BARRA LATERAL (LISTA) */}
+      {/* CAMBIO: order-1 (primero en móvil), md:order-2 (segundo en PC) */}
+      <aside className='w-full md:w-26rem bg-white shadow-4 flex flex-column z-2 flex-1 md:flex-none md:h-full border-bottom-1 md:border-bottom-0 md:border-left-1 border-200 order-1 md:order-2 overflow-hidden'>
+        <div className='p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none'>
+          <h1 className='text-xl md:text-2xl font-extrabold m-0 text-900 tracking-tight'>
+            Mapa en Vivo
+          </h1>
+          <p className='text-600 m-0 mt-1 text-sm'>
+            {eventos.length} eventos próximos
+          </p>
+        </div>
+
+        <div className='flex-1 overflow-y-auto p-3 md:p-4 flex flex-column gap-3 md:gap-4'>
+          {/* AVISO E INSTRUCCIONES */}
+          <div className='surface-ground p-3 md:p-4 border-round-xl border-left-3 border-blue-500 shadow-1 flex-none'>
+            <div className='flex align-items-center gap-2 text-900 font-semibold text-lg mb-2'>
+              <i className='pi pi-map-marker text-blue-600 text-xl' />
+              <span>Añadir nuevo evento</span>
+            </div>
+
+            <p className='m-0 line-height-3 text-700 text-sm mb-2 md:mb-3'>
+              Navega por el mapa, haz zoom en la zona exacta y
+              <span className='font-bold text-900'>
+                {' '}
+                haz click sobre el lugar{' '}
+              </span>
+              donde comenzará el evento para crearlo.
+            </p>
+
+            <p className='m-0 line-height-3 text-700 text-sm mb-2 md:mb-3 hidden md:block'>
+              - También puedes utilizar el
+              <span className='font-bold text-900'> botón de abajo </span>
+              para añadirlo de una manera mas sencilla.
+            </p>
+
+            <div className='surface-0 p-2 md:p-3 border-round-md flex align-items-start gap-2 text-xs text-600 border-1 border-200'>
+              <i className='pi pi-info-circle mt-1 text-blue-500' />
+              <span>
+                <strong>Nota:</strong> Una vez que la fecha y hora del evento
+                hayan pasado, este dejará de mostrarse automáticamente.
+              </span>
+            </div>
+          </div>
+
+          {session ? (
+            <Button
+              label='Agregar Evento'
+              icon='pi pi-plus'
+              className='w-full p-button-outlined shadow-1 flex-none'
+              onClick={handleOpenModalButton}
+            />
+          ) : (
+            <div className='flex align-items-center gap-2 text-orange-600 surface-50 p-3 border-round border-1 border-orange-100 flex-none'>
+              <i className='pi pi-lock' />
+              <span className='font-medium text-sm'>
+                Inicia sesión para publicar.
+              </span>
+            </div>
+          )}
+
+          {/* LISTA DE EVENTOS */}
+          <div className='flex flex-column gap-3 mt-1 pb-4'>
+            <h3 className='text-900 font-bold m-0 text-lg hidden md:block'>
+              Próximos Eventos
+            </h3>
+
+            {eventos.length === 0 && (
+              <div className='text-center p-4 text-600 bg-gray-50 border-round'>
+                No hay eventos próximos.
+              </div>
+            )}
+
+            {eventos.map((ev) => (
+              <div
+                key={ev.id}
+                onClick={() => setSelectedEvent(ev)}
+                className={`
+                    surface-card p-2 md:p-3 shadow-1 border-round-xl cursor-pointer 
+                    transition-all hover:shadow-3 border-left-4 flex gap-3 align-items-center
+                    ${selectedEvent?.id === ev.id ? 'border-blue-500 surface-50' : 'border-transparent'}
+                  `}
+              >
+                <div className='w-3rem h-3rem md:w-4rem md:h-4rem border-round overflow-hidden flex-none shadow-1'>
+                  <img
+                    src={ev.image_url || 'https://via.placeholder.com/150'}
+                    alt='mini'
+                    className='w-full h-full object-cover'
+                  />
+                </div>
+
+                <div className='flex-grow-1 overflow-hidden'>
+                  <h4 className='m-0 text-900 font-bold text-sm mb-1 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
+                    {ev.titulo}
+                  </h4>
+                  <div className='flex align-items-center gap-2 mb-1'>
+                    <Tag
+                      value={ev.tipo}
+                      severity='info'
+                      style={{ fontSize: '0.65rem', padding: '2px 4px' }}
+                    />
+                    <span className='text-600 text-xs font-semibold'>
+                      {ev.fechaCorta}
+                    </span>
+                  </div>
+                </div>
+
+                <i
+                  className={`pi pi-chevron-right text-400 ${selectedEvent?.id === ev.id ? 'text-blue-500' : ''}`}
+                ></i>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      {/* 1. SECCIÓN DEL MAPA */}
+      {/* CAMBIO: order-2 (segundo en móvil, abajo), md:order-1 (primero en PC, izq) */}
+      {/* Altura: h-[40vh] en móvil (fijo abajo), h-full en PC */}
+      <div className='w-full md:flex-1 h-[40vh] md:h-full relative z-0 order-2 md:order-1 border-top-1 md:border-top-0 border-200'>
         <MapContainer
           center={centerSpain}
           zoom={6}
           minZoom={5}
           maxBounds={spainBounds}
-          // Quitamos el style inline de height aquí porque ya lo forzamos con la clase CSS arriba
-          // y el contenedor padre flex se encarga del resto
           zoomControl={false}
-          className='flex-grow-1 h-full w-full'
+          className='h-full w-full'
         >
           <TileLayer
             attribution='&copy; OpenStreetMap'
@@ -265,126 +379,6 @@ const MapPage = ({ session }) => {
           </div>
         )}
       </div>
-
-      {/* 2. BARRA LATERAL (Derecha) */}
-      <aside
-        className='w-26rem bg-white shadow-4 flex flex-column z-2 h-full border-left-1 border-200'
-        style={{ minWidth: '350px' }}
-      >
-        <div className='p-4 bg-white border-bottom-1 border-100 flex-none'>
-          <h1 className='text-2xl font-extrabold m-0 text-900 tracking-tight'>
-            Mapa en Vivo
-          </h1>
-          <p className='text-600 m-0 mt-1 text-sm'>
-            {eventos.length} eventos próximos disponibles
-          </p>
-        </div>
-
-        <div className='flex-1 overflow-y-auto p-4 flex flex-column gap-4'>
-          {/* AVISO E INSTRUCCIONES */}
-          <div className='surface-ground p-4 border-round-xl border-left-3 border-blue-500 shadow-1 flex-none'>
-            <div className='flex align-items-center gap-2 text-900 font-semibold text-lg mb-2'>
-              <i className='pi pi-map-marker text-blue-600 text-xl' />
-              <span>Añadir nuevo evento</span>
-            </div>
-
-            <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-              Navega por el mapa, haz zoom en la zona exacta y
-              <span className='font-bold text-900'>
-                {' '}
-                haz click sobre el lugar{' '}
-              </span>
-              donde comenzará el evento para crearlo.
-            </p>
-
-            <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-              - También puedes utilizar el
-              <span className='font-bold text-900'> botón de abajo </span>
-              para añadirlo de una manera mas sencilla.
-            </p>
-
-            <div className='surface-0 p-3 border-round-md flex align-items-start gap-2 text-xs text-600 border-1 border-200'>
-              <i className='pi pi-info-circle mt-1 text-blue-500' />
-              <span>
-                <strong>Nota:</strong> Una vez que la fecha y hora del evento
-                hayan pasado, este dejará de mostrarse automáticamente en el
-                mapa.
-              </span>
-            </div>
-          </div>
-
-          {session ? (
-            <Button
-              label='Agregar Evento por Dirección'
-              icon='pi pi-plus'
-              className='w-full p-button-outlined shadow-1 flex-none'
-              onClick={handleOpenModalButton}
-            />
-          ) : (
-            <div className='flex align-items-center gap-2 text-orange-600 surface-50 p-3 border-round border-1 border-orange-100 flex-none'>
-              <i className='pi pi-lock' />
-              <span className='font-medium text-sm'>
-                Inicia sesión para poder publicar tus propios eventos.
-              </span>
-            </div>
-          )}
-
-          {/* LISTA DE EVENTOS */}
-          <div className='flex flex-column gap-3 mt-2 pb-4'>
-            <h3 className='text-900 font-bold m-0 text-lg'>Próximos Eventos</h3>
-
-            {eventos.length === 0 && (
-              <div className='text-center p-4 text-600 bg-gray-50 border-round'>
-                No hay eventos próximos.
-              </div>
-            )}
-
-            {eventos.map((ev) => (
-              <div
-                key={ev.id}
-                onClick={() => setSelectedEvent(ev)}
-                className={`
-                    surface-card p-3 shadow-1 border-round-xl cursor-pointer 
-                    transition-all hover:shadow-3 border-left-4 flex gap-3 align-items-center
-                    ${selectedEvent?.id === ev.id ? 'border-blue-500 surface-50' : 'border-transparent'}
-                 `}
-              >
-                <div className='w-4rem h-4rem border-round overflow-hidden flex-none shadow-1'>
-                  <img
-                    src={ev.image_url || 'https://via.placeholder.com/150'}
-                    alt='mini'
-                    className='w-full h-full object-cover'
-                  />
-                </div>
-
-                <div className='flex-grow-1 overflow-hidden'>
-                  <h4 className='m-0 text-900 font-bold text-sm mb-1 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
-                    {ev.titulo}
-                  </h4>
-                  <div className='flex align-items-center gap-2 mb-1'>
-                    <Tag
-                      value={ev.tipo}
-                      severity='info'
-                      style={{ fontSize: '0.65rem', padding: '2px 4px' }}
-                    />
-                    <span className='text-600 text-xs font-semibold'>
-                      <i
-                        className='pi pi-calendar mr-1'
-                        style={{ fontSize: '0.7rem' }}
-                      ></i>
-                      {ev.fechaCorta}
-                    </span>
-                  </div>
-                </div>
-
-                <i
-                  className={`pi pi-chevron-right text-400 ${selectedEvent?.id === ev.id ? 'text-blue-500' : ''}`}
-                ></i>
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
 
       <AddEventDialog
         visible={dialogVisible}
