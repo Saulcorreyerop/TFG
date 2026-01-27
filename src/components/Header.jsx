@@ -4,24 +4,31 @@ import { supabase } from '../supabaseClient'
 import { Menubar } from 'primereact/menubar'
 import { Button } from 'primereact/button'
 import { Avatar } from 'primereact/avatar'
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog'
 
 const Header = ({ session }) => {
   const navigate = useNavigate()
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      navigate('/')
-    } catch (error) {
-      console.error('Error cerrando sesión:', error.message)
-    }
+  const handleLogoutConfirmation = () => {
+    confirmDialog({
+      message: '¿Estás seguro de que quieres cerrar sesión?',
+      header: 'Cerrar Sesión',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, salir',
+      rejectLabel: 'Cancelar',
+      acceptClassName: 'p-button-danger',
+      accept: async () => {
+        try {
+          const { error } = await supabase.auth.signOut()
+          if (error) throw error
+          navigate('/')
+        } catch (error) {
+          console.error('Error cerrando sesión:', error.message)
+        }
+      },
+    })
   }
 
-  // --- CORRECCIÓN: Lógica para obtener el nombre de usuario ---
-  // 1. Busca en los metadatos (donde lo guardamos al registrar)
-  // 2. Si no hay, usa el email cortado
-  // 3. Si falla todo, pone 'Usuario'
   const displayName =
     session?.user?.user_metadata?.username ||
     session?.user?.email?.split('@')[0] ||
@@ -53,11 +60,10 @@ const Header = ({ session }) => {
   )
 
   const end = session ? (
-    /* --- USUARIO LOGUEADO --- */
     <div className='flex align-items-center gap-2 md:gap-3'>
       <div className='flex align-items-center gap-2'>
         <span className='font-bold text-sm hidden md:block text-700'>
-          {displayName} {/* <--- AQUI MOSTRAMOS EL NOMBRE REAL */}
+          {displayName}
         </span>
         <Avatar
           icon='pi pi-user'
@@ -68,14 +74,12 @@ const Header = ({ session }) => {
       <Button
         icon='pi pi-power-off'
         severity='danger'
-        onClick={handleLogout}
+        onClick={handleLogoutConfirmation}
         className='p-button-rounded p-button-text p-button-sm'
       />
     </div>
   ) : (
-    /* --- USUARIO NO LOGUEADO --- */
     <div className='flex align-items-center gap-2'>
-      {/* VISTA MÓVIL: Solo icono de usuario (redondo y simple) */}
       <Button
         icon='pi pi-user'
         rounded
@@ -85,8 +89,6 @@ const Header = ({ session }) => {
         className='md:hidden'
         onClick={() => navigate('/login')}
       />
-
-      {/* VISTA ESCRITORIO: Botones completos (Ocultos en móvil) */}
       <div className='hidden md:flex gap-2'>
         <Button
           label='Entrar'
@@ -106,6 +108,9 @@ const Header = ({ session }) => {
 
   return (
     <div className='sticky top-0 z-5 shadow-1'>
+      {/* AÑADIDO: draggable={false} bloquea el movimiento */}
+      <ConfirmDialog draggable={false} />
+
       <Menubar
         model={items}
         start={start}
