@@ -45,26 +45,36 @@
   padding-bottom: 2rem;
 }
 
-/* --- ESTILOS TARJETAS E INSTRUCCIONES (RESTAURADOS) --- */
+/* --- ESTILOS TARJETAS E INSTRUCCIONES --- */
 .instruction-card {
   background-color: white;
   border-left: 4px solid #a855f7; /* Morado Intenso */
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Sombra suave */
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .note-box {
   background-color: #faf5ff; /* Morado muy suave */
-  border: 1px solid #e9d5ff; /* Borde morado suave */
+  border: 1px solid #e9d5ff;
   color: #4b5563;
 }
 
+/* Clases de utilidad de color manuales para asegurar que se vean */
 .text-purple {
-  color: #9333ea;
+  color: #9333ea !important;
 }
 .text-purple-dark {
-  color: #7e22ce;
+  color: #7e22ce !important;
+}
+
+/* ESTILO PARA LA LÍNEA SEPARADORA */
+.event-separator {
+  border: 0;
+  height: 2px; /* Grosor */
+  background-color: #a855f7; /* Color Morado */
+  margin: 1rem 0;
+  opacity: 0.3; /* Un poco transparente para que no sea muy agresiva */
 }
 
 .event-card {

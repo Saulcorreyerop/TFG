@@ -248,11 +248,11 @@ const MapPage = ({ session }) => {
             ></div>
           </div>
 
-          <div className='mt-2 md:mt-0'>
-            <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900'>
+          <div className='mt-2 md:mt-0 text-center display-flex justify-content-center align-items-center flex-column w-full'>
+            <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
               Eventos
             </h1>
-            <p className='text-500 m-0 text-xs md:text-sm mt-1'>
+            <p className='text-500 m-0 text-xs md:text-sm mt-1 text-center'>
               {eventos.length} disponibles
             </p>
           </div>
@@ -291,7 +291,10 @@ const MapPage = ({ session }) => {
 
             <p className='m-0 line-height-3 text-700 text-sm mb-3'>
               - También puedes utilizar el
-              <span className='font-bold text-900'> botón de abajo </span>
+              <span className='font-bold text-900'>
+                {' '}
+                botón de abajo o la cruz de arriba{' '}
+              </span>
               para añadirlo de una manera mas sencilla.
             </p>
 
@@ -307,7 +310,6 @@ const MapPage = ({ session }) => {
               </span>
             </div>
 
-            {/* AQUÍ ESTABA EL CAMBIO: Quitamos 'md:hidden' para que se vea siempre */}
             <div className='mt-3'>
               <Button
                 label='Agregar Evento por Dirección'
@@ -320,6 +322,12 @@ const MapPage = ({ session }) => {
           </div>
 
           <div className='flex flex-column gap-2'>
+            <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
+              Eventos Próximos
+            </h2>
+            {/* AQUÍ ESTÁ EL CAMBIO: Usamos la clase .event-separator */}
+            <hr className='event-separator' />
+
             {eventos.length === 0 && (
               <div className='text-center p-5 text-500'>
                 <i className='pi pi-map text-4xl mb-2 opacity-50' />

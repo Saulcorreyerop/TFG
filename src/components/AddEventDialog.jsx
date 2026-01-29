@@ -294,6 +294,7 @@ const AddEventDialog = ({
               outlined
               className='w-full mb-3'
               onClick={() => setShowMapModal(true)}
+              severity='help'
             />
 
             <div className='flex gap-2'>
@@ -363,12 +364,19 @@ const AddEventDialog = ({
           </div>
 
           <div className='flex gap-2 justify-content-end'>
-            <Button label='Cancelar' icon='pi pi-times' text onClick={onHide} />
+            <Button
+              label='Cancelar'
+              icon='pi pi-times'
+              text
+              onClick={onHide}
+              severity='danger'
+            />
             <Button
               label='Publicar'
               icon='pi pi-check'
               onClick={handleSave}
               loading={loading}
+              severity='help'
             />
           </div>
         </div>
