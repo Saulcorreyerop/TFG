@@ -16,7 +16,6 @@ import AddEventDialog from '../components/AddEventDialog'
 
 // --- SUB-COMPONENTES ---
 
-// A. Controla el vuelo del mapa
 const MapController = ({ selectedEvent }) => {
   const map = useMap()
   useEffect(() => {
@@ -27,13 +26,11 @@ const MapController = ({ selectedEvent }) => {
         { animate: true, duration: 1.5 },
       )
     }
-    // Forzamos un ajuste de tamaño para evitar zonas grises
     setTimeout(() => map.invalidateSize(), 300)
   }, [selectedEvent, map])
   return null
 }
 
-// B. Marcador
 const LocationMarker = ({ onLocationSelect, session, showToast }) => {
   useMapEvents({
     click(e) {
@@ -45,7 +42,6 @@ const LocationMarker = ({ onLocationSelect, session, showToast }) => {
   return null
 }
 
-// C. Tarjeta de Evento
 const EventCard = ({ ev, isSelected, onClick }) => (
   <div
     onClick={() => onClick(ev)}
@@ -97,12 +93,13 @@ const MapPage = ({ session }) => {
   const navigate = useNavigate()
   const toast = useRef(null)
 
+  // Referencia al contenedor de scroll para moverlo programáticamente
+  const scrollContainerRef = useRef(null)
+
   const [eventos, setEventos] = useState([])
   const [dialogVisible, setDialogVisible] = useState(false)
   const [posicionTemp, setPosicionTemp] = useState({ lat: null, lng: null })
   const [selectedEvent, setSelectedEvent] = useState(null)
-
-  // Estado para detectar orientación horizontal en móvil
   const [isLandscapeMobile, setIsLandscapeMobile] = useState(false)
 
   const centerSpain = [40.0, -3.7492]
@@ -111,17 +108,12 @@ const MapPage = ({ session }) => {
     [55.0, 30.0],
   ]
 
-  // Detectar cambio de tamaño/orientación
   useEffect(() => {
     const handleResize = () => {
-      // Si el ancho es mayor que el alto, y el ancho es menor que un tablet grande (ej. 1024px)
-      // consideramos que es un móvil en horizontal.
       const isLandscape =
         window.innerWidth > window.innerHeight && window.innerWidth < 1024
       setIsLandscapeMobile(isLandscape)
     }
-
-    // Ejecutar al inicio y al redimensionar
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -160,24 +152,49 @@ const MapPage = ({ session }) => {
     setDialogVisible(true)
   }
 
+  // FUNCIÓN CLAVE: Al seleccionar un evento, hacemos scroll arriba (des-solapar)
+  const handleEventClick = (ev) => {
+    setSelectedEvent(ev)
+
+    // Si estamos en móvil vertical, hacemos scroll suave al inicio
+    if (
+      scrollContainerRef.current &&
+      window.innerWidth < 768 &&
+      !isLandscapeMobile
+    ) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    }
+  }
+
   const showToast = (severity, summary, detail) =>
     toast.current.show({ severity, summary, detail })
 
+  // Lógica de diseño:
+  // En Desktop/Landscape: Flex Row normal.
+  // En Móvil Vertical: 'relative' para permitir posicionamiento absoluto.
+  const containerClass = isLandscapeMobile
+    ? 'flex flex-row w-full overflow-hidden surface-ground'
+    : 'flex flex-column md:flex-row w-full overflow-hidden surface-ground relative'
+
   return (
-    <div
-      // CAMBIO 1: Si es landscape móvil o desktop (md), usamos fila (row). Si es móvil vertical, columna.
-      className={`flex w-full overflow-hidden surface-ground relative ${
-        isLandscapeMobile ? 'flex-row' : 'flex-column md:flex-row'
-      }`}
-      style={{ height: 'calc(100vh - 64px)' }}
-    >
+    <div className={containerClass} style={{ height: 'calc(100vh - 64px)' }}>
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
       {/* --- SECCIÓN 1: MAPA --- */}
+      {/* En Móvil Vertical: Posición ABSOLUTA y FIJA arriba.
+          En Desktop/Landscape: Posición RELATIVA normal.
+      */}
       <div
         className={`
-            relative z-0 order-1
-            ${isLandscapeMobile ? 'w-6 h-full' : 'w-full h-[40%] md:h-full md:flex-1'}
+            z-0
+            ${
+              isLandscapeMobile
+                ? 'w-6 h-full relative order-1'
+                : 'absolute top-0 left-0 w-full h-[45vh] md:static md:w-full md:h-full md:flex-1 md:order-1'
+            }
         `}
       >
         <MapContainer
@@ -206,7 +223,7 @@ const MapPage = ({ session }) => {
           {eventos.map((ev) => (
             <Marker key={ev.id} position={[ev.lat, ev.lng]}>
               <Popup>
-                <div className='text-center p-1' style={{ minWidth: '200px' }}>
+                <div className='text-center p-1' style={{ minWidth: '150px' }}>
                   {ev.image_url && (
                     <img
                       src={ev.image_url}
@@ -222,37 +239,10 @@ const MapPage = ({ session }) => {
                   <h3 className='font-bold text-lg m-0 text-gray-900'>
                     {ev.titulo}
                   </h3>
-
                   <div className='flex justify-content-center my-2'>
                     <Tag value={ev.tipo} severity='info' />
                   </div>
-
-                  {ev.description && (
-                    <p
-                      className='text-sm text-gray-700 m-0 mb-2 line-clamp-2'
-                      style={{
-                        overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {ev.description}
-                    </p>
-                  )}
-
-                  <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
-                    <div className='font-semibold mb-1'>
-                      {ev.fecha.toLocaleDateString('es-ES')} -{' '}
-                      {ev.fecha.toLocaleTimeString('es-ES', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </div>
-                    <div className='italic text-500'>
-                      Añadido por: {ev.profiles?.username || 'Anónimo'}
-                    </div>
-                  </div>
+                  <p className='text-xs text-500 m-0 mt-1'>{ev.fechaCorta}</p>
                 </div>
               </Popup>
             </Marker>
@@ -273,128 +263,124 @@ const MapPage = ({ session }) => {
         )}
       </div>
 
-      {/* --- SECCIÓN 2: LISTA E INSTRUCCIONES --- */}
+      {/* --- SECCIÓN 2: LISTA DE EVENTOS (SCROLLABLE) --- */}
+      {/* En Móvil Vertical: 
+             - Ocupa TODO el alto (h-full).
+             - Tiene scroll (overflow-y-auto).
+             - Tiene un 'padding' superior transparente (espaciador) para dejar ver el mapa.
+             - Está por encima del mapa (z-10).
+      */}
       <aside
+        ref={scrollContainerRef}
         className={`
-            order-2 
-            flex flex-column 
-            bg-white shadow-top-large md:shadow-4 
-            z-2 
-            relative md:static
-            border-top-1 md:border-top-0 md:border-left-1 border-200
-            overflow-hidden
-            ${isLandscapeMobile ? 'w-6 h-full' : 'w-full md:w-26rem h-[60%] md:h-full'}
+            z-10 bg-transparent
+            ${
+              isLandscapeMobile
+                ? 'order-2 w-6 h-full flex flex-column bg-white shadow-4 overflow-hidden relative'
+                : 'absolute inset-0 overflow-y-auto md:static md:w-26rem md:h-full md:flex md:flex-column md:bg-white md:shadow-4 md:order-2 md:overflow-hidden'
+            }
         `}
-        style={{
-          // Solo aplicamos el borde redondeado y margen negativo si NO estamos en landscape y ES móvil
-          borderRadius:
-            !isLandscapeMobile && window.innerWidth < 768
-              ? '20px 20px 0 0'
-              : '0',
-          marginTop:
-            !isLandscapeMobile && window.innerWidth < 768 ? '-20px' : '0',
-        }}
       >
-        <div className='p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none flex justify-content-between align-items-center'>
-          <div>
-            <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900'>
-              Eventos
-            </h1>
-            <p className='text-500 m-0 text-xs md:text-sm mt-1'>
-              {eventos.length} disponibles
-            </p>
-          </div>
-          {session && (
-            <Button
-              label='Añadir evento'
-              icon='pi pi-plus'
-              severity='help'
-              onClick={handleAddClick}
-              className='p-button-outlined shadow-1 mt-3'
-            />
-          )}
-        </div>
+        {/* --- ESPACIADOR TRANSPARENTE (Solo visible en Móvil Vertical) --- */}
+        {/* Altura: 40vh (La altura visible inicial del mapa).
+            pointer-events-none: Permite hacer click en el mapa a través de este espacio vacío.
+        */}
+        {!isLandscapeMobile && (
+          <div className='w-full h-[40vh] pointer-events-none md:hidden' />
+        )}
 
-        <div className='flex-1 overflow-y-auto p-2 md:p-4 bg-gray-50 md:bg-white'>
-          {/* --- BLOQUE DE AVISO (MORADO) --- */}
-          <div
-            className='p-3 border-round-xl shadow-2 mb-4'
-            style={{
-              borderLeft: '4px solid #A855F7',
-              backgroundColor: '#ffffff',
-            }}
-          >
-            <div
-              className='flex align-items-center gap-2 font-bold text-lg mb-2'
-              style={{ color: '#2c3e50' }}
-            >
-              <i
-                className='pi pi-map-marker text-xl'
-                style={{ color: '#9333EA' }}
-              />
-              <span>Añadir nuevo evento</span>
+        {/* --- CONTENIDO REAL (FONDO BLANCO) --- */}
+        <div
+          className={`
+            bg-white flex-1 flex flex-column shadow-top-large
+            ${!isLandscapeMobile ? 'min-h-[60vh] border-round-top-2xl' : 'h-full'}
+        `}
+        >
+          {/* Header Sticky dentro de la lista */}
+          <div className='p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none flex justify-content-between align-items-center sticky top-0 z-20 border-round-top-2xl'>
+            <div>
+              <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900'>
+                Eventos
+              </h1>
+              <p className='text-500 m-0 text-xs md:text-sm mt-1'>
+                {eventos.length} disponibles
+              </p>
             </div>
-
-            <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-              Navega por el mapa, haz zoom en la zona exacta y
-              <span className='font-bold text-900'>
-                {' '}
-                haz click sobre el lugar{' '}
-              </span>
-              donde comenzará el evento para crearlo.
-            </p>
-
-            <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-              - También puedes utilizar el
-              <span className='font-bold text-900'> botón de abajo </span>
-              para añadirlo de una manera mas sencilla.
-            </p>
-
-            <div
-              className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700'
-              style={{
-                backgroundColor: '#FAF5FF',
-                border: '1px solid #E9D5FF',
-              }}
-            >
-              <i
-                className='pi pi-info-circle'
-                style={{ color: '#A855F7', marginTop: '2px' }}
-              />
-              <span>
-                <strong>Nota:</strong> Una vez que la fecha y hora del evento
-                hayan pasado, este dejará de mostrarse automáticamente en el
-                mapa.
-              </span>
-            </div>
-
             {session && (
               <Button
-                label='Agregar Evento por Dirección'
-                severity='help'
+                label={window.innerWidth > 768 ? 'Añadir evento' : undefined}
                 icon='pi pi-plus'
-                className='w-full p-button-outlined shadow-1 mt-3'
+                severity='help'
                 onClick={handleAddClick}
+                className='p-button-outlined shadow-1'
+                rounded={window.innerWidth < 768} // Redondo en móvil para ahorrar espacio
               />
             )}
           </div>
 
-          <div className='flex flex-column gap-2 pb-6'>
-            {eventos.length === 0 && (
-              <div className='text-center p-5 text-500'>
-                <i className='pi pi-map text-4xl mb-2 opacity-50' />
-                <p>No hay eventos próximos.</p>
+          {/* Lista Scrollable Interna (En desktop) o Continuación (En móvil) */}
+          <div
+            className={`
+                p-2 md:p-4 bg-gray-50 md:bg-white
+                ${isLandscapeMobile || window.innerWidth >= 768 ? 'flex-1 overflow-y-auto' : ''}
+            `}
+          >
+            {/* BLOQUE DE AVISO (MORADO) */}
+            <div
+              className='p-3 border-round-xl shadow-2 mb-4 bg-white'
+              style={{ borderLeft: '4px solid #A855F7' }}
+            >
+              <div
+                className='flex align-items-center gap-2 font-bold text-lg mb-2'
+                style={{ color: '#2c3e50' }}
+              >
+                <i
+                  className='pi pi-map-marker text-xl'
+                  style={{ color: '#9333EA' }}
+                />
+                <span>Añadir nuevo evento</span>
               </div>
-            )}
 
-            {eventos.map((ev) => (
-              <EventCard
-                key={ev.id}
-                ev={ev}
-                isSelected={selectedEvent?.id === ev.id}
-                onClick={setSelectedEvent}
-              />
-            ))}
+              <p className='m-0 line-height-3 text-700 text-sm mb-3'>
+                Navega por el mapa, haz zoom y haz click para crear.
+              </p>
+
+              <div
+                className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700'
+                style={{
+                  backgroundColor: '#FAF5FF',
+                  border: '1px solid #E9D5FF',
+                }}
+              >
+                <i
+                  className='pi pi-info-circle'
+                  style={{ color: '#A855F7', marginTop: '2px' }}
+                />
+                <span>
+                  <strong>Nota:</strong> Los eventos pasados desaparecen
+                  automáticamente.
+                </span>
+              </div>
+            </div>
+
+            {/* LISTA DE CARDS */}
+            <div className='flex flex-column gap-2 pb-6'>
+              {eventos.length === 0 && (
+                <div className='text-center p-5 text-500'>
+                  <i className='pi pi-map text-4xl mb-2 opacity-50' />
+                  <p>No hay eventos próximos.</p>
+                </div>
+              )}
+
+              {eventos.map((ev) => (
+                <EventCard
+                  key={ev.id}
+                  ev={ev}
+                  isSelected={selectedEvent?.id === ev.id}
+                  onClick={handleEventClick} // Usamos el nuevo handler
+                />
+              ))}
+            </div>
           </div>
         </div>
       </aside>
