@@ -26,7 +26,7 @@ const MapController = ({ selectedEvent }) => {
         { animate: true, duration: 1.5 },
       )
     }
-    // Ajuste crítico para que el mapa se renderice bien al cambiar tamaños
+    // Forzamos redibujado para evitar zonas grises
     setTimeout(() => map.invalidateSize(), 300)
   }, [selectedEvent, map])
   return null
@@ -93,8 +93,6 @@ const EventCard = ({ ev, isSelected, onClick }) => (
 const MapPage = ({ session }) => {
   const navigate = useNavigate()
   const toast = useRef(null)
-
-  // Referencia al contenedor scrollable (la "sábana")
   const scrollSheetRef = useRef(null)
 
   const [eventos, setEventos] = useState([])
@@ -109,7 +107,7 @@ const MapPage = ({ session }) => {
     [55.0, 30.0],
   ]
 
-  // Detectar orientación
+  // Detectar orientación del móvil
   useEffect(() => {
     const handleResize = () => {
       const isLandscape =
@@ -145,7 +143,8 @@ const MapPage = ({ session }) => {
   }
 
   useEffect(() => {
-    fetchEventos() // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchEventos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleAddClick = () => {
@@ -153,29 +152,23 @@ const MapPage = ({ session }) => {
     setDialogVisible(true)
   }
 
-  // --- LÓGICA DE "DES-SOLAPAR" ---
+  // Al seleccionar evento, hacemos scroll al inicio para mostrar el mapa (efecto des-solapar)
   const handleEventClick = (ev) => {
     setSelectedEvent(ev)
-
-    // Si estamos en móvil vertical, hacemos scroll al inicio (0)
-    // Esto hace que la lista baje visualmente y se vea el mapa a través del espaciador transparente.
     if (
       scrollSheetRef.current &&
       window.innerWidth < 768 &&
       !isLandscapeMobile
     ) {
-      scrollSheetRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      })
+      scrollSheetRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
   const showToast = (severity, summary, detail) =>
     toast.current.show({ severity, summary, detail })
 
-  // Estilos condicionales según dispositivo
-  const isDesktopOrLandscape = window.innerWidth >= 768 || isLandscapeMobile
+  // Variable para saber si estamos en modo Desktop o Móvil Horizontal
+  const isDesktopMode = window.innerWidth >= 768 || isLandscapeMobile
 
   return (
     <div
@@ -183,23 +176,22 @@ const MapPage = ({ session }) => {
       style={{
         height: 'calc(100vh - 64px)',
         display: 'flex',
-        flexDirection: isDesktopOrLandscape ? 'row' : 'column',
+        flexDirection: isDesktopMode ? 'row' : 'column',
       }}
     >
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-      {/* =============================================
-         CAPA 1: EL MAPA (FONDO) 
-         =============================================
-         En Móvil Vertical: Ocupa TODA la pantalla (h-full) y está absoluta al fondo (z-0).
-         En Desktop: Flex relativo normal.
-      */}
+      {/* =========================================================
+          CAPA 1: EL MAPA
+          En móvil: Fondo fijo (absolute inset-0 z-0)
+          En PC: Columna flexible
+         ========================================================= */}
       <div
         className={`
             ${
-              isDesktopOrLandscape
-                ? 'flex-1 h-full relative z-0 order-1' // Desktop/Landscape
-                : 'absolute inset-0 w-full h-full z-0' // Móvil Vertical (Fondo fijo)
+              isDesktopMode
+                ? 'flex-1 h-full relative z-0 order-1'
+                : 'absolute inset-0 w-full h-full z-0' // MÓVIL: Ocupa todo el fondo
             }
         `}
       >
@@ -259,7 +251,6 @@ const MapPage = ({ session }) => {
           ))}
         </MapContainer>
 
-        {/* Botón Login Flotante */}
         {!session && (
           <div className='absolute top-0 right-0 m-3 z-[400]'>
             <Button
@@ -274,67 +265,72 @@ const MapPage = ({ session }) => {
         )}
       </div>
 
-      {/* =============================================
-         CAPA 2: LA LISTA (FRENTE / SCROLLABLE)
-         =============================================
-         En Móvil Vertical: 
-            - Absoluta (z-10) cubriendo toda la pantalla.
-            - Fondo TRANSPARENTE (para ver el mapa a través).
-            - overflow-y-auto (para hacer scroll).
-         En Desktop:
-            - Bloque estático lateral.
-      */}
+      {/* =========================================================
+          CAPA 2: LA LISTA (SÁBANA DESLIZANTE)
+          En móvil: Capa superior (z-10) con pointer-events-none en el contenedor
+                    para dejar pasar clicks al mapa en las zonas vacías.
+         ========================================================= */}
       <aside
         ref={scrollSheetRef}
         className={`
             ${
-              isDesktopOrLandscape
-                ? 'w-26rem h-full bg-white shadow-4 z-2 flex flex-column order-2 relative overflow-hidden' // Desktop
-                : 'absolute inset-0 z-10 w-full h-full overflow-y-auto pointer-events-auto no-scrollbar' // Móvil Vertical
+              isDesktopMode
+                ? 'w-26rem h-full bg-white shadow-4 z-2 flex flex-column order-2 relative overflow-hidden'
+                : 'absolute inset-0 z-10 w-full h-full overflow-y-auto no-scrollbar' // MÓVIL
             }
         `}
-        style={{ scrollBehavior: 'smooth' }}
+        // CLAVE: En móvil, el contenedor no captura eventos (pasan al mapa),
+        // pero los hijos con 'pointer-events-auto' sí los capturan.
+        style={
+          !isDesktopMode
+            ? { pointerEvents: 'none', scrollBehavior: 'smooth' }
+            : {}
+        }
       >
-        {/* --- ESPACIADOR TRANSPARENTE (Solo Móvil) ---
-           Esta es la clave. Es un div vacío transparente que empuja el contenido blanco hacia abajo.
-           Al inicio, ves el mapa a través de este div.
-           Al hacer scroll, el contenido blanco sube y tapa este div.
-           pointer-events-none: Permite tocar el mapa si tocas en la zona transparente.
+        {/* --- ESPACIADOR TRANSPARENTE (Solo Móvil) --- 
+            Deja ver el mapa. Como el padre es pointer-events-none, 
+            si tocas aquí, interactúas con el mapa. 
+            Aumentado a 55vh para que se vea más mapa al inicio.
         */}
-        {!isDesktopOrLandscape && (
-          <div
-            className='w-full pointer-events-none'
-            style={{ height: '45vh' }} // Altura inicial visible del mapa
-          />
+        {!isDesktopMode && (
+          <div className='w-full' style={{ height: '55vh' }} />
         )}
 
-        {/* --- CONTENIDO BLANCO DE LA LISTA --- */}
+        {/* --- CONTENIDO DE LA LISTA (Blanco) --- 
+            Este bloque SÍ captura eventos (scroll, click) gracias a pointer-events-auto
+        */}
         <div
           className={`
-                bg-white flex-1 flex flex-column shadow-top-large
-                ${!isDesktopOrLandscape ? 'min-h-[70vh] rounded-t-3xl shadow-8' : 'h-full'}
+                bg-white flex-1 flex flex-column shadow-8
+                ${!isDesktopMode ? 'min-h-[60vh] rounded-t-3xl pointer-events-auto' : 'h-full'}
             `}
-          // Bordes redondeados solo en móvil
           style={
-            !isDesktopOrLandscape
+            !isDesktopMode
               ? {
                   borderRadius: '24px 24px 0 0',
-                  boxShadow: '0 -4px 10px rgba(0,0,0,0.1)',
+                  boxShadow: '0 -10px 25px rgba(0,0,0,0.1)',
                 }
               : {}
           }
         >
-          {/* Header de la Lista (Sticky) */}
+          {/* Header Sticky dentro de la lista */}
           <div
             className={`
                     p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none flex justify-content-between align-items-center
-                    ${!isDesktopOrLandscape ? 'sticky top-0 z-20' : ''} 
+                    ${!isDesktopMode ? 'sticky top-0 z-20 rounded-t-3xl' : ''} 
                 `}
-            style={
-              !isDesktopOrLandscape ? { borderRadius: '24px 24px 0 0' } : {}
-            }
           >
-            <div>
+            <div
+              onClick={() =>
+                !isDesktopMode &&
+                scrollSheetRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+              }
+            >
+              {/* Pequeña barra visual de "agarrar" en móvil */}
+              {!isDesktopMode && (
+                <div className='w-2rem h-1 bg-gray-300 border-round mx-auto mb-3 opacity-50' />
+              )}
+
               <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900'>
                 Eventos
               </h1>
@@ -346,19 +342,19 @@ const MapPage = ({ session }) => {
               <Button
                 icon='pi pi-plus'
                 severity='help'
-                rounded={!isDesktopOrLandscape}
-                label={isDesktopOrLandscape ? 'Añadir' : undefined}
+                rounded={!isDesktopMode}
+                label={isDesktopMode ? 'Añadir' : undefined}
                 onClick={handleAddClick}
                 className='shadow-1'
               />
             )}
           </div>
 
-          {/* Cuerpo de la Lista */}
+          {/* Lista Scrollable */}
           <div
-            className={`p-2 md:p-4 bg-gray-50 md:bg-white flex-1 ${isDesktopOrLandscape ? 'overflow-y-auto' : ''}`}
+            className={`p-2 md:p-4 bg-gray-50 md:bg-white flex-1 ${isDesktopMode ? 'overflow-y-auto' : ''}`}
           >
-            {/* Tarjeta de Instrucciones (Morada) */}
+            {/* Tarjeta Instrucciones (Morada) */}
             <div
               className='p-3 border-round-xl shadow-2 mb-4 bg-white'
               style={{ borderLeft: '4px solid #A855F7' }}
@@ -392,8 +388,8 @@ const MapPage = ({ session }) => {
                   automáticamente.
                 </span>
               </div>
-              {/* Botón extra en móvil por si el mapa queda muy tapado */}
-              {session && !isDesktopOrLandscape && (
+              {/* Botón extra en móvil */}
+              {session && !isDesktopMode && (
                 <Button
                   label='Añadir por dirección'
                   link
@@ -404,7 +400,7 @@ const MapPage = ({ session }) => {
               )}
             </div>
 
-            {/* Lista de Eventos */}
+            {/* Lista */}
             <div className='flex flex-column gap-2 pb-8'>
               {eventos.length === 0 && (
                 <div className='text-center p-5 text-500'>
