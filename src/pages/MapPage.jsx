@@ -27,6 +27,7 @@ const MapController = ({ selectedEvent }) => {
         { animate: true, duration: 1.5 },
       )
     }
+    // Forzamos un ajuste de tamaño para evitar zonas grises
     setTimeout(() => map.invalidateSize(), 300)
   }, [selectedEvent, map])
   return null
@@ -44,13 +45,12 @@ const LocationMarker = ({ onLocationSelect, session, showToast }) => {
   return null
 }
 
-// C. Tarjeta de Evento (Lista lateral)
+// C. Tarjeta de Evento
 const EventCard = ({ ev, isSelected, onClick }) => (
   <div
     onClick={() => onClick(ev)}
     className='surface-card p-3 shadow-1 border-round-xl cursor-pointer transition-all hover:shadow-3 flex gap-3 align-items-center mb-2 mx-1'
     style={{
-      // Borde morado si está seleccionado
       borderLeft: isSelected ? '4px solid #A855F7' : '4px solid transparent',
       backgroundColor: isSelected ? '#FAF5FF' : '#ffffff',
     }}
@@ -102,11 +102,30 @@ const MapPage = ({ session }) => {
   const [posicionTemp, setPosicionTemp] = useState({ lat: null, lng: null })
   const [selectedEvent, setSelectedEvent] = useState(null)
 
+  // Estado para detectar orientación horizontal en móvil
+  const [isLandscapeMobile, setIsLandscapeMobile] = useState(false)
+
   const centerSpain = [40.0, -3.7492]
   const spainBounds = [
     [20.0, -25.0],
     [55.0, 30.0],
   ]
+
+  // Detectar cambio de tamaño/orientación
+  useEffect(() => {
+    const handleResize = () => {
+      // Si el ancho es mayor que el alto, y el ancho es menor que un tablet grande (ej. 1024px)
+      // consideramos que es un móvil en horizontal.
+      const isLandscape =
+        window.innerWidth > window.innerHeight && window.innerWidth < 1024
+      setIsLandscapeMobile(isLandscape)
+    }
+
+    // Ejecutar al inicio y al redimensionar
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const fetchEventos = async () => {
     const { data } = await supabase
@@ -121,7 +140,7 @@ const MapPage = ({ session }) => {
           ...ev,
           lat: parseFloat(ev.lat),
           lng: parseFloat(ev.lng),
-          fecha: new Date(ev.fecha), // Objeto Date para el popup
+          fecha: new Date(ev.fecha),
           fechaCorta: new Date(ev.fecha).toLocaleDateString('es-ES', {
             day: '2-digit',
             month: 'short',
@@ -146,13 +165,21 @@ const MapPage = ({ session }) => {
 
   return (
     <div
-      className='flex flex-column md:flex-row w-full overflow-hidden surface-ground relative'
+      // CAMBIO 1: Si es landscape móvil o desktop (md), usamos fila (row). Si es móvil vertical, columna.
+      className={`flex w-full overflow-hidden surface-ground relative ${
+        isLandscapeMobile ? 'flex-row' : 'flex-column md:flex-row'
+      }`}
       style={{ height: 'calc(100vh - 64px)' }}
     >
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
       {/* --- SECCIÓN 1: MAPA --- */}
-      <div className='w-full h-[40%] md:h-full md:flex-1 relative z-0 order-1'>
+      <div
+        className={`
+            relative z-0 order-1
+            ${isLandscapeMobile ? 'w-6 h-full' : 'w-full h-[40%] md:h-full md:flex-1'}
+        `}
+      >
         <MapContainer
           center={centerSpain}
           zoom={5}
@@ -178,9 +205,8 @@ const MapPage = ({ session }) => {
 
           {eventos.map((ev) => (
             <Marker key={ev.id} position={[ev.lat, ev.lng]}>
-              {/* --- POPUP RESTAURADO CON TODOS LOS DETALLES --- */}
               <Popup>
-                <div className='text-center' style={{ minWidth: '200px' }}>
+                <div className='text-center p-1' style={{ minWidth: '200px' }}>
                   {ev.image_url && (
                     <img
                       src={ev.image_url}
@@ -229,7 +255,6 @@ const MapPage = ({ session }) => {
                   </div>
                 </div>
               </Popup>
-              {/* ----------------------------------------------- */}
             </Marker>
           ))}
         </MapContainer>
@@ -250,20 +275,24 @@ const MapPage = ({ session }) => {
 
       {/* --- SECCIÓN 2: LISTA E INSTRUCCIONES --- */}
       <aside
-        className='
+        className={`
             order-2 
-            w-full md:w-26rem 
-            h-[60%] md:h-full 
             flex flex-column 
             bg-white shadow-top-large md:shadow-4 
             z-2 
             relative md:static
             border-top-1 md:border-top-0 md:border-left-1 border-200
             overflow-hidden
-        '
+            ${isLandscapeMobile ? 'w-6 h-full' : 'w-full md:w-26rem h-[60%] md:h-full'}
+        `}
         style={{
-          borderRadius: window.innerWidth < 768 ? '20px 20px 0 0' : '0',
-          marginTop: window.innerWidth < 768 ? '-20px' : '0',
+          // Solo aplicamos el borde redondeado y margen negativo si NO estamos en landscape y ES móvil
+          borderRadius:
+            !isLandscapeMobile && window.innerWidth < 768
+              ? '20px 20px 0 0'
+              : '0',
+          marginTop:
+            !isLandscapeMobile && window.innerWidth < 768 ? '-20px' : '0',
         }}
       >
         <div className='p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none flex justify-content-between align-items-center'>
