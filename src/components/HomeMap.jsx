@@ -54,11 +54,6 @@ const HomeMap = () => {
         </p>
       </div>
 
-      {/* CAMBIOS AQUÍ:
-         1. style={{ height: '750px' }} -> Más alto para que sea vertical.
-         2. maxWidth: '500px' -> Limitamos el ancho para forzar la forma de rectángulo vertical.
-         3. className='... mx-auto' -> Lo centramos en la pantalla.
-      */}
       <div
         className='relative shadow-4 border-round-xl overflow-hidden mx-auto'
         style={{ height: '700px', maxWidth: '1400px', width: '100%' }}
@@ -83,9 +78,17 @@ const HomeMap = () => {
 
         <MapContainer
           center={centerSpain}
-          zoom={5.5} // Ajustado un poco el zoom para el formato vertical
-          scrollWheelZoom={false}
+          zoom={5.5}
           style={{ height: '100%', width: '100%' }}
+          // --- PROPIEDADES PARA CONGELAR EL MAPA ---
+          dragging={false} // Deshabilita arrastrar (panning)
+          zoomControl={false} // Oculta los botones + / -
+          scrollWheelZoom={false} // Deshabilita zoom con rueda del ratón
+          doubleClickZoom={false} // Deshabilita zoom con doble click
+          touchZoom={false} // Deshabilita zoom táctil (pellizcar)
+          keyboard={false} // Deshabilita navegación con teclado
+          boxZoom={false} // Deshabilita zoom de caja con Shift
+          // -----------------------------------------
         >
           <TileLayer
             attribution='&copy; OpenStreetMap'
