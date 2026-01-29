@@ -16,7 +16,8 @@ import AddEventDialog from '../components/AddEventDialog'
 
 import './MapPage.css'
 
-// ... (MapController, LocationMarker y EventCard IGUAL que antes, sin cambios) ...
+// --- SUB-COMPONENTES ---
+
 const MapController = ({ selectedEvent }) => {
   const map = useMap()
   useEffect(() => {
@@ -128,28 +129,32 @@ const MapPage = ({ session }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchEventos])
 
+  // Lógica mejorada: Si no hay sesión, avisa. Si hay sesión, abre el modal.
   const handleAddClick = () => {
+    if (!session) {
+      toast.current.show({
+        severity: 'info',
+        summary: 'Cuenta requerida',
+        detail: 'Debes iniciar sesión para publicar un evento.',
+        life: 3000,
+      })
+      // Opcional: Redirigir al login tras un instante
+      // setTimeout(() => navigate('/login'), 1000);
+      return
+    }
     setPosicionTemp({ lat: null, lng: null })
     setDialogVisible(true)
   }
 
-  // Scroll al top solo si estamos en modo Portrait (bloque)
   const handleEventClick = (ev) => {
     setSelectedEvent(ev)
-    // Detectamos si el contenedor tiene overflow (signo de que está en modo portrait)
-    if (
-      mainContainerRef.current &&
-      window.getComputedStyle(mainContainerRef.current).display === 'block'
-    ) {
+    if (window.innerWidth < 768 && mainContainerRef.current) {
       mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
   const scrollToTopList = () => {
-    if (
-      mainContainerRef.current &&
-      window.getComputedStyle(mainContainerRef.current).display === 'block'
-    ) {
+    if (window.innerWidth < 768 && mainContainerRef.current) {
       mainContainerRef.current.scrollTo({ top: 500, behavior: 'smooth' })
     }
   }
@@ -219,6 +224,7 @@ const MapPage = ({ session }) => {
           ))}
         </MapContainer>
 
+        {/* Botón flotante de login (solo si no hay sesión) */}
         {!session && (
           <div className='absolute top-0 right-0 m-3 z-[400]'>
             <Button
@@ -239,7 +245,6 @@ const MapPage = ({ session }) => {
           className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
           onClick={scrollToTopList}
         >
-          {/* Handler visual (Controlado por CSS: solo visible en Portrait) */}
           <div className='mobile-drag-handle'>
             <div
               className='w-3rem h-1 border-round opacity-50'
@@ -255,19 +260,19 @@ const MapPage = ({ session }) => {
               {eventos.length} disponibles
             </p>
           </div>
-          {session && (
-            <Button
-              icon='pi pi-plus'
-              severity='help'
-              rounded
-              className='shadow-1'
-              onClick={(e) => {
-                e.stopPropagation()
-                handleAddClick()
-              }}
-              aria-label='Añadir'
-            />
-          )}
+
+          {/* EL CAMBIO CLAVE: Quitamos la condición {session && ...} para que se vea siempre */}
+          <Button
+            icon='pi pi-plus'
+            severity='help'
+            rounded
+            className='shadow-1'
+            onClick={(e) => {
+              e.stopPropagation()
+              handleAddClick()
+            }}
+            aria-label='Añadir'
+          />
         </div>
 
         <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
@@ -295,18 +300,17 @@ const MapPage = ({ session }) => {
                 automáticamente.
               </span>
             </div>
-            {/* Botón extra en lista (Visible si el CSS lo permite o por lógica simple) */}
-            {session && (
-              <div className='md:hidden mt-2'>
-                <Button
-                  label='Añadir por dirección'
-                  link
-                  size='small'
-                  className='w-full p-0 text-purple-600'
-                  onClick={handleAddClick}
-                />
-              </div>
-            )}
+
+            {/* Botón extra en lista: También visible siempre, lógica en handleAddClick */}
+            <div className='md:hidden mt-2'>
+              <Button
+                label='Añadir por dirección'
+                link
+                size='small'
+                className='w-full p-0 text-purple-600'
+                onClick={handleAddClick}
+              />
+            </div>
           </div>
 
           <div className='flex flex-column gap-2'>
