@@ -26,6 +26,7 @@ const MapController = ({ selectedEvent }) => {
         { animate: true, duration: 1.5 },
       )
     }
+    // Ajuste crítico para que el mapa se renderice bien al cambiar tamaños
     setTimeout(() => map.invalidateSize(), 300)
   }, [selectedEvent, map])
   return null
@@ -93,8 +94,8 @@ const MapPage = ({ session }) => {
   const navigate = useNavigate()
   const toast = useRef(null)
 
-  // Referencia al contenedor de scroll para moverlo programáticamente
-  const scrollContainerRef = useRef(null)
+  // Referencia al contenedor scrollable (la "sábana")
+  const scrollSheetRef = useRef(null)
 
   const [eventos, setEventos] = useState([])
   const [dialogVisible, setDialogVisible] = useState(false)
@@ -108,6 +109,7 @@ const MapPage = ({ session }) => {
     [55.0, 30.0],
   ]
 
+  // Detectar orientación
   useEffect(() => {
     const handleResize = () => {
       const isLandscape =
@@ -143,8 +145,7 @@ const MapPage = ({ session }) => {
   }
 
   useEffect(() => {
-    fetchEventos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchEventos() // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleAddClick = () => {
@@ -152,17 +153,18 @@ const MapPage = ({ session }) => {
     setDialogVisible(true)
   }
 
-  // FUNCIÓN CLAVE: Al seleccionar un evento, hacemos scroll arriba (des-solapar)
+  // --- LÓGICA DE "DES-SOLAPAR" ---
   const handleEventClick = (ev) => {
     setSelectedEvent(ev)
 
-    // Si estamos en móvil vertical, hacemos scroll suave al inicio
+    // Si estamos en móvil vertical, hacemos scroll al inicio (0)
+    // Esto hace que la lista baje visualmente y se vea el mapa a través del espaciador transparente.
     if (
-      scrollContainerRef.current &&
+      scrollSheetRef.current &&
       window.innerWidth < 768 &&
       !isLandscapeMobile
     ) {
-      scrollContainerRef.current.scrollTo({
+      scrollSheetRef.current.scrollTo({
         top: 0,
         behavior: 'smooth',
       })
@@ -172,28 +174,32 @@ const MapPage = ({ session }) => {
   const showToast = (severity, summary, detail) =>
     toast.current.show({ severity, summary, detail })
 
-  // Lógica de diseño:
-  // En Desktop/Landscape: Flex Row normal.
-  // En Móvil Vertical: 'relative' para permitir posicionamiento absoluto.
-  const containerClass = isLandscapeMobile
-    ? 'flex flex-row w-full overflow-hidden surface-ground'
-    : 'flex flex-column md:flex-row w-full overflow-hidden surface-ground relative'
+  // Estilos condicionales según dispositivo
+  const isDesktopOrLandscape = window.innerWidth >= 768 || isLandscapeMobile
 
   return (
-    <div className={containerClass} style={{ height: 'calc(100vh - 64px)' }}>
+    <div
+      className='w-full overflow-hidden surface-ground relative'
+      style={{
+        height: 'calc(100vh - 64px)',
+        display: 'flex',
+        flexDirection: isDesktopOrLandscape ? 'row' : 'column',
+      }}
+    >
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-      {/* --- SECCIÓN 1: MAPA --- */}
-      {/* En Móvil Vertical: Posición ABSOLUTA y FIJA arriba.
-          En Desktop/Landscape: Posición RELATIVA normal.
+      {/* =============================================
+         CAPA 1: EL MAPA (FONDO) 
+         =============================================
+         En Móvil Vertical: Ocupa TODA la pantalla (h-full) y está absoluta al fondo (z-0).
+         En Desktop: Flex relativo normal.
       */}
       <div
         className={`
-            z-0
             ${
-              isLandscapeMobile
-                ? 'w-6 h-full relative order-1'
-                : 'absolute top-0 left-0 w-full h-[45vh] md:static md:w-full md:h-full md:flex-1 md:order-1'
+              isDesktopOrLandscape
+                ? 'flex-1 h-full relative z-0 order-1' // Desktop/Landscape
+                : 'absolute inset-0 w-full h-full z-0' // Móvil Vertical (Fondo fijo)
             }
         `}
       >
@@ -242,13 +248,18 @@ const MapPage = ({ session }) => {
                   <div className='flex justify-content-center my-2'>
                     <Tag value={ev.tipo} severity='info' />
                   </div>
-                  <p className='text-xs text-500 m-0 mt-1'>{ev.fechaCorta}</p>
+                  <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
+                    <div className='font-semibold'>
+                      {ev.fecha.toLocaleDateString('es-ES')}
+                    </div>
+                  </div>
                 </div>
               </Popup>
             </Marker>
           ))}
         </MapContainer>
 
+        {/* Botón Login Flotante */}
         {!session && (
           <div className='absolute top-0 right-0 m-3 z-[400]'>
             <Button
@@ -263,41 +274,66 @@ const MapPage = ({ session }) => {
         )}
       </div>
 
-      {/* --- SECCIÓN 2: LISTA DE EVENTOS (SCROLLABLE) --- */}
-      {/* En Móvil Vertical: 
-             - Ocupa TODO el alto (h-full).
-             - Tiene scroll (overflow-y-auto).
-             - Tiene un 'padding' superior transparente (espaciador) para dejar ver el mapa.
-             - Está por encima del mapa (z-10).
+      {/* =============================================
+         CAPA 2: LA LISTA (FRENTE / SCROLLABLE)
+         =============================================
+         En Móvil Vertical: 
+            - Absoluta (z-10) cubriendo toda la pantalla.
+            - Fondo TRANSPARENTE (para ver el mapa a través).
+            - overflow-y-auto (para hacer scroll).
+         En Desktop:
+            - Bloque estático lateral.
       */}
       <aside
-        ref={scrollContainerRef}
+        ref={scrollSheetRef}
         className={`
-            z-10 bg-transparent
             ${
-              isLandscapeMobile
-                ? 'order-2 w-6 h-full flex flex-column bg-white shadow-4 overflow-hidden relative'
-                : 'absolute inset-0 overflow-y-auto md:static md:w-26rem md:h-full md:flex md:flex-column md:bg-white md:shadow-4 md:order-2 md:overflow-hidden'
+              isDesktopOrLandscape
+                ? 'w-26rem h-full bg-white shadow-4 z-2 flex flex-column order-2 relative overflow-hidden' // Desktop
+                : 'absolute inset-0 z-10 w-full h-full overflow-y-auto pointer-events-auto no-scrollbar' // Móvil Vertical
             }
         `}
+        style={{ scrollBehavior: 'smooth' }}
       >
-        {/* --- ESPACIADOR TRANSPARENTE (Solo visible en Móvil Vertical) --- */}
-        {/* Altura: 40vh (La altura visible inicial del mapa).
-            pointer-events-none: Permite hacer click en el mapa a través de este espacio vacío.
+        {/* --- ESPACIADOR TRANSPARENTE (Solo Móvil) ---
+           Esta es la clave. Es un div vacío transparente que empuja el contenido blanco hacia abajo.
+           Al inicio, ves el mapa a través de este div.
+           Al hacer scroll, el contenido blanco sube y tapa este div.
+           pointer-events-none: Permite tocar el mapa si tocas en la zona transparente.
         */}
-        {!isLandscapeMobile && (
-          <div className='w-full h-[40vh] pointer-events-none md:hidden' />
+        {!isDesktopOrLandscape && (
+          <div
+            className='w-full pointer-events-none'
+            style={{ height: '45vh' }} // Altura inicial visible del mapa
+          />
         )}
 
-        {/* --- CONTENIDO REAL (FONDO BLANCO) --- */}
+        {/* --- CONTENIDO BLANCO DE LA LISTA --- */}
         <div
           className={`
-            bg-white flex-1 flex flex-column shadow-top-large
-            ${!isLandscapeMobile ? 'min-h-[60vh] border-round-top-2xl' : 'h-full'}
-        `}
+                bg-white flex-1 flex flex-column shadow-top-large
+                ${!isDesktopOrLandscape ? 'min-h-[70vh] rounded-t-3xl shadow-8' : 'h-full'}
+            `}
+          // Bordes redondeados solo en móvil
+          style={
+            !isDesktopOrLandscape
+              ? {
+                  borderRadius: '24px 24px 0 0',
+                  boxShadow: '0 -4px 10px rgba(0,0,0,0.1)',
+                }
+              : {}
+          }
         >
-          {/* Header Sticky dentro de la lista */}
-          <div className='p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none flex justify-content-between align-items-center sticky top-0 z-20 border-round-top-2xl'>
+          {/* Header de la Lista (Sticky) */}
+          <div
+            className={`
+                    p-3 md:p-4 bg-white border-bottom-1 border-100 flex-none flex justify-content-between align-items-center
+                    ${!isDesktopOrLandscape ? 'sticky top-0 z-20' : ''} 
+                `}
+            style={
+              !isDesktopOrLandscape ? { borderRadius: '24px 24px 0 0' } : {}
+            }
+          >
             <div>
               <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900'>
                 Eventos
@@ -308,24 +344,21 @@ const MapPage = ({ session }) => {
             </div>
             {session && (
               <Button
-                label={window.innerWidth > 768 ? 'Añadir evento' : undefined}
                 icon='pi pi-plus'
                 severity='help'
+                rounded={!isDesktopOrLandscape}
+                label={isDesktopOrLandscape ? 'Añadir' : undefined}
                 onClick={handleAddClick}
-                className='p-button-outlined shadow-1'
-                rounded={window.innerWidth < 768} // Redondo en móvil para ahorrar espacio
+                className='shadow-1'
               />
             )}
           </div>
 
-          {/* Lista Scrollable Interna (En desktop) o Continuación (En móvil) */}
+          {/* Cuerpo de la Lista */}
           <div
-            className={`
-                p-2 md:p-4 bg-gray-50 md:bg-white
-                ${isLandscapeMobile || window.innerWidth >= 768 ? 'flex-1 overflow-y-auto' : ''}
-            `}
+            className={`p-2 md:p-4 bg-gray-50 md:bg-white flex-1 ${isDesktopOrLandscape ? 'overflow-y-auto' : ''}`}
           >
-            {/* BLOQUE DE AVISO (MORADO) */}
+            {/* Tarjeta de Instrucciones (Morada) */}
             <div
               className='p-3 border-round-xl shadow-2 mb-4 bg-white'
               style={{ borderLeft: '4px solid #A855F7' }}
@@ -340,11 +373,9 @@ const MapPage = ({ session }) => {
                 />
                 <span>Añadir nuevo evento</span>
               </div>
-
               <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-                Navega por el mapa, haz zoom y haz click para crear.
+                Navega por el mapa y haz click para crear.
               </p>
-
               <div
                 className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700'
                 style={{
@@ -361,10 +392,20 @@ const MapPage = ({ session }) => {
                   automáticamente.
                 </span>
               </div>
+              {/* Botón extra en móvil por si el mapa queda muy tapado */}
+              {session && !isDesktopOrLandscape && (
+                <Button
+                  label='Añadir por dirección'
+                  link
+                  size='small'
+                  className='w-full mt-2 p-0 text-purple-600'
+                  onClick={handleAddClick}
+                />
+              )}
             </div>
 
-            {/* LISTA DE CARDS */}
-            <div className='flex flex-column gap-2 pb-6'>
+            {/* Lista de Eventos */}
+            <div className='flex flex-column gap-2 pb-8'>
               {eventos.length === 0 && (
                 <div className='text-center p-5 text-500'>
                   <i className='pi pi-map text-4xl mb-2 opacity-50' />
@@ -377,7 +418,7 @@ const MapPage = ({ session }) => {
                   key={ev.id}
                   ev={ev}
                   isSelected={selectedEvent?.id === ev.id}
-                  onClick={handleEventClick} // Usamos el nuevo handler
+                  onClick={handleEventClick}
                 />
               ))}
             </div>
