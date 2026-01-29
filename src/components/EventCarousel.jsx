@@ -3,98 +3,142 @@ import { supabase } from '../supabaseClient'
 import { Carousel } from 'primereact/carousel'
 import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
-import { Dialog } from 'primereact/dialog'
-import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
-import { Calendar } from 'primereact/calendar'
-import { Dropdown } from 'primereact/dropdown'
 import { Toast } from 'primereact/toast'
-import { addLocale } from 'primereact/api'
 import AddEventDialog from './AddEventDialog'
 
-// Configuración Español
-addLocale('es', {
-  firstDayOfWeek: 1,
-  dayNames: [
-    'domingo',
-    'lunes',
-    'martes',
-    'miércoles',
-    'jueves',
-    'viernes',
-    'sábado',
-  ],
-  dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
-  dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
-  monthNames: [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ],
-  monthNamesShort: [
-    'ene',
-    'feb',
-    'mar',
-    'abr',
-    'may',
-    'jun',
-    'jul',
-    'ago',
-    'sep',
-    'oct',
-    'nov',
-    'dic',
-  ],
-  today: 'Hoy',
-  clear: 'Limpiar',
-})
+// Constantes de configuración (fuera del componente)
+const RESPONSIVE_OPTIONS = [
+  { breakpoint: '1199px', numVisible: 3, numScroll: 1 },
+  { breakpoint: '991px', numVisible: 2, numScroll: 1 },
+  { breakpoint: '767px', numVisible: 1, numScroll: 1 },
+]
 
+// --- SUB-COMPONENTE: Tarjeta Individual del Carrusel ---
+const CarouselItem = ({ event }) => (
+  <div className='p-3 h-full'>
+    <div className='surface-card shadow-2 border-round-xl overflow-hidden hover:shadow-5 transition-all transition-duration-300 h-full flex flex-column'>
+      {/* Imagen y Tags */}
+      <div className='relative h-15rem w-full bg-gray-200'>
+        <img
+          src={event.image}
+          alt={event.titulo}
+          className='w-full h-full'
+          style={{ objectFit: 'cover', display: 'block' }}
+          loading='lazy'
+        />
+        <div className='absolute bottom-0 right-0 m-3'>
+          <Tag
+            value={event.tipo}
+            severity='info'
+            className='shadow-2'
+            icon='pi pi-tag'
+          />
+        </div>
+        <div
+          className='absolute bottom-0 left-0 w-full h-3rem'
+          style={{
+            background: 'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
+          }}
+        ></div>
+      </div>
+
+      {/* Contenido */}
+      <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
+        <div>
+          <div className='flex align-items-center gap-2 text-500 text-sm font-semibold mb-2 uppercase tracking-wide'>
+            <i className='pi pi-calendar text-blue-500'></i>
+            <span>{event.formattedDate}</span>
+          </div>
+          <h4 className='text-xl font-bold text-900 mt-0 mb-2 line-height-3'>
+            {event.titulo}
+          </h4>
+          {event.description && (
+            <p
+              className='text-600 text-sm line-height-3 m-0 mb-4 line-clamp-2'
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                height: '3em',
+              }}
+            >
+              {event.description}
+            </p>
+          )}
+        </div>
+
+        {/* Footer de la tarjeta */}
+        <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
+          <div className='flex align-items-center gap-2 text-600 text-sm'>
+            <div
+              className='border-circle surface-300 flex align-items-center justify-content-center'
+              style={{ width: '24px', height: '24px' }}
+            >
+              <i className='pi pi-user text-xs'></i>
+            </div>
+            <span
+              className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
+              style={{ maxWidth: '80px' }}
+            >
+              {event.profiles?.username || 'Anónimo'}
+            </span>
+          </div>
+          <div className='flex gap-2'>
+            <Button
+              icon='pi pi-heart'
+              rounded
+              outlined
+              severity='danger'
+              className='w-2rem h-2rem'
+              aria-label='Favorito'
+            />
+            <Button
+              icon='pi pi-arrow-right'
+              rounded
+              className='w-2rem h-2rem'
+              aria-label='Ver detalles'
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)
+
+// --- COMPONENTE PRINCIPAL ---
 const EventCarousel = () => {
   const [events, setEvents] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [currentUserSession, setCurrentUserSession] = useState(null)
   const toast = useRef(null)
 
-  // --- SOLUCIÓN: Función normal, sin useCallback ---
   const fetchEvents = async () => {
-    const now = new Date().toISOString()
     const { data, error } = await supabase
       .from('events')
       .select('*, profiles(username)')
-      .gte('fecha', now)
+      .gte('fecha', new Date().toISOString())
       .order('fecha', { ascending: true })
       .limit(9)
 
     if (!error && data) {
-      const eventsWithImages = data.map((ev) => ({
+      const processedEvents = data.map((ev) => ({
         ...ev,
-        date: new Date(ev.fecha).toLocaleDateString('es-ES', {
+        formattedDate: new Date(ev.fecha).toLocaleDateString('es-ES', {
           day: '2-digit',
           month: 'long',
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
         }),
-        location: 'España',
-        image: ev.image_url
-          ? ev.image_url
-          : `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=90&random=${ev.id}`,
-        status: 'CONFIRMADO',
+        image:
+          ev.image_url ||
+          `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80&random=${ev.id}`,
       }))
-      setEvents(eventsWithImages)
+      setEvents(processedEvents)
     }
   }
 
-  // Ejecutar SOLO al montar el componente (array vacío)
   useEffect(() => {
     fetchEvents()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,102 +161,10 @@ const EventCarousel = () => {
     setShowModal(true)
   }
 
-  const responsiveOptions = [
-    { breakpoint: '1199px', numVisible: 3, numScroll: 1 },
-    { breakpoint: '991px', numVisible: 2, numScroll: 1 },
-    { breakpoint: '767px', numVisible: 1, numScroll: 1 },
-  ]
-
-  const eventTemplate = (event) => {
-    return (
-      <div className='p-3 h-full'>
-        <div className='surface-card shadow-2 border-round-xl overflow-hidden hover:shadow-5 transition-all transition-duration-300 h-full flex flex-column'>
-          <div className='relative h-15rem w-full bg-gray-200'>
-            <img
-              src={event.image}
-              alt={event.titulo}
-              className='w-full h-full'
-              style={{ objectFit: 'cover', display: 'block' }}
-            />
-            <div className='absolute bottom-0 right-0 m-3'>
-              <Tag
-                value={event.tipo}
-                severity='info'
-                className='shadow-2'
-                icon='pi pi-tag'
-              />
-            </div>
-            <div
-              className='absolute bottom-0 left-0 w-full h-3rem'
-              style={{
-                background:
-                  'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
-              }}
-            ></div>
-          </div>
-          <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
-            <div>
-              <div className='flex align-items-center gap-2 text-500 text-sm font-semibold mb-2 uppercase tracking-wide'>
-                <i className='pi pi-calendar text-blue-500'></i>
-                <span>{event.date}</span>
-              </div>
-              <h4 className='text-xl font-bold text-900 mt-0 mb-2 line-height-3'>
-                {event.titulo}
-              </h4>
-              {event.description && (
-                <p
-                  className='text-600 text-sm line-height-3 m-0 mb-4 line-clamp-2'
-                  style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    height: '3em',
-                  }}
-                >
-                  {event.description}
-                </p>
-              )}
-            </div>
-            <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
-              <div className='flex align-items-center gap-2 text-600 text-sm'>
-                <div
-                  className='border-circle surface-300 flex align-items-center justify-content-center'
-                  style={{ width: '24px', height: '24px' }}
-                >
-                  <i className='pi pi-user text-xs'></i>
-                </div>
-                <span
-                  className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
-                  style={{ maxWidth: '80px' }}
-                >
-                  {event.profiles?.username || 'Anónimo'}
-                </span>
-              </div>
-              <div className='flex gap-2'>
-                <Button
-                  icon='pi pi-heart'
-                  rounded
-                  outlined
-                  severity='danger'
-                  className='w-2rem h-2rem'
-                />
-                <Button
-                  icon='pi pi-arrow-right'
-                  rounded
-                  className='w-2rem h-2rem'
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <section className='py-6 surface-ground relative'>
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
+
       <div className='text-center mb-5'>
         <h3 className='text-900 text-3xl font-bold mb-2'>Próximos Eventos</h3>
         <p className='text-600'>
@@ -237,8 +189,8 @@ const EventCarousel = () => {
             value={events}
             numVisible={3}
             numScroll={1}
-            responsiveOptions={responsiveOptions}
-            itemTemplate={eventTemplate}
+            responsiveOptions={RESPONSIVE_OPTIONS}
+            itemTemplate={(event) => <CarouselItem event={event} />}
             circular
             autoplayInterval={4000}
             showIndicators={false}

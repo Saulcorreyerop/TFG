@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 
+// --- 1. IMPORTACIONES GLOBALES (Leaflet y PrimeReact) ---
+import { addLocale } from 'primereact/api'
+import L from 'leaflet'
+import icon from 'leaflet/dist/images/marker-icon.png'
+import iconShadow from 'leaflet/dist/images/marker-shadow.png'
+
 // Componentes
 import Header from './components/Header'
 import Hero from './components/Hero'
@@ -13,9 +19,66 @@ import Footer from './components/Footer'
 // Páginas
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
-import EventsPage from './pages/EventsPage' // <--- 1. IMPORTAMOS LA NUEVA PÁGINA
+import EventsPage from './pages/EventsPage'
 
-// Definimos la estructura de la página de Inicio
+// --- 2. CONFIGURACIÓN GLOBAL (Se ejecuta una sola vez) ---
+// Configuración de Español para Calendarios
+addLocale('es', {
+  firstDayOfWeek: 1,
+  dayNames: [
+    'domingo',
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+  ],
+  dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
+  dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
+  monthNames: [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ],
+  monthNamesShort: [
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sep',
+    'oct',
+    'nov',
+    'dic',
+  ],
+  today: 'Hoy',
+  clear: 'Limpiar',
+})
+
+// Configuración de Iconos por defecto de Leaflet
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+})
+L.Marker.prototype.options.icon = DefaultIcon
+// ---------------------------------------------------------
+
 const Home = () => (
   <>
     <Hero />
@@ -29,12 +92,10 @@ function App() {
   const [session, setSession] = useState(null)
 
   useEffect(() => {
-    // Verificamos sesión al cargar
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
     })
 
-    // Escuchamos cambios (login/logout)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -47,25 +108,16 @@ function App() {
   return (
     <BrowserRouter>
       <div className='flex flex-column min-h-screen'>
-        {/* Pasamos la sesión al Header para cambiar los botones */}
         <Header session={session} />
-
         <Routes>
           <Route path='/' element={<Home />} />
-
-          {/* Pasamos 'session' al Mapa interactivo completo */}
           <Route path='/mapa' element={<MapPage session={session} />} />
-
-          {/* <--- 2. AÑADIMOS LA RUTA DE EVENTOS (pasando la sesión) */}
           <Route path='/eventos' element={<EventsPage session={session} />} />
-
-          {/* Rutas de autenticación */}
           <Route
             path='/login'
             element={!session ? <AuthPage /> : <Navigate to='/' />}
           />
         </Routes>
-
         <Footer />
       </div>
     </BrowserRouter>

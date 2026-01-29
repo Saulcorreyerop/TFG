@@ -1,28 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
 import { Card } from 'primereact/card'
 import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { TabView, TabPanel } from 'primereact/tabview'
 import { InputText } from 'primereact/inputtext'
-import { Dropdown } from 'primereact/dropdown' // <--- NUEVO
+import { Dropdown } from 'primereact/dropdown'
 import { Toast } from 'primereact/toast'
 import { addLocale } from 'primereact/api'
 import AddEventDialog from '../components/AddEventDialog'
 
-// Configuración de Español
+// Configuración global (fuera del componente para que sea estática)
 addLocale('es', {
   firstDayOfWeek: 1,
-  dayNames: [
-    'domingo',
-    'lunes',
-    'martes',
-    'miércoles',
-    'jueves',
-    'viernes',
-    'sábado',
-  ],
-  dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
   dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
   monthNames: [
     'enero',
@@ -38,46 +28,84 @@ addLocale('es', {
     'noviembre',
     'diciembre',
   ],
-  monthNamesShort: [
-    'ene',
-    'feb',
-    'mar',
-    'abr',
-    'may',
-    'jun',
-    'jul',
-    'ago',
-    'sep',
-    'oct',
-    'nov',
-    'dic',
-  ],
   today: 'Hoy',
   clear: 'Limpiar',
 })
 
+const EVENT_TYPES = [
+  { label: 'Todos los tipos', value: null },
+  { label: 'Stance / Expo', value: 'Exposición' },
+  { label: 'Ruta / Tramo', value: 'Tramo' },
+  { label: 'Circuito / Trackday', value: 'Circuito' },
+  { label: 'Clásicos', value: 'Clasicos' },
+  { label: 'Off-road / 4x4', value: 'Offroad' },
+]
+
+// Componente Tarjeta (Fuera para no recrearse)
+const EventCard = React.memo(({ event, isPast = false }) => (
+  <div className='col-12 md:col-6 lg:col-4 p-3'>
+    <div
+      className={`surface-card shadow-2 border-round-xl overflow-hidden h-full flex flex-column transition-all hover:shadow-5 ${isPast ? 'opacity-70 grayscale-1' : ''}`}
+    >
+      <div className='relative h-14rem'>
+        <img
+          src={event.image}
+          alt={event.titulo}
+          className='w-full h-full object-cover'
+          loading='lazy'
+        />
+        <div className='absolute top-0 right-0 m-2'>
+          <Tag value={event.tipo} severity={isPast ? 'secondary' : 'info'} />
+        </div>
+        {isPast && (
+          <Tag
+            value='FINALIZADO'
+            severity='danger'
+            className='absolute top-0 left-0 m-2'
+          />
+        )}
+      </div>
+
+      <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
+        <div>
+          <div className='text-500 font-medium text-sm mb-2'>
+            <i className='pi pi-calendar mr-1'></i> {event.formattedDate} •{' '}
+            {event.time}
+          </div>
+          <h3 className='text-xl font-bold text-900 mt-0 mb-2'>
+            {event.titulo}
+          </h3>
+          <p className='text-600 line-height-3 text-sm line-clamp-3 mb-4'>
+            {event.description || 'Sin descripción detallada.'}
+          </p>
+        </div>
+
+        <div className='border-top-1 surface-border pt-3 flex align-items-center justify-content-between'>
+          <span className='text-sm text-500'>
+            <i className='pi pi-user mr-1'></i>{' '}
+            {event.profiles?.username || 'Anónimo'}
+          </span>
+          <Button
+            label='Ver Detalles'
+            icon='pi pi-external-link'
+            size='small'
+            outlined
+            className={isPast ? 'p-button-secondary' : ''}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+))
+
 const EventsPage = ({ session }) => {
-  const [upcomingEvents, setUpcomingEvents] = useState([])
-  const [pastEvents, setPastEvents] = useState([])
-  const [featuredEvents, setFeaturedEvents] = useState([])
-
-  // --- ESTADOS DE FILTRO ---
-  const [filterText, setFilterText] = useState('')
-  const [filterType, setFilterType] = useState(null)
-
+  const [events, setEvents] = useState({ upcoming: [], past: [], featured: [] })
+  const [filters, setFilters] = useState({ text: '', type: null })
   const [showModal, setShowModal] = useState(false)
   const toast = useRef(null)
 
-  const tiposEvento = [
-    { label: 'Todos los tipos', value: null },
-    { label: 'Stance / Expo', value: 'Stance' },
-    { label: 'Ruta / Tramo', value: 'Ruta' },
-    { label: 'Circuito / Trackday', value: 'Racing' },
-    { label: 'Clásicos', value: 'Clasicos' },
-    { label: 'Off-road / 4x4', value: 'Offroad' },
-  ]
-
-  const fetchAllEvents = async () => {
+  // 1. useCallback para estabilizar la función de carga (evita bucles en useEffect)
+  const fetchAllEvents = useCallback(async () => {
     const { data, error } = await supabase
       .from('events')
       .select('*, profiles(username)')
@@ -85,131 +113,83 @@ const EventsPage = ({ session }) => {
 
     if (!error && data) {
       const now = new Date()
+      const processed = data.map((ev) => {
+        const date = new Date(ev.fecha)
+        return {
+          ...ev,
+          dateObj: date,
+          formattedDate: date.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          }),
+          time: date.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          image:
+            ev.image_url ||
+            `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80&random=${ev.id}`,
+        }
+      })
 
-      const processedEvents = data.map((ev) => ({
-        ...ev,
-        dateObj: new Date(ev.fecha),
-        formattedDate: new Date(ev.fecha).toLocaleDateString('es-ES', {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        }),
-        time: new Date(ev.fecha).toLocaleTimeString('es-ES', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        image: ev.image_url
-          ? ev.image_url
-          : `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=90&random=${ev.id}`,
-      }))
-
-      const future = processedEvents
+      const future = processed
         .filter((ev) => ev.dateObj >= now)
         .sort((a, b) => a.dateObj - b.dateObj)
-      const past = processedEvents
-        .filter((ev) => ev.dateObj < now)
-        .sort((a, b) => b.dateObj - a.dateObj)
 
-      setUpcomingEvents(future)
-      setPastEvents(past)
-      setFeaturedEvents(future.slice(0, 2))
+      setEvents({
+        upcoming: future,
+        past: processed
+          .filter((ev) => ev.dateObj < now)
+          .sort((a, b) => b.dateObj - a.dateObj),
+        featured: future.slice(0, 2),
+      })
     }
-  }
-
+  }, [])
   useEffect(() => {
     fetchAllEvents()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  })
+
+  // 3. useCallback para la función de filtrado (ESTO arregla el error de "missing dependency")
+  const filterList = useCallback(
+    (list) => {
+      return list.filter((e) => {
+        const matchText = e.titulo
+          .toLowerCase()
+          .includes(filters.text.toLowerCase())
+        const matchType = filters.type ? e.tipo === filters.type : true
+        return matchText && matchType
+      })
+    },
+    [filters],
+  ) // Se recrea solo cuando cambian los filtros
+
+  // 4. useMemo ahora recibe una función estable
+  const filteredUpcoming = useMemo(
+    () => filterList(events.upcoming),
+    [events.upcoming, filterList],
+  )
+  const filteredPast = useMemo(
+    () => filterList(events.past),
+    [events.past, filterList],
+  )
 
   const handleOpenModal = () => {
-    if (!session) {
-      toast.current.show({
+    if (!session)
+      return toast.current.show({
         severity: 'warn',
         summary: 'Acceso',
         detail: 'Inicia sesión para crear eventos.',
       })
-      return
-    }
     setShowModal(true)
   }
-
-  // --- LÓGICA DE FILTRADO COMBINADO ---
-  const filterList = (list) => {
-    return list.filter((e) => {
-      // 1. Filtro por texto (título)
-      const matchesText = e.titulo
-        .toLowerCase()
-        .includes(filterText.toLowerCase())
-      // 2. Filtro por tipo (si hay uno seleccionado)
-      const matchesType = filterType ? e.tipo === filterType : true
-
-      return matchesText && matchesType
-    })
-  }
-
-  // Limpiar filtros
-  const clearFilters = () => {
-    setFilterText('')
-    setFilterType(null)
-  }
-
-  const EventCard = ({ event, isPast = false }) => (
-    <div className='col-12 md:col-6 lg:col-4 p-3'>
-      <div
-        className={`surface-card shadow-2 border-round-xl overflow-hidden h-full flex flex-column transition-all hover:shadow-5 ${isPast ? 'opacity-80 grayscale-1' : ''}`}
-      >
-        <div className='relative h-14rem'>
-          <img
-            src={event.image}
-            alt={event.titulo}
-            className='w-full h-full object-cover'
-          />
-          <div className='absolute top-0 right-0 m-2'>
-            <Tag value={event.tipo} severity={isPast ? 'secondary' : 'info'} />
-          </div>
-          {isPast && (
-            <div className='absolute top-0 left-0 m-2'>
-              <Tag value='FINALIZADO' severity='danger' />
-            </div>
-          )}
-        </div>
-        <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
-          <div>
-            <div className='text-500 font-medium text-sm mb-2'>
-              <i className='pi pi-calendar mr-1'></i> {event.formattedDate} •{' '}
-              {event.time}
-            </div>
-            <h3 className='text-xl font-bold text-900 mt-0 mb-2'>
-              {event.titulo}
-            </h3>
-            <p className='text-600 line-height-3 text-sm line-clamp-3 mb-4'>
-              {event.description || 'Sin descripción detallada.'}
-            </p>
-          </div>
-
-          <div className='border-top-1 surface-border pt-3 flex align-items-center justify-content-between'>
-            <span className='text-sm text-500'>
-              <i className='pi pi-user mr-1'></i>{' '}
-              {event.profiles?.username || 'Anónimo'}
-            </span>
-            <Button
-              label='Ver Detalles'
-              icon='pi pi-external-link'
-              size='small'
-              outlined
-              className={isPast ? 'p-button-secondary' : ''}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 
   return (
     <div className='min-h-screen surface-ground p-3 md:p-5'>
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
+      {/* Título */}
       <div className='text-center mb-6'>
         <h1 className='text-4xl font-extrabold text-900 mb-2'>
           Agenda de Eventos
@@ -225,13 +205,14 @@ const EventsPage = ({ session }) => {
         />
       </div>
 
-      {featuredEvents.length > 0 && !filterText && !filterType && (
-        <div className='mb-6'>
+      {/* Destacados */}
+      {events.featured.length > 0 && !filters.text && !filters.type && (
+        <div className='mb-6 fadein animation-duration-500'>
           <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-blue-500 pl-3'>
             Destacados de la Semana
           </h2>
           <div className='grid'>
-            {featuredEvents.map((event) => (
+            {events.featured.map((event) => (
               <div key={`feat-${event.id}`} className='col-12 md:col-6 p-2'>
                 <div className='surface-card shadow-3 border-round-xl overflow-hidden flex flex-column md:flex-row h-full'>
                   <div className='w-full md:w-5 relative h-15rem md:h-auto'>
@@ -240,9 +221,12 @@ const EventsPage = ({ session }) => {
                       className='w-full h-full object-cover'
                       alt={event.titulo}
                     />
-                    <div className='absolute bottom-0 left-0 m-2'>
-                      <Tag severity='warning' value='¡MUY PRONTO!' rounded />
-                    </div>
+                    <Tag
+                      severity='warning'
+                      value='¡MUY PRONTO!'
+                      rounded
+                      className='absolute bottom-0 left-0 m-2'
+                    />
                   </div>
                   <div className='w-full md:w-7 p-4 flex flex-column justify-content-center'>
                     <h3 className='text-2xl font-bold mb-2'>{event.titulo}</h3>
@@ -255,7 +239,11 @@ const EventsPage = ({ session }) => {
                     <p className='text-600 mb-4 line-clamp-2'>
                       {event.description}
                     </p>
-                    <Button label='Ver Info Completa' className='w-full' />
+                    <Button
+                      label='Ver Info Completa'
+                      className='w-full'
+                      outlined
+                    />
                   </div>
                 </div>
               </div>
@@ -264,65 +252,61 @@ const EventsPage = ({ session }) => {
         </div>
       )}
 
-      {/* --- BARRA DE HERRAMIENTAS DE FILTRADO --- */}
+      {/* Filtros */}
       <div className='card mb-4 p-3 border-round-xl shadow-1 surface-card flex flex-column md:flex-row gap-3 justify-content-between align-items-center'>
-        <div className='flex align-items-center gap-2 w-full md:w-auto'>
-          <i className='pi pi-filter text-blue-500 text-xl mr-2'></i>
-          <span className='font-bold text-900'>Filtrar por:</span>
+        <div className='flex align-items-center gap-2 w-full md:w-auto font-bold text-900'>
+          <i className='pi pi-filter text-blue-500 text-xl'></i> Filtrar por:
         </div>
-
         <div className='flex flex-column md:flex-row gap-3 w-full md:w-auto'>
-          {/* Dropdown de Categoría */}
           <Dropdown
-            value={filterType}
-            options={tiposEvento}
-            onChange={(e) => setFilterType(e.value)}
+            value={filters.type}
+            options={EVENT_TYPES}
+            onChange={(e) => setFilters((prev) => ({ ...prev, type: e.value }))}
             placeholder='Tipo de Evento'
             className='w-full md:w-15rem'
             showClear
           />
-
-          {/* Buscador de Texto */}
           <span className='p-input-icon-left w-full md:w-20rem'>
             <i className='pi pi-search' />
             <InputText
               placeholder='Buscar por título...'
               className='w-full'
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
+              value={filters.text}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, text: e.target.value }))
+              }
             />
           </span>
-
-          {/* Botón limpiar */}
-          {(filterText || filterType) && (
+          {(filters.text || filters.type) && (
             <Button
               icon='pi pi-times'
               rounded
               text
               severity='danger'
-              onClick={clearFilters}
+              onClick={() => setFilters({ text: '', type: null })}
               tooltip='Limpiar filtros'
             />
           )}
         </div>
       </div>
 
+      {/* Tabs Listado */}
       <Card className='shadow-1 border-round-xl'>
         <TabView>
           <TabPanel
-            header={`Próximos (${filterList(upcomingEvents).length})`}
+            header={`Próximos (${filteredUpcoming.length})`}
             leftIcon='pi pi-calendar-plus mr-2'
           >
             <div className='grid mt-2'>
-              {filterList(upcomingEvents).length > 0 ? (
-                filterList(upcomingEvents).map((event) => (
-                  <EventCard key={event.id} event={event} />
+              {filteredUpcoming.length > 0 ? (
+                filteredUpcoming.map((ev) => (
+                  <EventCard key={ev.id} event={ev} />
                 ))
               ) : (
                 <div className='col-12 text-center py-5'>
                   <i className='pi pi-filter-slash text-4xl text-gray-300 mb-3'></i>
                   <p className='text-600'>
-                    No hay eventos que coincidan con tus filtros.
+                    No hay eventos próximos con estos filtros.
                   </p>
                 </div>
               )}
@@ -330,13 +314,13 @@ const EventsPage = ({ session }) => {
           </TabPanel>
 
           <TabPanel
-            header={`Historial (${filterList(pastEvents).length})`}
+            header={`Historial (${filteredPast.length})`}
             leftIcon='pi pi-history mr-2'
           >
             <div className='grid mt-2'>
-              {filterList(pastEvents).length > 0 ? (
-                filterList(pastEvents).map((event) => (
-                  <EventCard key={event.id} event={event} isPast={true} />
+              {filteredPast.length > 0 ? (
+                filteredPast.map((ev) => (
+                  <EventCard key={ev.id} event={ev} isPast />
                 ))
               ) : (
                 <div className='col-12 text-center py-5'>
