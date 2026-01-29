@@ -14,7 +14,8 @@ import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import AddEventDialog from '../components/AddEventDialog'
 
-import './MapPage.css' // Asegúrate de importar el CSS nuevo
+// Importamos el CSS actualizado
+import './MapPage.css'
 
 // --- SUB-COMPONENTES ---
 
@@ -28,6 +29,7 @@ const MapController = ({ selectedEvent }) => {
         { animate: true, duration: 1.5 },
       )
     }
+    // Timeout para asegurar renderizado correcto en móviles
     setTimeout(() => map.invalidateSize(), 400)
   }, [selectedEvent, map])
   return null
@@ -88,6 +90,7 @@ const EventCard = ({ ev, isSelected, onClick }) => (
 const MapPage = ({ session }) => {
   const navigate = useNavigate()
   const toast = useRef(null)
+  // Referencia para hacer scroll programático
   const mainContainerRef = useRef(null)
 
   const [eventos, setEventos] = useState([])
@@ -134,7 +137,7 @@ const MapPage = ({ session }) => {
     setDialogVisible(true)
   }
 
-  // Al hacer click, si estamos en móvil, scrolleamos el contenedor principal arriba para revelar el mapa
+  // Al hacer clic en un evento, si es móvil, hacemos scroll arriba suavemente para revelar el mapa
   const handleEventClick = (ev) => {
     setSelectedEvent(ev)
     if (window.innerWidth < 768 && mainContainerRef.current) {
@@ -142,10 +145,12 @@ const MapPage = ({ session }) => {
     }
   }
 
-  // Scroll al inicio al tocar la barra gris
-  const scrollToTop = () => {
-    if (mainContainerRef.current) {
-      mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+  // Función para subir la lista al hacer click en la barra gris o título en móvil
+  const scrollToTopList = () => {
+    if (window.innerWidth < 768 && mainContainerRef.current) {
+      // Hacemos scroll hacia abajo lo suficiente para que la lista tape el mapa
+      // El valor 500 es aproximado, suficiente para cubrir la zona del mapa visible
+      mainContainerRef.current.scrollTo({ top: 500, behavior: 'smooth' })
     }
   }
 
@@ -156,7 +161,7 @@ const MapPage = ({ session }) => {
     <div ref={mainContainerRef} className='map-page-container'>
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-      {/* 1. SECCIÓN DEL MAPA (Fondo Sticky) */}
+      {/* 1. SECCIÓN DEL MAPA */}
       <div className='map-section'>
         <MapContainer
           center={centerSpain}
@@ -228,22 +233,23 @@ const MapPage = ({ session }) => {
         )}
       </div>
 
-      {/* 2. SECCIÓN DE LA LISTA (Sábana Deslizante) */}
+      {/* 2. SECCIÓN DE LA LISTA (SIDEBAR) */}
       <aside className='sidebar-section'>
-        <div className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'>
-          {/* Handler visual (Barrita gris) para móvil */}
-          <div
-            className='md:hidden absolute top-0 left-0 w-full flex justify-content-center pt-2'
-            onClick={scrollToTop}
-          >
+        {/* Header con evento onClick para subir la lista en móvil */}
+        <div
+          className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
+          onClick={scrollToTopList}
+        >
+          {/* Handler visual (Barrita gris) para indicar arrastre */}
+          <div className='md:hidden absolute top-0 left-0 w-full flex justify-content-center pt-2'>
             <div
               className='w-3rem h-1 border-round opacity-50'
               style={{ backgroundColor: '#d1d5db' }}
             ></div>
           </div>
 
-          <div>
-            <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 mt-2 md:mt-0'>
+          <div className='mt-2 md:mt-0'>
+            <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900'>
               Eventos
             </h1>
             <p className='text-500 m-0 text-xs md:text-sm mt-1'>
@@ -256,7 +262,10 @@ const MapPage = ({ session }) => {
               severity='help'
               rounded
               className='shadow-1'
-              onClick={handleAddClick}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleAddClick()
+              }}
               aria-label='Añadir'
             />
           )}
@@ -264,13 +273,7 @@ const MapPage = ({ session }) => {
 
         <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
           {/* Instrucciones (Morado) */}
-          <div
-            className='p-3 border-round-xl shadow-2 mb-4 instruction-card'
-            style={{
-              backgroundColor: 'white',
-              borderLeft: '4px solid #A855F7',
-            }}
-          >
+          <div className='p-3 border-round-xl shadow-2 mb-4 instruction-card'>
             <div
               className='flex align-items-center gap-2 font-bold text-lg mb-2'
               style={{ color: '#2c3e50' }}
@@ -284,13 +287,7 @@ const MapPage = ({ session }) => {
             <p className='m-0 line-height-3 text-700 text-sm mb-3'>
               Navega por el mapa y haz click para crear.
             </p>
-            <div
-              className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700'
-              style={{
-                backgroundColor: '#FAF5FF',
-                border: '1px solid #E9D5FF',
-              }}
-            >
+            <div className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700 note-box'>
               <i
                 className='pi pi-info-circle'
                 style={{ color: '#A855F7', marginTop: '2px' }}
@@ -300,7 +297,7 @@ const MapPage = ({ session }) => {
                 automáticamente.
               </span>
             </div>
-            {/* Botón extra visible solo en móvil */}
+
             {session && (
               <div className='md:hidden mt-2'>
                 <Button

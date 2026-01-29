@@ -3,7 +3,8 @@
   display: flex;
   flex-direction: row;
   width: 100%;
-  height: calc(100vh - 64px); /* Altura total menos el header de la app */
+  /* Usamos dvh (dynamic viewport height) para mejor soporte en móviles modernos */
+  height: calc(100dvh - 64px);
   overflow: hidden;
   background-color: var(--surface-ground, #f8f9fa);
   position: relative;
@@ -51,24 +52,28 @@
 }
 
 /* =========================================
-   DISEÑO MÓVIL (Bottom Sheet)
+   DISEÑO MÓVIL (Bottom Sheet Ajustado)
    ========================================= */
 @media (max-width: 768px) {
   .map-page-container {
-    display: block; /* Bloque normal para permitir scroll nativo */
-    overflow-y: auto; /* El scroll está en el contenedor principal */
+    display: block;
+    overflow-y: auto;
     scroll-behavior: smooth;
+    /* Aseguramos que el contenedor ocupe la altura dinámica real */
+    height: calc(100dvh - 64px);
   }
 
   .map-section {
     width: 100%;
-    /* TRUCO MATEMÁTICO:
-       Calculamos la altura del mapa para que ocupe TODO el espacio
-       MENOS lo que mide la cabecera de la lista (aprox 80px).
-       Así, la cabecera queda justo asomando por abajo. */
-    height: calc(100% - 80px);
 
-    /* El mapa se queda pegado al fondo mientras la lista sube */
+    /* --- CAMBIO CLAVE AQUÍ --- 
+       Antes: calc(100% - 80px) -> Quedaba muy abajo.
+       Ahora: calc(100% - 150px) -> Dejamos 150px libres abajo.
+       Esto sube el "corte" del mapa, haciendo que la lista asome más arriba 
+       y libre la barra de navegación de iOS. 
+    */
+    height: calc(100% - 150px);
+
     position: sticky;
     top: 0;
     z-index: 0;
@@ -76,27 +81,30 @@
 
   .sidebar-section {
     width: 100%;
-    /* Altura mínima para que al subir tape toda la pantalla */
-    min-height: 100%;
+    /* Altura mínima: Pantalla completa menos un trocito para que tape todo al subir */
+    min-height: calc(100dvh - 100px);
     background-color: white;
 
-    /* Estética de "Hoja" */
     border-radius: 24px 24px 0 0;
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
 
     position: relative;
     z-index: 10;
 
-    /* Quitamos el scroll interno en móvil, usamos el de la página */
     overflow: visible;
     display: block;
+
+    /* Añadimos padding extra abajo para que el último evento no quede
+       tapado por la barra de navegación al hacer scroll final */
+    padding-bottom: 80px;
   }
 
   .sidebar-header {
-    /* La cabecera se pega arriba cuando la lista sube del todo */
     position: sticky;
     top: 0;
     border-radius: 24px 24px 0 0;
-    padding-top: 0.5rem; /* Espacio para la barrita gris */
+    padding-top: 0.5rem;
+    /* Sombra suave para que se note que es sticky al deslizar */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
 }
