@@ -14,11 +14,9 @@ import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import AddEventDialog from '../components/AddEventDialog'
 
-// Importamos el CSS actualizado
 import './MapPage.css'
 
-// --- SUB-COMPONENTES ---
-
+// ... (MapController, LocationMarker y EventCard IGUAL que antes, sin cambios) ...
 const MapController = ({ selectedEvent }) => {
   const map = useMap()
   useEffect(() => {
@@ -29,7 +27,6 @@ const MapController = ({ selectedEvent }) => {
         { animate: true, duration: 1.5 },
       )
     }
-    // Timeout para asegurar renderizado correcto en móviles
     setTimeout(() => map.invalidateSize(), 400)
   }, [selectedEvent, map])
   return null
@@ -90,7 +87,6 @@ const EventCard = ({ ev, isSelected, onClick }) => (
 const MapPage = ({ session }) => {
   const navigate = useNavigate()
   const toast = useRef(null)
-  // Referencia para hacer scroll programático
   const mainContainerRef = useRef(null)
 
   const [eventos, setEventos] = useState([])
@@ -137,19 +133,23 @@ const MapPage = ({ session }) => {
     setDialogVisible(true)
   }
 
-  // Al hacer clic en un evento, si es móvil, hacemos scroll arriba suavemente para revelar el mapa
+  // Scroll al top solo si estamos en modo Portrait (bloque)
   const handleEventClick = (ev) => {
     setSelectedEvent(ev)
-    if (window.innerWidth < 768 && mainContainerRef.current) {
+    // Detectamos si el contenedor tiene overflow (signo de que está en modo portrait)
+    if (
+      mainContainerRef.current &&
+      window.getComputedStyle(mainContainerRef.current).display === 'block'
+    ) {
       mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
-  // Función para subir la lista al hacer click en la barra gris o título en móvil
   const scrollToTopList = () => {
-    if (window.innerWidth < 768 && mainContainerRef.current) {
-      // Hacemos scroll hacia abajo lo suficiente para que la lista tape el mapa
-      // El valor 500 es aproximado, suficiente para cubrir la zona del mapa visible
+    if (
+      mainContainerRef.current &&
+      window.getComputedStyle(mainContainerRef.current).display === 'block'
+    ) {
       mainContainerRef.current.scrollTo({ top: 500, behavior: 'smooth' })
     }
   }
@@ -233,15 +233,14 @@ const MapPage = ({ session }) => {
         )}
       </div>
 
-      {/* 2. SECCIÓN DE LA LISTA (SIDEBAR) */}
+      {/* 2. SECCIÓN DE LA LISTA */}
       <aside className='sidebar-section'>
-        {/* Header con evento onClick para subir la lista en móvil */}
         <div
           className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
           onClick={scrollToTopList}
         >
-          {/* Handler visual (Barrita gris) para indicar arrastre */}
-          <div className='md:hidden absolute top-0 left-0 w-full flex justify-content-center pt-2'>
+          {/* Handler visual (Controlado por CSS: solo visible en Portrait) */}
+          <div className='mobile-drag-handle'>
             <div
               className='w-3rem h-1 border-round opacity-50'
               style={{ backgroundColor: '#d1d5db' }}
@@ -272,7 +271,6 @@ const MapPage = ({ session }) => {
         </div>
 
         <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
-          {/* Instrucciones (Morado) */}
           <div className='p-3 border-round-xl shadow-2 mb-4 instruction-card'>
             <div
               className='flex align-items-center gap-2 font-bold text-lg mb-2'
@@ -297,7 +295,7 @@ const MapPage = ({ session }) => {
                 automáticamente.
               </span>
             </div>
-
+            {/* Botón extra en lista (Visible si el CSS lo permite o por lógica simple) */}
             {session && (
               <div className='md:hidden mt-2'>
                 <Button
@@ -311,7 +309,6 @@ const MapPage = ({ session }) => {
             )}
           </div>
 
-          {/* Lista de Eventos */}
           <div className='flex flex-column gap-2'>
             {eventos.length === 0 && (
               <div className='text-center p-5 text-500'>

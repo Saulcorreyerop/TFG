@@ -1,18 +1,20 @@
-/* --- LAYOUT GENERAL (Escritorio) --- */
+/* =========================================
+   1. ESTILOS BASE (Escritorio y Landscape)
+   ========================================= */
 .map-page-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: row; /* Lado a lado por defecto */
   width: 100%;
-  /* Usamos dvh (dynamic viewport height) para mejor soporte en móviles modernos */
-  height: calc(100dvh - 64px);
-  overflow: hidden;
+  height: calc(100vh - 64px); /* Usamos vh estándar o dvh si el navegador soporta */
+  height: calc(100dvh - 64px); 
+  overflow: hidden; /* Sin scroll global, scroll interno en lista */
   background-color: var(--surface-ground, #f8f9fa);
   position: relative;
 }
 
 /* Sección Mapa */
 .map-section {
-  flex: 1;
+  flex: 1; /* Ocupa el espacio restante */
   height: 100%;
   position: relative;
   z-index: 0;
@@ -20,7 +22,7 @@
 
 /* Sección Lista (Sidebar) */
 .sidebar-section {
-  width: 26rem;
+  width: 26rem; /* Ancho fijo en escritorio */
   height: 100%;
   background-color: white;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
@@ -33,6 +35,11 @@
   flex: none;
   background-color: white;
   z-index: 20;
+  /* Ocultamos la barra gris de arrastre en escritorio/landscape */
+}
+
+.mobile-drag-handle {
+  display: none; 
 }
 
 .sidebar-content {
@@ -52,28 +59,20 @@
 }
 
 /* =========================================
-   DISEÑO MÓVIL (Bottom Sheet Ajustado)
+   2. DISEÑO MÓVIL VERTICAL (Portrait)
+   Solo se aplica si es pantalla pequeña Y está vertical
    ========================================= */
-@media (max-width: 768px) {
+@media (max-width: 768px) and (orientation: portrait) {
   .map-page-container {
-    display: block;
-    overflow-y: auto;
+    display: block; /* Bloque para scroll vertical */
+    overflow-y: auto; /* Scroll en el contenedor padre */
     scroll-behavior: smooth;
-    /* Aseguramos que el contenedor ocupe la altura dinámica real */
-    height: calc(100dvh - 64px);
   }
 
   .map-section {
     width: 100%;
-
-    /* --- CAMBIO CLAVE AQUÍ --- 
-       Antes: calc(100% - 80px) -> Quedaba muy abajo.
-       Ahora: calc(100% - 150px) -> Dejamos 150px libres abajo.
-       Esto sube el "corte" del mapa, haciendo que la lista asome más arriba 
-       y libre la barra de navegación de iOS. 
-    */
-    height: calc(100% - 150px);
-
+    /* Dejamos espacio abajo para que asome la cabecera */
+    height: calc(100% - 160px); 
     position: sticky;
     top: 0;
     z-index: 0;
@@ -81,22 +80,18 @@
 
   .sidebar-section {
     width: 100%;
-    /* Altura mínima: Pantalla completa menos un trocito para que tape todo al subir */
-    min-height: calc(100dvh - 100px);
+    height: auto;
+    min-height: calc(100dvh - 100px); /* Que cubra casi toda la pantalla al subir */
     background-color: white;
-
+    
+    /* Estilo "Hoja" */
     border-radius: 24px 24px 0 0;
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
-
+    
     position: relative;
     z-index: 10;
-
-    overflow: visible;
-    display: block;
-
-    /* Añadimos padding extra abajo para que el último evento no quede
-       tapado por la barra de navegación al hacer scroll final */
-    padding-bottom: 80px;
+    overflow: visible; /* Quitamos scroll interno */
+    padding-bottom: 80px; /* Espacio extra final */
   }
 
   .sidebar-header {
@@ -104,7 +99,59 @@
     top: 0;
     border-radius: 24px 24px 0 0;
     padding-top: 0.5rem;
-    /* Sombra suave para que se note que es sticky al deslizar */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* Mostramos la barrita gris solo en móvil vertical */
+  .mobile-drag-handle {
+    display: flex;
+    justify-content: center;
+    padding-top: 0.5rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    cursor: pointer;
+  }
+}
+
+/* =========================================
+   3. DISEÑO MÓVIL HORIZONTAL (Landscape)
+   Arregla el problema de la pantalla aplastada
+   ========================================= */
+@media (max-height: 600px) and (orientation: landscape) {
+  .map-page-container {
+    flex-direction: row; /* Volvemos a fila */
+    overflow: hidden; /* Scroll interno */
+  }
+
+  .map-section {
+    width: 50%; /* Mitad pantalla */
+    height: 100%;
+    position: relative; /* Reset sticky */
+  }
+
+  .sidebar-section {
+    width: 50%; /* Mitad pantalla */
+    height: 100%;
+    border-radius: 0; /* Quitamos bordes redondos */
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    overflow: hidden; /* Scroll interno activado */
+    padding-bottom: 0;
+  }
+
+  .sidebar-content {
+    overflow-y: auto; /* Scroll dentro de la lista */
+  }
+
+  .sidebar-header {
+    position: static; /* Header normal */
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .mobile-drag-handle {
+    display: none; /* Ocultamos barrita */
   }
 }
