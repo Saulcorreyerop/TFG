@@ -129,7 +129,6 @@ const MapPage = ({ session }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchEventos])
 
-  // Lógica mejorada: Si no hay sesión, avisa. Si hay sesión, abre el modal.
   const handleAddClick = () => {
     if (!session) {
       toast.current.show({
@@ -138,8 +137,6 @@ const MapPage = ({ session }) => {
         detail: 'Debes iniciar sesión para publicar un evento.',
         life: 3000,
       })
-      // Opcional: Redirigir al login tras un instante
-      // setTimeout(() => navigate('/login'), 1000);
       return
     }
     setPosicionTemp({ lat: null, lng: null })
@@ -224,7 +221,6 @@ const MapPage = ({ session }) => {
           ))}
         </MapContainer>
 
-        {/* Botón flotante de login (solo si no hay sesión) */}
         {!session && (
           <div className='absolute top-0 right-0 m-3 z-[400]'>
             <Button
@@ -261,7 +257,6 @@ const MapPage = ({ session }) => {
             </p>
           </div>
 
-          {/* EL CAMBIO CLAVE: Quitamos la condición {session && ...} para que se vea siempre */}
           <Button
             icon='pi pi-plus'
             severity='help'
@@ -281,33 +276,44 @@ const MapPage = ({ session }) => {
               className='flex align-items-center gap-2 font-bold text-lg mb-2'
               style={{ color: '#2c3e50' }}
             >
-              <i
-                className='pi pi-map-marker text-xl'
-                style={{ color: '#9333EA' }}
-              />
+              <i className='pi pi-map-marker text-xl text-purple' />
               <span>Añadir nuevo evento</span>
             </div>
+
             <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-              Navega por el mapa y haz click para crear.
+              Navega por el mapa, haz zoom en la zona exacta y
+              <span className='font-bold text-900'>
+                {' '}
+                haz click sobre el lugar{' '}
+              </span>
+              donde comenzará el evento para crearlo.
             </p>
-            <div className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700 note-box'>
+
+            <p className='m-0 line-height-3 text-700 text-sm mb-3'>
+              - También puedes utilizar el
+              <span className='font-bold text-900'> botón de abajo </span>
+              para añadirlo de una manera mas sencilla.
+            </p>
+
+            <div className='p-3 border-round-md flex align-items-start gap-2 text-xs note-box'>
               <i
-                className='pi pi-info-circle'
-                style={{ color: '#A855F7', marginTop: '2px' }}
+                className='pi pi-info-circle text-purple'
+                style={{ marginTop: '2px' }}
               />
               <span>
-                <strong>Nota:</strong> Los eventos pasados desaparecen
-                automáticamente.
+                <strong>Nota:</strong> Una vez que la fecha y hora del evento
+                hayan pasado, este dejará de mostrarse automáticamente en el
+                mapa.
               </span>
             </div>
 
-            {/* Botón extra en lista: También visible siempre, lógica en handleAddClick */}
-            <div className='md:hidden mt-2'>
+            {/* AQUÍ ESTABA EL CAMBIO: Quitamos 'md:hidden' para que se vea siempre */}
+            <div className='mt-3'>
               <Button
-                label='Añadir por dirección'
-                link
-                size='small'
-                className='w-full p-0 text-purple-600'
+                label='Agregar Evento por Dirección'
+                severity='help'
+                outlined
+                className='w-full text-purple-dark'
                 onClick={handleAddClick}
               />
             </div>
