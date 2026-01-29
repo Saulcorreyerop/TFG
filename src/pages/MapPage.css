@@ -1,0 +1,97 @@
+/* --- LAYOUT GENERAL --- */
+.map-page-container {
+  display: flex;
+  flex-direction: row; /* Desktop por defecto */
+  width: 100%;
+  height: calc(100vh - 64px); /* Ajusta según tu Header */
+  overflow: hidden;
+  background-color: var(--surface-ground, #f8f9fa);
+  position: relative;
+}
+
+/* --- SECCIÓN DEL MAPA --- */
+.map-section {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  z-index: 0;
+}
+
+/* --- SECCIÓN DE LA LISTA (SIDEBAR) --- */
+.sidebar-section {
+  width: 26rem; /* Ancho fijo en PC */
+  height: 100%;
+  background-color: white;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  flex: none; /* No encoger ni estirar */
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto; /* Scroll interno en PC */
+  padding-bottom: 2rem;
+}
+
+/* --- ESTILOS TARJETAS E INSTRUCCIONES --- */
+.instruction-card {
+  background-color: white;
+  border-left: 4px solid #a855f7; /* Morado */
+}
+
+.note-box {
+  background-color: #faf5ff; /* Morado muy suave */
+  border: 1px solid #e9d5ff;
+}
+
+.event-card {
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.event-card.selected {
+  border-left-color: #a855f7;
+  background-color: #faf5ff;
+}
+
+/* =========================================
+   DISEÑO MÓVIL (Menos de 768px) 
+   ========================================= */
+@media (max-width: 768px) {
+  .map-page-container {
+    display: block; /* Cambiamos a bloque para permitir scroll vertical nativo */
+    overflow-y: auto; /* El scroll lo tiene el contenedor padre */
+  }
+
+  .map-section {
+    width: 100%;
+    height: 55vh; /* Altura del mapa */
+    position: sticky; /* MAGIA: Se queda pegado al top mientras scrolleas */
+    top: 0;
+  }
+
+  .sidebar-section {
+    width: 100%;
+    height: auto; /* Altura automática según contenido */
+    min-height: 60vh; /* Para asegurar que tape la pantalla al subir */
+    position: relative;
+    z-index: 10;
+    margin-top: -20px; /* Efecto solapamiento */
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    overflow: visible; /* Quitamos scroll interno */
+  }
+
+  .sidebar-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background-color: white;
+    border-radius: 24px 24px 0 0;
+  }
+}
