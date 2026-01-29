@@ -62,3 +62,20 @@ body {
     margin-left: auto;
   }
 }
+.text-flag-esp {
+  background: linear-gradient(
+    to bottom,
+    #ad1519 0%,
+    #ad1519 30%,
+    #fabd00 30%,
+    #fabd00 70%,
+    #ad1519 70%,
+    #ad1519 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+  font-weight: 800;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+}

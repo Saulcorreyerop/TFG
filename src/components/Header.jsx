@@ -58,7 +58,7 @@ const Header = ({ session }) => {
       onClick={() => navigate('/')}
     >
       <h2 className='text-xl font-bold text-900 m-0'>
-        CarMeet<span style={{ color: 'var(--blue-500)' }}>ESP</span>
+        CarMeet<span className='text-flag-esp'>ESP</span>
       </h2>
     </div>
   )
