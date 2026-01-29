@@ -151,6 +151,8 @@ const EventsPage = ({ session }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   })
 
+  // Página Creada Por Saúl Correyero Pañero
+
   // 3. useCallback para la función de filtrado (ESTO arregla el error de "missing dependency")
   const filterList = useCallback(
     (list) => {
