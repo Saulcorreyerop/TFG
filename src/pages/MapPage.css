@@ -1,15 +1,15 @@
-/* --- LAYOUT GENERAL --- */
+/* --- LAYOUT GENERAL (Escritorio) --- */
 .map-page-container {
   display: flex;
-  flex-direction: row; /* Desktop por defecto */
+  flex-direction: row;
   width: 100%;
-  height: calc(100vh - 64px); /* Ajusta según tu Header */
+  height: calc(100vh - 64px); /* Altura total menos el header de la app */
   overflow: hidden;
   background-color: var(--surface-ground, #f8f9fa);
   position: relative;
 }
 
-/* --- SECCIÓN DEL MAPA --- */
+/* Sección Mapa */
 .map-section {
   flex: 1;
   height: 100%;
@@ -17,9 +17,9 @@
   z-index: 0;
 }
 
-/* --- SECCIÓN DE LA LISTA (SIDEBAR) --- */
+/* Sección Lista (Sidebar) */
 .sidebar-section {
-  width: 26rem; /* Ancho fijo en PC */
+  width: 26rem;
   height: 100%;
   background-color: white;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
@@ -29,69 +29,74 @@
 }
 
 .sidebar-header {
-  flex: none; /* No encoger ni estirar */
+  flex: none;
+  background-color: white;
+  z-index: 20;
 }
 
 .sidebar-content {
   flex: 1;
-  overflow-y: auto; /* Scroll interno en PC */
+  overflow-y: auto;
   padding-bottom: 2rem;
 }
 
-/* --- ESTILOS TARJETAS E INSTRUCCIONES --- */
-.instruction-card {
-  background-color: white;
-  border-left: 4px solid #a855f7; /* Morado */
-}
-
-.note-box {
-  background-color: #faf5ff; /* Morado muy suave */
-  border: 1px solid #e9d5ff;
-}
-
+/* Estilos de tarjetas */
 .event-card {
   border-left: 4px solid transparent;
   transition: all 0.2s ease;
 }
-
 .event-card.selected {
   border-left-color: #a855f7;
   background-color: #faf5ff;
 }
 
 /* =========================================
-   DISEÑO MÓVIL (Menos de 768px) 
+   DISEÑO MÓVIL (Bottom Sheet)
    ========================================= */
 @media (max-width: 768px) {
   .map-page-container {
-    display: block; /* Cambiamos a bloque para permitir scroll vertical nativo */
-    overflow-y: auto; /* El scroll lo tiene el contenedor padre */
+    display: block; /* Bloque normal para permitir scroll nativo */
+    overflow-y: auto; /* El scroll está en el contenedor principal */
+    scroll-behavior: smooth;
   }
 
   .map-section {
     width: 100%;
-    height: 55vh; /* Altura del mapa */
-    position: sticky; /* MAGIA: Se queda pegado al top mientras scrolleas */
+    /* TRUCO MATEMÁTICO:
+       Calculamos la altura del mapa para que ocupe TODO el espacio
+       MENOS lo que mide la cabecera de la lista (aprox 80px).
+       Así, la cabecera queda justo asomando por abajo. */
+    height: calc(100% - 80px);
+
+    /* El mapa se queda pegado al fondo mientras la lista sube */
+    position: sticky;
     top: 0;
+    z-index: 0;
   }
 
   .sidebar-section {
     width: 100%;
-    height: auto; /* Altura automática según contenido */
-    min-height: 60vh; /* Para asegurar que tape la pantalla al subir */
+    /* Altura mínima para que al subir tape toda la pantalla */
+    min-height: 100%;
+    background-color: white;
+
+    /* Estética de "Hoja" */
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
+
     position: relative;
     z-index: 10;
-    margin-top: -20px; /* Efecto solapamiento */
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-    overflow: visible; /* Quitamos scroll interno */
+
+    /* Quitamos el scroll interno en móvil, usamos el de la página */
+    overflow: visible;
+    display: block;
   }
 
   .sidebar-header {
+    /* La cabecera se pega arriba cuando la lista sube del todo */
     position: sticky;
     top: 0;
-    z-index: 20;
-    background-color: white;
     border-radius: 24px 24px 0 0;
+    padding-top: 0.5rem; /* Espacio para la barrita gris */
   }
 }

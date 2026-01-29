@@ -14,8 +14,7 @@ import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import AddEventDialog from '../components/AddEventDialog'
 
-// Importamos el CSS
-import './MapPage.css'
+import './MapPage.css' // Asegúrate de importar el CSS nuevo
 
 // --- SUB-COMPONENTES ---
 
@@ -29,7 +28,6 @@ const MapController = ({ selectedEvent }) => {
         { animate: true, duration: 1.5 },
       )
     }
-    // Asegura que el mapa se pinte bien al cambiar de tamaño
     setTimeout(() => map.invalidateSize(), 400)
   }, [selectedEvent, map])
   return null
@@ -136,10 +134,17 @@ const MapPage = ({ session }) => {
     setDialogVisible(true)
   }
 
-  // Al hacer click, si estamos en móvil, scrolleamos el contenedor principal arriba
+  // Al hacer click, si estamos en móvil, scrolleamos el contenedor principal arriba para revelar el mapa
   const handleEventClick = (ev) => {
     setSelectedEvent(ev)
     if (window.innerWidth < 768 && mainContainerRef.current) {
+      mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // Scroll al inicio al tocar la barra gris
+  const scrollToTop = () => {
+    if (mainContainerRef.current) {
       mainContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
@@ -151,7 +156,7 @@ const MapPage = ({ session }) => {
     <div ref={mainContainerRef} className='map-page-container'>
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-      {/* 1. SECCIÓN DEL MAPA */}
+      {/* 1. SECCIÓN DEL MAPA (Fondo Sticky) */}
       <div className='map-section'>
         <MapContainer
           center={centerSpain}
@@ -160,7 +165,7 @@ const MapPage = ({ session }) => {
           maxBounds={spainBounds}
           zoomControl={false}
           className='h-full w-full'
-          style={{ background: '#f0f0f0' }} // Color de fondo mientras carga
+          style={{ background: '#f0f0f0' }}
         >
           <TileLayer
             attribution='&copy; OpenStreetMap'
@@ -223,21 +228,22 @@ const MapPage = ({ session }) => {
         )}
       </div>
 
-      {/* 2. SECCIÓN DE LA LISTA (SIDEBAR) */}
+      {/* 2. SECCIÓN DE LA LISTA (Sábana Deslizante) */}
       <aside className='sidebar-section'>
-        <div className='sidebar-header p-3 md:p-4 bg-white border-bottom-1 border-100 flex justify-content-between align-items-center'>
-          {/* Handler visual para móvil */}
+        <div className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'>
+          {/* Handler visual (Barrita gris) para móvil */}
           <div
             className='md:hidden absolute top-0 left-0 w-full flex justify-content-center pt-2'
-            onClick={() =>
-              mainContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-            }
+            onClick={scrollToTop}
           >
-            <div className='w-2rem h-1 bg-gray-300 border-round opacity-60'></div>
+            <div
+              className='w-3rem h-1 border-round opacity-50'
+              style={{ backgroundColor: '#d1d5db' }}
+            ></div>
           </div>
 
           <div>
-            <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900'>
+            <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 mt-2 md:mt-0'>
               Eventos
             </h1>
             <p className='text-500 m-0 text-xs md:text-sm mt-1'>
@@ -257,8 +263,14 @@ const MapPage = ({ session }) => {
         </div>
 
         <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
-          {/* Instrucciones */}
-          <div className='p-3 border-round-xl shadow-2 mb-4 instruction-card'>
+          {/* Instrucciones (Morado) */}
+          <div
+            className='p-3 border-round-xl shadow-2 mb-4 instruction-card'
+            style={{
+              backgroundColor: 'white',
+              borderLeft: '4px solid #A855F7',
+            }}
+          >
             <div
               className='flex align-items-center gap-2 font-bold text-lg mb-2'
               style={{ color: '#2c3e50' }}
@@ -272,7 +284,13 @@ const MapPage = ({ session }) => {
             <p className='m-0 line-height-3 text-700 text-sm mb-3'>
               Navega por el mapa y haz click para crear.
             </p>
-            <div className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700 note-box'>
+            <div
+              className='p-3 border-round-md flex align-items-start gap-2 text-xs text-700'
+              style={{
+                backgroundColor: '#FAF5FF',
+                border: '1px solid #E9D5FF',
+              }}
+            >
               <i
                 className='pi pi-info-circle'
                 style={{ color: '#A855F7', marginTop: '2px' }}
@@ -282,16 +300,17 @@ const MapPage = ({ session }) => {
                 automáticamente.
               </span>
             </div>
-
-            {/* Botón extra visible solo en móvil (por CSS media query si quisieras, o JS aquí) */}
-            {session && window.innerWidth < 768 && (
-              <Button
-                label='Añadir por dirección'
-                link
-                size='small'
-                className='w-full mt-2 p-0 text-purple-600'
-                onClick={handleAddClick}
-              />
+            {/* Botón extra visible solo en móvil */}
+            {session && (
+              <div className='md:hidden mt-2'>
+                <Button
+                  label='Añadir por dirección'
+                  link
+                  size='small'
+                  className='w-full p-0 text-purple-600'
+                  onClick={handleAddClick}
+                />
+              </div>
             )}
           </div>
 
