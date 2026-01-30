@@ -260,7 +260,7 @@ const MapPage = ({ session }) => {
             <div className='mt-2 md:mt-0 text-center display-flex justify-content-center align-items-center flex-column w-full'>
               <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
                 {/* --- DRAG HANDLE (Tirador) --- */}
-                <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
+                <div className='flex justify-content-center pt-1 pb-1 w-full cursor-pointer'>
                   <div
                     className='border-round-xl'
                     style={{
