@@ -258,6 +258,19 @@ const MapPage = ({ session }) => {
             </div>
 
             <div className='mt-2 md:mt-0 text-center display-flex justify-content-center align-items-center flex-column w-full'>
+              <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
+                {/* --- DRAG HANDLE (Tirador) --- */}
+                <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
+                  <div
+                    className='border-round-xl'
+                    style={{
+                      width: '40px',
+                      height: '6px',
+                      backgroundColor: '#cbd5e1' /* Gris azulado visible */,
+                    }}
+                  ></div>
+                </div>
+              </div>
               <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
                 Eventos
               </h1>
