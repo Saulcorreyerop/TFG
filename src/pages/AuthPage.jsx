@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react' // Asegúrate de importar useRef y useState
+import React, { useState, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { InputText } from 'primereact/inputtext'
 import { Password } from 'primereact/password'
@@ -10,15 +10,13 @@ import { Toast } from 'primereact/toast'
 const AuthPage = () => {
   const toast = useRef(null)
   const [loading, setLoading] = useState(false)
-
-  // NUEVO: Estado para controlar qué pestaña está activa (0 = Login, 1 = Registro)
   const [activeIndex, setActiveIndex] = useState(0)
 
-  // Estados para Login
+  // Estados Login
   const [loginInput, setLoginInput] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
 
-  // Estados para Registro
+  // Estados Registro
   const [regUsername, setRegUsername] = useState('')
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
@@ -51,8 +49,6 @@ const AuthPage = () => {
       })
 
       if (error) throw error
-
-      // Redirección aquí si es necesario
     } catch (error) {
       toast.current.show({
         severity: 'error',
@@ -114,8 +110,6 @@ const AuthPage = () => {
       setRegPassword('')
       setRegConfirmPassword('')
       setRegUsername('')
-      // Opcional: Cambiar a la pestaña de login tras registro exitoso
-      // setActiveIndex(0)
     }
     setLoading(false)
   }
@@ -129,20 +123,22 @@ const AuthPage = () => {
           <p className='text-600'>Tu comunidad de motor te espera</p>
         </div>
 
-        {/* NUEVO: TabView controlado mediante activeIndex y onTabChange */}
         <TabView
           activeIndex={activeIndex}
           onTabChange={(e) => setActiveIndex(e.index)}
         >
           {/* --- PANEL DE INICIO DE SESIÓN --- */}
           <TabPanel header='Iniciar Sesión'>
-            <form onSubmit={handleLogin} className='flex flex-column gap-3'>
-              <span className='p-float-label mt-3'>
+            {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
+            <form
+              onSubmit={handleLogin}
+              className='flex flex-column gap-4 pt-2 p-fluid'
+            >
+              <span className='p-float-label'>
                 <InputText
                   id='login-input'
                   value={loginInput}
                   onChange={(e) => setLoginInput(e.target.value)}
-                  className='w-full'
                 />
                 <label htmlFor='login-input'>Correo o Nombre de Usuario</label>
               </span>
@@ -154,8 +150,6 @@ const AuthPage = () => {
                   onChange={(e) => setLoginPassword(e.target.value)}
                   toggleMask
                   feedback={false}
-                  className='w-full'
-                  inputClassName='w-full'
                 />
                 <label htmlFor='login-pass'>Contraseña</label>
               </span>
@@ -163,16 +157,14 @@ const AuthPage = () => {
               <Button
                 label={loading ? 'Verificando...' : 'Entrar'}
                 icon='pi pi-sign-in'
-                className='w-full mt-2'
                 loading={loading}
               />
 
-              {/* NUEVO: Texto y enlace para cambiar al registro */}
-              <div className='text-center mt-3 text-600'>
+              <div className='text-center text-600 mt-2'>
                 ¿No tienes cuenta aún?{' '}
                 <span
                   className='font-bold text-primary cursor-pointer hover:underline'
-                  onClick={() => setActiveIndex(1)} // Cambia al índice 1 (Registro)
+                  onClick={() => setActiveIndex(1)}
                 >
                   Regístrate aquí
                 </span>
@@ -182,13 +174,16 @@ const AuthPage = () => {
 
           {/* --- PANEL DE REGISTRO --- */}
           <TabPanel header='Registrarse'>
-            <form onSubmit={handleRegister} className='flex flex-column gap-3'>
-              <span className='p-float-label mt-3'>
+            {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
+            <form
+              onSubmit={handleRegister}
+              className='flex flex-column gap-4 pt-2 p-fluid'
+            >
+              <span className='p-float-label'>
                 <InputText
                   id='reg-user'
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
-                  className='w-full'
                 />
                 <label htmlFor='reg-user'>Nombre de Usuario</label>
               </span>
@@ -198,7 +193,6 @@ const AuthPage = () => {
                   id='reg-email'
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
-                  className='w-full'
                 />
                 <label htmlFor='reg-email'>Correo Electrónico</label>
               </span>
@@ -213,8 +207,6 @@ const AuthPage = () => {
                   weakLabel='Débil'
                   mediumLabel='Media'
                   strongLabel='Fuerte'
-                  className='w-full'
-                  inputClassName='w-full'
                 />
                 <label htmlFor='reg-pass'>Contraseña</label>
               </span>
@@ -226,8 +218,6 @@ const AuthPage = () => {
                   onChange={(e) => setRegConfirmPassword(e.target.value)}
                   toggleMask
                   feedback={false}
-                  className='w-full'
-                  inputClassName='w-full'
                 />
                 <label htmlFor='reg-confirm'>Confirmar Contraseña</label>
               </span>
@@ -236,12 +226,10 @@ const AuthPage = () => {
                 label={loading ? 'Creando cuenta...' : 'Crear Cuenta'}
                 icon='pi pi-user-plus'
                 severity='success'
-                className='w-full mt-2'
                 loading={loading}
               />
 
-              {/* Opcional: Botón para volver al login desde registro */}
-              <div className='text-center mt-3 text-600'>
+              <div className='text-center text-600 mt-2'>
                 ¿Ya tienes cuenta?{' '}
                 <span
                   className='font-bold text-primary cursor-pointer hover:underline'

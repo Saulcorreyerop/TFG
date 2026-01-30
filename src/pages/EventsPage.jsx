@@ -151,7 +151,7 @@ const EventsPage = ({ session }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   })
 
-  // Página Creada Por Saúl Correyero Pañero 
+  // Página Creada Por Saúl Correyero Pañero
 
   // 3. useCallback para la función de filtrado (ESTO arregla el error de "missing dependency")
   const filterList = useCallback(
@@ -269,10 +269,10 @@ const EventsPage = ({ session }) => {
             showClear
           />
           <span className='p-input-icon-left w-full md:w-20rem'>
-            <i className='pi pi-search' />
+            <i className=' pl-2 pi pi-search' />
             <InputText
               placeholder='Buscar por título...'
-              className='w-full'
+              className='pl-5 w-full'
               value={filters.text}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, text: e.target.value }))
