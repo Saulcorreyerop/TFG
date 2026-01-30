@@ -11,7 +11,6 @@ import { addLocale } from 'primereact/api'
 import AddEventDialog from '../components/AddEventDialog'
 import { useFavorites } from '../hooks/useFavorites'
 
-// Configuración global
 addLocale('es', {
   firstDayOfWeek: 1,
   dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
@@ -42,7 +41,6 @@ const EVENT_TYPES = [
   { label: 'Off-road / 4x4', value: 'Offroad' },
 ]
 
-// Helper para formatear eventos (usado para lista general y favoritos)
 const formatEventData = (ev) => {
   const date = new Date(ev.fecha)
   return {
@@ -63,7 +61,6 @@ const formatEventData = (ev) => {
   }
 }
 
-// Componente Tarjeta
 const EventCard = React.memo(({ event, isPast = false, session }) => {
   const { isFavorite, toggleFavorite, loading } = useFavorites(
     event.id,
@@ -141,15 +138,13 @@ const EventCard = React.memo(({ event, isPast = false, session }) => {
 
 const EventsPage = ({ session }) => {
   const [events, setEvents] = useState({ upcoming: [], past: [], featured: [] })
-  // NUEVO ESTADO PARA FAVORITOS
   const [favorites, setFavorites] = useState([])
-
   const [filters, setFilters] = useState({ text: '', type: null })
   const [showModal, setShowModal] = useState(false)
   const toast = useRef(null)
 
   const fetchAllEvents = useCallback(async () => {
-    // 1. Cargar TODOS los eventos
+    // 1. Obtener Eventos
     const { data, error } = await supabase
       .from('events')
       .select('*, profiles(username)')
@@ -157,9 +152,7 @@ const EventsPage = ({ session }) => {
 
     if (!error && data) {
       const now = new Date()
-      // Usamos el helper para formatear
       const processed = data.map((ev) => formatEventData(ev))
-
       const future = processed
         .filter((ev) => ev.dateObj >= now)
         .sort((a, b) => a.dateObj - b.dateObj)
@@ -173,24 +166,22 @@ const EventsPage = ({ session }) => {
       })
     }
 
-    // 2. Cargar FAVORITOS (Solo si hay sesión)
+    // 2. Obtener Favoritos
     if (session) {
       const { data: favData, error: favError } = await supabase
         .from('favorites')
-        .select('event_id, events(*, profiles(username))') // Join con events y profiles
+        .select('event_id, events(*, profiles(username))')
         .eq('user_id', session.user.id)
 
       if (!favError && favData) {
-        // Extraemos el objeto 'events' y lo formateamos
         const validFavs = favData
-          .map((item) => item.events) // Sacamos el evento anidado
-          .filter((ev) => ev !== null) // Filtramos nulos por seguridad
-          .map((ev) => formatEventData(ev)) // Formateamos igual que los demás
-
+          .map((item) => item.events)
+          .filter((ev) => ev !== null)
+          .map((ev) => formatEventData(ev))
         setFavorites(validFavs)
       }
     } else {
-      setFavorites([]) // Si no hay sesión, vaciamos favoritos
+      setFavorites([])
     }
   }, [session])
 
@@ -235,7 +226,6 @@ const EventsPage = ({ session }) => {
     <div className='min-h-screen surface-ground p-3 md:p-5'>
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-      {/* Título */}
       <div className='text-center mb-6'>
         <h1 className='text-4xl font-extrabold text-900 mb-2'>
           Agenda de Eventos
@@ -251,24 +241,20 @@ const EventsPage = ({ session }) => {
         />
       </div>
 
-      {/* --- SECCIÓN NUEVA: TUS FAVORITOS --- */}
-      {/* Se renderiza solo si hay favoritos y no hay filtros activos (opcional, para que siempre estén visibles) */}
       {favorites.length > 0 && !filters.text && !filters.type && (
         <div className='mb-6 fadein animation-duration-500'>
           <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-pink-500 pl-3 flex align-items-center gap-2'>
-            <i className='pi text-pink-500'></i> Tus Favoritos
+            <i className='pi pi-heart-fill text-pink-500'></i> Tus Favoritos
           </h2>
           <div className='grid'>
             {favorites.map((ev) => (
               <EventCard key={`fav-${ev.id}`} event={ev} session={session} />
             ))}
           </div>
-          {/* Separador visual */}
           <div className='border-bottom-1 surface-border my-5'></div>
         </div>
       )}
 
-      {/* Destacados (Se ocultan si se filtra) */}
       {events.featured.length > 0 && !filters.text && !filters.type && (
         <div className='mb-6 fadein animation-duration-500'>
           <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-blue-500 pl-3'>
@@ -315,7 +301,6 @@ const EventsPage = ({ session }) => {
         </div>
       )}
 
-      {/* Filtros */}
       <div className='card mb-4 p-3 border-round-xl shadow-1 surface-card flex flex-column md:flex-row gap-3 justify-content-between align-items-center'>
         <div className='flex align-items-center gap-2 w-full md:w-auto font-bold text-900'>
           <i className='pi pi-filter text-blue-500 text-xl'></i> Filtrar por:
@@ -330,7 +315,7 @@ const EventsPage = ({ session }) => {
             showClear
           />
           <span className='p-input-icon-left w-full md:w-20rem'>
-            <i className=' pl-2 pi pi-search' />
+            <i className='pl-2 pi pi-search' />
             <InputText
               placeholder='Buscar por título...'
               className='pl-5 w-full'
@@ -353,7 +338,6 @@ const EventsPage = ({ session }) => {
         </div>
       </div>
 
-      {/* Tabs Listado */}
       <Card className='shadow-1 border-round-xl'>
         <TabView>
           <TabPanel

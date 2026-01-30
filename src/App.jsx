@@ -23,6 +23,8 @@ import AuthPage from './pages/AuthPage'
 import EventsPage from './pages/EventsPage'
 import GaragePage from './pages/GaragePage'
 import ProfilePage from './pages/ProfilePage'
+import PublicProfile from './pages/PublicProfile'
+import CommunityPage from './pages/CommunityPage'
 
 import { Helmet } from 'react-helmet-async'
 
@@ -146,6 +148,7 @@ function App() {
           <Route path='/' element={<Home />} />
           <Route path='/mapa' element={<MapPage session={session} />} />
           <Route path='/eventos' element={<EventsPage session={session} />} />
+          <Route path='/comunidad' element={<CommunityPage />} />
 
           <Route
             path='/garaje'
@@ -167,6 +170,7 @@ function App() {
               )
             }
           />
+          <Route path='/usuario/:userId' element={<PublicProfile />} />
           <Route
             path='/login'
             element={!session ? <AuthPage /> : <Navigate to='/' />}

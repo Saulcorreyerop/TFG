@@ -50,6 +50,11 @@ const Header = ({ session }) => {
       command: () => navigate('/eventos'),
     },
     { label: 'Garaje', icon: 'pi pi-car', command: () => navigate('/garaje') },
+    {
+      label: 'Comunidad',
+      icon: 'pi pi-users',
+      command: () => navigate('/comunidad'),
+    },
   ]
 
   const start = (
