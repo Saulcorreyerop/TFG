@@ -11,7 +11,15 @@ const Footer = () => {
         DAW
       </div>
       <div className='mt-2 text-sm text-gray-500'>
-        Desarrollado por Saúl Correyero Pañero
+        Desarrollado por <b>Saúl Correyero Pañero</b>
+      </div>
+
+      <div>
+        <small>
+          Pagina en fase de desarrollo.
+          <br />
+          Todos los derechos reservados.
+        </small>
       </div>
     </footer>
   )

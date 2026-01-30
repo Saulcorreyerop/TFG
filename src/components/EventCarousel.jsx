@@ -5,8 +5,8 @@ import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { Toast } from 'primereact/toast'
 import AddEventDialog from './AddEventDialog'
+import { useFavorites } from '../hooks/useFavorites' // <--- IMPORTAMOS EL HOOK
 
-// Constantes de configuración (fuera del componente)
 const RESPONSIVE_OPTIONS = [
   { breakpoint: '1199px', numVisible: 3, numScroll: 1 },
   { breakpoint: '991px', numVisible: 2, numScroll: 1 },
@@ -14,97 +14,110 @@ const RESPONSIVE_OPTIONS = [
 ]
 
 // --- SUB-COMPONENTE: Tarjeta Individual del Carrusel ---
-const CarouselItem = ({ event }) => (
-  <div className='p-3 h-full'>
-    <div className='surface-card shadow-2 border-round-xl overflow-hidden hover:shadow-5 transition-all transition-duration-300 h-full flex flex-column'>
-      {/* Imagen y Tags */}
-      <div className='relative h-15rem w-full bg-gray-200'>
-        <img
-          src={event.image}
-          alt={event.titulo}
-          className='w-full h-full'
-          style={{ objectFit: 'cover', display: 'block' }}
-          loading='lazy'
-        />
-        <div className='absolute bottom-0 right-0 m-3'>
-          <Tag
-            value={event.tipo}
-            severity='info'
-            className='shadow-2'
-            icon='pi pi-tag'
+// Ahora recibe "session"
+const CarouselItem = ({ event, session }) => {
+  // USAMOS EL HOOK AQUÍ
+  const { isFavorite, toggleFavorite, loading } = useFavorites(
+    event.id,
+    session,
+  )
+
+  return (
+    <div className='p-3 h-full'>
+      <div className='surface-card shadow-2 border-round-xl overflow-hidden hover:shadow-5 transition-all transition-duration-300 h-full flex flex-column'>
+        {/* Imagen y Tags */}
+        <div className='relative h-15rem w-full bg-gray-200'>
+          <img
+            src={event.image}
+            alt={event.titulo}
+            className='w-full h-full'
+            style={{ objectFit: 'cover', display: 'block' }}
+            loading='lazy'
           />
-        </div>
-        <div
-          className='absolute bottom-0 left-0 w-full h-3rem'
-          style={{
-            background: 'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
-          }}
-        ></div>
-      </div>
-
-      {/* Contenido */}
-      <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
-        <div>
-          <div className='flex align-items-center gap-2 text-500 text-sm font-semibold mb-2 uppercase tracking-wide'>
-            <i className='pi pi-calendar text-blue-500'></i>
-            <span>{event.formattedDate}</span>
+          <div className='absolute bottom-0 right-0 m-3'>
+            <Tag
+              value={event.tipo}
+              severity='info'
+              className='shadow-2'
+              icon='pi pi-tag'
+            />
           </div>
-          <h4 className='text-xl font-bold text-900 mt-0 mb-2 line-height-3'>
-            {event.titulo}
-          </h4>
-          {event.description && (
-            <p
-              className='text-600 text-sm line-height-3 m-0 mb-4 line-clamp-2'
-              style={{
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                height: '3em',
-              }}
-            >
-              {event.description}
-            </p>
-          )}
+          <div
+            className='absolute bottom-0 left-0 w-full h-3rem'
+            style={{
+              background:
+                'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
+            }}
+          ></div>
         </div>
 
-        {/* Footer de la tarjeta */}
-        <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
-          <div className='flex align-items-center gap-2 text-600 text-sm'>
-            <div
-              className='border-circle surface-300 flex align-items-center justify-content-center'
-              style={{ width: '24px', height: '24px' }}
-            >
-              <i className='pi pi-user text-xs'></i>
+        {/* Contenido */}
+        <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
+          <div>
+            <div className='flex align-items-center gap-2 text-500 text-sm font-semibold mb-2 uppercase tracking-wide'>
+              <i className='pi pi-calendar text-blue-500'></i>
+              <span>{event.formattedDate}</span>
             </div>
-            <span
-              className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
-              style={{ maxWidth: '80px' }}
-            >
-              {event.profiles?.username || 'Anónimo'}
-            </span>
+            <h4 className='text-xl font-bold text-900 mt-0 mb-2 line-height-3'>
+              {event.titulo}
+            </h4>
+            {event.description && (
+              <p
+                className='text-600 text-sm line-height-3 m-0 mb-4 line-clamp-2'
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  height: '3em',
+                }}
+              >
+                {event.description}
+              </p>
+            )}
           </div>
-          <div className='flex gap-2'>
-            <Button
-              icon='pi pi-heart'
-              rounded
-              outlined
-              severity='danger'
-              className='w-2rem h-2rem'
-              aria-label='Favorito'
-            />
-            <Button
-              icon='pi pi-arrow-right'
-              rounded
-              className='w-2rem h-2rem'
-              aria-label='Ver detalles'
-            />
+
+          {/* Footer de la tarjeta */}
+          <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
+            <div className='flex align-items-center gap-2 text-600 text-sm'>
+              <div
+                className='border-circle surface-300 flex align-items-center justify-content-center'
+                style={{ width: '24px', height: '24px' }}
+              >
+                <i className='pi pi-user text-xs'></i>
+              </div>
+              <span
+                className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
+                style={{ maxWidth: '80px' }}
+              >
+                {event.profiles?.username || 'Anónimo'}
+              </span>
+            </div>
+            <div className='flex gap-2'>
+              {/* BOTÓN DE FAVORITO CONECTADO */}
+              <Button
+                icon={isFavorite ? 'pi pi-heart-fill' : 'pi pi-heart'}
+                rounded
+                outlined={!isFavorite} // Relleno si es fav
+                severity='danger'
+                className='w-2rem h-2rem'
+                aria-label='Favorito'
+                onClick={toggleFavorite}
+                loading={loading}
+              />
+              <Button
+                icon='pi pi-arrow-right'
+                rounded
+                className='w-2rem h-2rem'
+                aria-label='Ver detalles'
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 // --- COMPONENTE PRINCIPAL ---
 const EventCarousel = () => {
@@ -112,6 +125,13 @@ const EventCarousel = () => {
   const [showModal, setShowModal] = useState(false)
   const [currentUserSession, setCurrentUserSession] = useState(null)
   const toast = useRef(null)
+
+  // Obtenemos la sesión al montar el componente para que los likes funcionen
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserSession(session)
+    })
+  }, [])
 
   const fetchEvents = async () => {
     const { data, error } = await supabase
@@ -144,11 +164,8 @@ const EventCarousel = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleOpenModal = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (!session) {
+  const handleOpenModal = () => {
+    if (!currentUserSession) {
       toast.current.show({
         severity: 'warn',
         summary: 'Acceso restringido',
@@ -157,7 +174,6 @@ const EventCarousel = () => {
       })
       return
     }
-    setCurrentUserSession(session)
     setShowModal(true)
   }
 
@@ -190,7 +206,10 @@ const EventCarousel = () => {
             numVisible={3}
             numScroll={1}
             responsiveOptions={RESPONSIVE_OPTIONS}
-            itemTemplate={(event) => <CarouselItem event={event} />}
+            // PASAMOS LA SESSION AL ITEM
+            itemTemplate={(event) => (
+              <CarouselItem event={event} session={currentUserSession} />
+            )}
             circular
             autoplayInterval={4000}
             showIndicators={false}

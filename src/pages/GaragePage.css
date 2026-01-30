@@ -1,0 +1,192 @@
+/* --- CONTENEDOR PRINCIPAL (GRID RESPONSIVE) --- */
+.garage-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Móvil: 1 columna */
+  gap: 2rem;
+  width: 100%;
+  padding-bottom: 2rem;
+}
+
+/* Tablet: 2 columnas */
+@media (min-width: 768px) {
+  .garage-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* PC: 3 columnas */
+@media (min-width: 1200px) {
+  .garage-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- TARJETA (CARD) --- */
+.garage-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border: 1px solid #f0f0f0;
+}
+
+/* Reset de PrimeReact */
+.garage-card .p-card-body,
+.garage-card .p-card-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.garage-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: #a855f7;
+}
+
+/* --- IMAGEN --- */
+.garage-image-container {
+  width: 100%;
+  height: 240px;
+  position: relative;
+  background-color: #f3f4f6;
+  overflow: hidden;
+}
+
+.garage-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.5s ease;
+}
+
+.garage-card:hover .garage-image {
+  transform: scale(1.05);
+}
+
+.garage-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+/* --- BADGE --- */
+.garage-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #111827;
+  text-transform: uppercase;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+/* --- CONTENIDO --- */
+.garage-info {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.garage-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.garage-specs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.garage-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.garage-desc {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+  min-height: 3rem;
+}
+
+/* --- BOTONES DE ACCIÓN --- */
+.garage-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.garage-btn {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  transition: all 0.2s;
+}
+
+.garage-btn.edit {
+  background-color: #eff6ff !important;
+  color: #3b82f6 !important;
+}
+
+.garage-btn.edit:hover {
+  background-color: #dbeafe !important;
+  transform: scale(1.1);
+}
+
+.garage-btn.delete {
+  background-color: #fee2e2 !important;
+  color: #ef4444 !important;
+}
+
+.garage-btn.delete:hover {
+  background-color: #fecaca !important;
+  transform: scale(1.1);
+}
+
+/* --- ESTADO VACÍO --- */
+.garage-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px dashed #e5e7eb;
+}

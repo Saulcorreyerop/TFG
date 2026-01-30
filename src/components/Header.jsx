@@ -49,7 +49,7 @@ const Header = ({ session }) => {
       icon: 'pi pi-calendar',
       command: () => navigate('/eventos'),
     },
-    { label: 'Garaje', icon: 'pi pi-car', command: () => navigate('/') },
+    { label: 'Garaje', icon: 'pi pi-car', command: () => navigate('/garaje') },
   ]
 
   const start = (
@@ -73,6 +73,8 @@ const Header = ({ session }) => {
           icon='pi pi-user'
           shape='circle'
           style={{ backgroundColor: '#2196F3', color: '#ffffff' }}
+          onClick={() => navigate('/perfil')}
+          className='cursor-pointer'
         />
       </div>
       <Button

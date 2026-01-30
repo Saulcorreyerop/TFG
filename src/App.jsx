@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient'
 
 // --- 1. IMPORTACIONES GLOBALES (Leaflet y PrimeReact) ---
 import { addLocale } from 'primereact/api'
+import { ProgressSpinner } from 'primereact/progressspinner' // <--- IMPORTANTE: Para el estado de carga
 import L from 'leaflet'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
@@ -20,6 +21,8 @@ import Footer from './components/Footer'
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
 import EventsPage from './pages/EventsPage'
+import GaragePage from './pages/GaragePage'
+import ProfilePage from './pages/ProfilePage'
 
 import { Helmet } from 'react-helmet-async'
 
@@ -103,20 +106,37 @@ const Home = () => (
 
 function App() {
   const [session, setSession] = useState(null)
+  // AÑADIMOS EL ESTADO DE CARGA (Empezamos cargando)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 1. Verificar sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      setLoading(false) // <--- Ya sabemos si hay usuario o no, terminamos de cargar
     })
 
+    // 2. Escuchar cambios en la autenticación
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // --- LÓGICA DE CARGA ---
+  // Si todavía estamos comprobando la sesión, mostramos un spinner en pantalla completa
+  // y no renderizamos las rutas todavía (así evitamos el redirect erróneo).
+  if (loading) {
+    return (
+      <div className='flex align-items-center justify-content-center min-h-screen surface-ground'>
+        <ProgressSpinner strokeWidth='4' />
+      </div>
+    )
+  }
 
   return (
     <BrowserRouter>
@@ -126,6 +146,27 @@ function App() {
           <Route path='/' element={<Home />} />
           <Route path='/mapa' element={<MapPage session={session} />} />
           <Route path='/eventos' element={<EventsPage session={session} />} />
+
+          <Route
+            path='/garaje'
+            element={
+              session ? (
+                <GaragePage session={session} />
+              ) : (
+                <Navigate to='/login' />
+              )
+            }
+          />
+          <Route
+            path='/perfil'
+            element={
+              session ? (
+                <ProfilePage session={session} />
+              ) : (
+                <Navigate to='/login' />
+              )
+            }
+          />
           <Route
             path='/login'
             element={!session ? <AuthPage /> : <Navigate to='/' />}
