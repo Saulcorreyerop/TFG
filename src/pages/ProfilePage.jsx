@@ -1,60 +1,73 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { Avatar } from 'primereact/avatar'
 import { TabView, TabPanel } from 'primereact/tabview'
 import { Button } from 'primereact/button'
 import { useNavigate } from 'react-router-dom'
-import { Card } from 'primereact/card' // Necesario para las tarjetas de eventos
-import { Tag } from 'primereact/tag' // Para los tags de los eventos
+import { Card } from 'primereact/card'
+import { Tag } from 'primereact/tag'
+import { Dialog } from 'primereact/dialog' // Nuevo
+import { InputText } from 'primereact/inputtext' // Nuevo
+import { Toast } from 'primereact/toast' // Nuevo
 
 const ProfilePage = ({ session }) => {
   const navigate = useNavigate()
+  const toast = useRef(null)
+
+  // Datos del perfil
   const [profile, setProfile] = useState(null)
   const [myVehicles, setMyVehicles] = useState([])
   const [favorites, setFavorites] = useState([])
 
+  // Estados para la Edición
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [editForm, setEditForm] = useState({
+    username: '',
+    avatar_url: null,
+  })
+  const [avatarFile, setAvatarFile] = useState(null) // Archivo nuevo seleccionado
+
+  // --- CARGA DE DATOS ---
+  const getProfile = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+    setProfile(data)
+    // Inicializamos el formulario con los datos actuales
+    if (data) {
+      setEditForm({
+        username: data.username || '',
+        avatar_url: data.avatar_url,
+      })
+    }
+  }
+
+  const getVehicles = async () => {
+    const { data } = await supabase
+      .from('vehicles')
+      .select('id, marca, modelo, image_url')
+      .eq('user_id', session.user.id)
+    if (data) setMyVehicles(data)
+  }
+
+  const getFavorites = async () => {
+    const { data, error } = await supabase
+      .from('favorites')
+      .select(`event_id, events (*)`)
+      .eq('user_id', session.user.id)
+
+    if (!error && data) {
+      const formattedEvents = data
+        .map((item) => item.events)
+        .filter((ev) => ev !== null)
+      setFavorites(formattedEvents)
+    }
+  }
+
   useEffect(() => {
-    const getProfile = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single()
-      setProfile(data)
-    }
-
-    const getVehicles = async () => {
-      const { data } = await supabase
-        .from('vehicles')
-        .select('id, marca, modelo, image_url')
-        .eq('user_id', session.user.id)
-      if (data) setMyVehicles(data)
-    }
-
-    const getFavorites = async () => {
-      // Obtenemos los eventos a través de la tabla favoritos
-      // Supabase entiende la relación "events" si la FK está bien hecha
-      const { data, error } = await supabase
-        .from('favorites')
-        .select(
-          `
-          event_id,
-          events (
-            *
-          )
-        `,
-        )
-        .eq('user_id', session.user.id)
-
-      if (!error && data) {
-        // Limpiamos la data para tener un array de eventos limpio
-        const formattedEvents = data
-          .map((item) => item.events)
-          .filter((ev) => ev !== null)
-        setFavorites(formattedEvents)
-      }
-    }
-
     if (session) {
       getProfile()
       getVehicles()
@@ -62,20 +75,80 @@ const ProfilePage = ({ session }) => {
     }
   }, [session])
 
+  // --- LÓGICA DE EDICIÓN ---
+
+  const handleAvatarUpload = async (file) => {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${session.user.id}-${Math.random()}.${fileExt}`
+    const filePath = `${fileName}`
+
+    // Subir al bucket 'avatars'
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file)
+
+    if (uploadError) throw uploadError
+
+    // Obtener URL pública
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
+    return data.publicUrl
+  }
+
+  const handleSaveProfile = async () => {
+    setLoading(true)
+    try {
+      let finalAvatarUrl = editForm.avatar_url
+
+      // 1. Si hay archivo nuevo, lo subimos
+      if (avatarFile) {
+        finalAvatarUrl = await handleAvatarUpload(avatarFile)
+      }
+
+      // 2. Actualizamos la tabla profiles
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: editForm.username,
+          avatar_url: finalAvatarUrl,
+          updated_at: new Date(),
+        })
+        .eq('id', session.user.id)
+
+      if (error) throw error
+
+      toast.current.show({
+        severity: 'success',
+        summary: 'Actualizado',
+        detail: 'Perfil modificado correctamente',
+      })
+      setShowEditDialog(false)
+      setAvatarFile(null)
+      getProfile() // Refrescamos los datos en pantalla
+    } catch (error) {
+      console.error(error)
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo actualizar el perfil',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!session)
     return (
       <div className='p-5 text-center'>Inicia sesión para ver tu perfil</div>
     )
 
-  // Plantilla simple para tarjeta de evento favorito
+  // Plantilla de evento favorito (igual que tenías)
   const eventTemplate = (event) => {
-    // Ajusta estos campos según cómo se llamen en tu tabla 'events' (titulo, fecha, etc.)
     return (
       <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
         <Card
           title={<h4 className='m-0 text-lg'>{event.titulo}</h4>}
           className='shadow-1 hover:shadow-3 transition-all cursor-pointer h-full'
-          onClick={() => navigate('/eventos')} // O a la página de detalle del evento
+          onClick={() => navigate('/eventos')}
         >
           <div className='flex flex-column gap-2'>
             <div className='flex align-items-center gap-2 text-sm text-500'>
@@ -95,15 +168,20 @@ const ProfilePage = ({ session }) => {
 
   return (
     <div className='max-w-4xl mx-auto p-4 md:p-6'>
+      <Toast ref={toast} />
+
       {/* Cabecera del Perfil */}
       <div className='bg-white shadow-2 border-round-2xl p-6 mb-4 flex flex-column md:flex-row align-items-center gap-5'>
-        <Avatar
-          icon='pi pi-user'
-          size='xlarge'
-          shape='circle'
-          className='bg-indigo-100 text-indigo-600 w-8rem h-8rem text-5xl'
-          image={profile?.avatar_url}
-        />
+        <div className='relative'>
+          <Avatar
+            icon='pi pi-user'
+            size='xlarge'
+            shape='circle'
+            className='bg-indigo-100 text-indigo-600 w-8rem h-8rem text-5xl shadow-2'
+            image={profile?.avatar_url} // Muestra la imagen si existe
+          />
+        </div>
+
         <div className='text-center md:text-left flex-1'>
           <h1 className='text-3xl font-bold m-0 text-900'>
             {profile?.username || 'Usuario'}
@@ -116,6 +194,7 @@ const ProfilePage = ({ session }) => {
               size='small'
               outlined
               severity='secondary'
+              onClick={() => setShowEditDialog(true)} // <--- AHORA ABRE EL DIÁLOGO
             />
             <Button
               label='Cerrar Sesión'
@@ -192,7 +271,6 @@ const ProfilePage = ({ session }) => {
             </div>
           </TabPanel>
 
-          {/* AQUI ESTÁ LA NUEVA PESTAÑA DE FAVORITOS */}
           <TabPanel header='Eventos Favoritos' leftIcon='pi pi-heart mr-2'>
             {favorites.length === 0 ? (
               <div className='text-center p-5'>
@@ -212,6 +290,70 @@ const ProfilePage = ({ session }) => {
           </TabPanel>
         </TabView>
       </div>
+
+      {/* --- DIÁLOGO DE EDICIÓN DE PERFIL --- */}
+      <Dialog
+        header='Editar Perfil'
+        visible={showEditDialog}
+        style={{ width: '90vw', maxWidth: '450px' }}
+        onHide={() => setShowEditDialog(false)}
+        className='p-fluid'
+      >
+        <div className='flex flex-column gap-4 pt-3'>
+          {/* 1. Cambio de Avatar */}
+          <div className='flex flex-column align-items-center gap-3'>
+            <Avatar
+              image={
+                avatarFile
+                  ? URL.createObjectURL(avatarFile)
+                  : editForm.avatar_url
+              }
+              icon={!editForm.avatar_url && !avatarFile ? 'pi pi-user' : null}
+              size='xlarge'
+              shape='circle'
+              className='w-8rem h-8rem text-5xl bg-gray-100'
+            />
+
+            {/* Input file oculto pero funcional */}
+            <div className='relative'>
+              <input
+                type='file'
+                id='avatar-upload'
+                accept='image/*'
+                className='hidden'
+                onChange={(e) => setAvatarFile(e.target.files[0])}
+              />
+              <label
+                htmlFor='avatar-upload'
+                className='p-button p-component p-button-outlined p-button-secondary p-button-sm cursor-pointer'
+              >
+                <i className='pi pi-camera mr-2'></i> Cambiar Foto
+              </label>
+            </div>
+          </div>
+
+          {/* 2. Cambio de Nombre */}
+          <span className='p-float-label mt-2'>
+            <InputText
+              id='username'
+              value={editForm.username}
+              onChange={(e) =>
+                setEditForm({ ...editForm, username: e.target.value })
+              }
+            />
+            <label htmlFor='username'>Nombre de Usuario</label>
+          </span>
+
+          {/* 3. Botones */}
+          <Button
+            label='Guardar Cambios'
+            icon='pi pi-check'
+            onClick={handleSaveProfile}
+            loading={loading}
+            severity='help'
+          />
+        </div>
+      </Dialog>
     </div>
   )
 }
