@@ -21,6 +21,8 @@ import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
 import EventsPage from './pages/EventsPage'
 
+import { Helmet } from 'react-helmet-async'
+
 // --- 2. CONFIGURACIÓN GLOBAL (Se ejecuta una sola vez) ---
 // Configuración de Español para Calendarios
 addLocale('es', {
@@ -81,6 +83,17 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 const Home = () => (
   <>
+    {/* AÑADIR ESTO PARA QUE GOOGLE LEA BIEN LA HOME */}
+    <Helmet>
+      <title>CarMeetESP | Concentraciones y Eventos de Coches en España</title>
+      <meta
+        name='description'
+        content='La mayor comunidad de eventos de motor en España. Encuentra KDDs, rutas, trackdays y concentraciones de coches cerca de ti en nuestro mapa interactivo.'
+      />
+      <link rel='canonical' href='https://carmeetesp.netlify.app/' />
+    </Helmet>
+    {/* ------------------------------------------------ */}
+
     <Hero />
     <HomeMap />
     <EventCarousel />
