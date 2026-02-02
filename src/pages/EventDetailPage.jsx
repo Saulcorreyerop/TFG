@@ -13,7 +13,6 @@ const EventDetailPage = ({ session }) => {
   const navigate = useNavigate()
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
-  // Estado para guardar el nombre del pueblo/ciudad calculado
   const [locationName, setLocationName] = useState('Cargando ubicación...')
 
   const {
@@ -34,35 +33,28 @@ const EventDetailPage = ({ session }) => {
         setEvent(data)
 
         // --- LÓGICA DE UBICACIÓN INTELIGENTE ---
-        // 1. Si el creador escribió algo manualmente, lo usamos.
         if (data.ubicacion && data.ubicacion.trim().length > 0) {
           setLocationName(data.ubicacion)
-        }
-        // 2. Si no hay texto, pero sí coordenadas (creado desde el mapa), buscamos el nombre.
-        else if (data.lat && data.lng) {
+        } else if (data.lat && data.lng) {
           try {
-            // Usamos Nominatim (OpenStreetMap) para obtener el nombre del lugar
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.lat}&lon=${data.lng}`,
             )
             const geoData = await response.json()
             const addr = geoData.address
-
-            // Intentamos encontrar el dato más relevante (Ciudad, Pueblo, Villa...)
             const locality =
               addr.city ||
               addr.town ||
               addr.village ||
               addr.municipality ||
               'Ubicación en mapa'
-            // Si hay calle o carretera, la añadimos delante
             const fullLocality = addr.road
               ? `${addr.road}, ${locality}`
               : locality
 
             setLocationName(fullLocality)
           } catch (err) {
-            console.error(err) // Corregido: usamos el error para que no salte el warning
+            console.error(err)
             setLocationName('Ubicación exacta en mapa')
           }
         } else {
@@ -101,7 +93,6 @@ const EventDetailPage = ({ session }) => {
   const isPast = dateObj < new Date()
 
   // --- GENERACIÓN DE ENLACES DE MAPAS ---
-  // Priorizamos las coordenadas para la navegación GPS precisa
   const queryParam =
     event.lat && event.lng
       ? `${event.lat},${event.lng}`
@@ -160,7 +151,11 @@ const EventDetailPage = ({ session }) => {
               <h2 className='text-2xl font-bold text-900 mb-3'>
                 Sobre este evento
               </h2>
-              <p className='line-height-3 text-700 text-lg pre-wrap'>
+              {/* CORRECCIÓN AQUI: wordBreak: 'break-word' evita que el texto se salga */}
+              <p
+                className='line-height-3 text-700 text-lg pre-wrap'
+                style={{ wordBreak: 'break-word' }}
+              >
                 {event.description ||
                   'El organizador no ha proporcionado una descripción detallada.'}
               </p>
@@ -169,7 +164,6 @@ const EventDetailPage = ({ session }) => {
             {/* Sección de Ubicación con Multi-Mapas */}
             <Card className='shadow-2 border-round-xl'>
               <h2 className='text-2xl font-bold text-900 mb-3'>Ubicación</h2>
-              {/* Aquí mostramos el nombre calculado dinámicamente */}
               <div className='flex align-items-center gap-3 mb-4 text-700 text-lg'>
                 <i className='pi pi-map-marker text-red-500 text-2xl'></i>
                 <span className='font-medium'>{locationName}</span>

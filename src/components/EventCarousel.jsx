@@ -6,7 +6,7 @@ import { Tag } from 'primereact/tag'
 import { Toast } from 'primereact/toast'
 import AddEventDialog from './AddEventDialog'
 import { useFavorites } from '../hooks/useFavorites'
-import { useNavigate } from 'react-router-dom' // <--- IMPORTADO
+import { useNavigate } from 'react-router-dom'
 
 const RESPONSIVE_OPTIONS = [
   { breakpoint: '1199px', numVisible: 3, numScroll: 1 },
@@ -20,7 +20,7 @@ const CarouselItem = ({ event, session }) => {
     event.id,
     session,
   )
-  const navigate = useNavigate() // <--- HOOK PARA NAVEGAR
+  const navigate = useNavigate()
 
   return (
     <div className='p-3 h-full'>
@@ -70,6 +70,7 @@ const CarouselItem = ({ event, session }) => {
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                   height: '3em',
+                  wordBreak: 'break-word', // <--- ESTO ARREGLA EL ANCHO DESIGUAL
                 }}
               >
                 {event.description}
@@ -85,22 +86,23 @@ const CarouselItem = ({ event, session }) => {
               onClick={() =>
                 event.user_id && navigate(`/usuario/${event.user_id}`)
               }
+              style={{ minWidth: 0 }} // Evita desbordamiento en flex
             >
               <div
-                className='border-circle surface-300 flex align-items-center justify-content-center'
+                className='border-circle surface-300 flex align-items-center justify-content-center flex-shrink-0'
                 style={{ width: '24px', height: '24px' }}
               >
                 <i className='pi pi-user text-xs'></i>
               </div>
               <span
                 className='font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden'
-                style={{ maxWidth: '80px' }}
+                style={{ maxWidth: '100%' }}
               >
                 {event.profiles?.username || 'Anónimo'}
               </span>
             </div>
 
-            <div className='flex gap-2'>
+            <div className='flex gap-2 flex-shrink-0'>
               {/* BOTÓN DE FAVORITO */}
               <Button
                 icon={isFavorite ? 'pi pi-heart-fill' : 'pi pi-heart'}
@@ -118,7 +120,7 @@ const CarouselItem = ({ event, session }) => {
                 rounded
                 className='w-2rem h-2rem'
                 aria-label='Ver detalles'
-                onClick={() => navigate(`/evento/${event.id}`)} // <--- ACCIÓN AÑADIDA
+                onClick={() => navigate(`/evento/${event.id}`)}
               />
             </div>
           </div>
