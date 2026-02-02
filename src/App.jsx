@@ -88,17 +88,14 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 const Home = () => (
   <>
-    {/* AÑADIR ESTO PARA QUE GOOGLE LEA BIEN LA HOME */}
     <Helmet>
-      <title>CarMeetESP | Concentraciones y Eventos de Coches en España</title>
+      <title>CarMeet ESP | Eventos y Rutas de Coches en España</title>
       <meta
         name='description'
-        content='La mayor comunidad de eventos de motor en España. Encuentra KDDs, rutas, trackdays y concentraciones de coches cerca de ti en nuestro mapa interactivo.'
+        content='La mayor comunidad de coches en España. Encuentra eventos, rutas en tiempo real y concentraciones de coches cerca de ti.'
       />
       <link rel='canonical' href='https://carmeetesp.netlify.app/' />
     </Helmet>
-    {/* ------------------------------------------------ */}
-
     <Hero />
     <HomeMap />
     <EventCarousel />
