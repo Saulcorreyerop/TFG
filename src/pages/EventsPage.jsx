@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
+import { useNavigate } from 'react-router-dom' // <--- IMPORTANTE: Necesario para navegar
 import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { TabView, TabPanel } from 'primereact/tabview'
@@ -11,6 +12,7 @@ import { addLocale } from 'primereact/api'
 import AddEventDialog from '../components/AddEventDialog'
 import { useFavorites } from '../hooks/useFavorites'
 
+// Configuración global de idioma para fechas
 addLocale('es', {
   firstDayOfWeek: 1,
   dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
@@ -41,6 +43,7 @@ const EVENT_TYPES = [
   { label: 'Off-road / 4x4', value: 'Offroad' },
 ]
 
+// Helper para formatear los datos del evento
 const formatEventData = (ev) => {
   const date = new Date(ev.fecha)
   return {
@@ -61,17 +64,20 @@ const formatEventData = (ev) => {
   }
 }
 
+// --- COMPONENTE TARJETA DE EVENTO ---
 const EventCard = React.memo(({ event, isPast = false, session }) => {
   const { isFavorite, toggleFavorite, loading } = useFavorites(
     event.id,
     session,
   )
+  const navigate = useNavigate() // Hook para navegar al detalle
 
   return (
     <div className='col-12 md:col-6 lg:col-4 p-3'>
       <div
         className={`surface-card shadow-2 border-round-xl overflow-hidden h-full flex flex-column transition-all hover:shadow-5 ${isPast ? 'opacity-70 grayscale-1' : ''}`}
       >
+        {/* Imagen y Tags */}
         <div className='relative h-14rem'>
           <img
             src={event.image}
@@ -91,6 +97,7 @@ const EventCard = React.memo(({ event, isPast = false, session }) => {
           )}
         </div>
 
+        {/* Contenido */}
         <div className='p-4 flex flex-column justify-content-between flex-grow-1'>
           <div>
             <div className='text-500 font-medium text-sm mb-2'>
@@ -105,28 +112,40 @@ const EventCard = React.memo(({ event, isPast = false, session }) => {
             </p>
           </div>
 
+          {/* Footer de la tarjeta */}
           <div className='border-top-1 surface-border pt-3 flex align-items-center justify-content-between'>
-            <span className='text-sm text-500'>
-              <i className='pi pi-user mr-1'></i>{' '}
-              {event.profiles?.username || 'Anónimo'}
-            </span>
+            {/* Usuario (Clickable) */}
+            <div
+              className='flex align-items-center gap-2 text-sm text-500 cursor-pointer hover:text-primary transition-colors'
+              onClick={() =>
+                event.user_id && navigate(`/usuario/${event.user_id}`)
+              }
+            >
+              <i className='pi pi-user'></i>
+              <span>{event.profiles?.username || 'Anónimo'}</span>
+            </div>
 
             <div className='flex gap-2'>
+              {/* BOTÓN FAVORITOS (Deshabilitado si es pasado) */}
               <Button
                 icon={isFavorite ? 'pi pi-heart-fill' : 'pi pi-heart'}
                 rounded
                 text
-                severity='danger'
+                severity={isPast ? 'secondary' : 'danger'}
                 onClick={toggleFavorite}
                 loading={loading}
-                tooltip='Guardar en favoritos'
+                disabled={isPast}
+                tooltip={isPast ? 'Evento finalizado' : 'Guardar en favoritos'}
+                tooltipOptions={{ position: 'top' }}
               />
+              {/* BOTÓN VER DETALLES */}
               <Button
                 label='Ver Detalles'
                 icon='pi pi-external-link'
                 size='small'
                 outlined
                 className={isPast ? 'p-button-secondary' : ''}
+                onClick={() => navigate(`/evento/${event.id}`)}
               />
             </div>
           </div>
@@ -136,6 +155,7 @@ const EventCard = React.memo(({ event, isPast = false, session }) => {
   )
 })
 
+// --- PÁGINA PRINCIPAL DE EVENTOS ---
 const EventsPage = ({ session }) => {
   const [events, setEvents] = useState({ upcoming: [], past: [], featured: [] })
   const [favorites, setFavorites] = useState([])
@@ -144,7 +164,7 @@ const EventsPage = ({ session }) => {
   const toast = useRef(null)
 
   const fetchAllEvents = useCallback(async () => {
-    // 1. Obtener Eventos
+    // 1. Obtener todos los eventos
     const { data, error } = await supabase
       .from('events')
       .select('*, profiles(username)')
@@ -153,6 +173,7 @@ const EventsPage = ({ session }) => {
     if (!error && data) {
       const now = new Date()
       const processed = data.map((ev) => formatEventData(ev))
+
       const future = processed
         .filter((ev) => ev.dateObj >= now)
         .sort((a, b) => a.dateObj - b.dateObj)
@@ -166,7 +187,7 @@ const EventsPage = ({ session }) => {
       })
     }
 
-    // 2. Obtener Favoritos
+    // 2. Obtener lista de Favoritos (Solo para la sección superior "Tus Favoritos")
     if (session) {
       const { data: favData, error: favError } = await supabase
         .from('favorites')
@@ -190,6 +211,7 @@ const EventsPage = ({ session }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAllEvents])
 
+  // Lógica de filtrado
   const filterList = useCallback(
     (list) => {
       return list.filter((e) => {
@@ -226,6 +248,7 @@ const EventsPage = ({ session }) => {
     <div className='min-h-screen surface-ground p-3 md:p-5'>
       <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
+      {/* Título y Botón Crear */}
       <div className='text-center mb-6'>
         <h1 className='text-4xl font-extrabold text-900 mb-2'>
           Agenda de Eventos
@@ -241,6 +264,7 @@ const EventsPage = ({ session }) => {
         />
       </div>
 
+      {/* Sección: TUS FAVORITOS (Solo visible si hay favoritos y no hay filtros) */}
       {favorites.length > 0 && !filters.text && !filters.type && (
         <div className='mb-6 fadein animation-duration-500'>
           <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-pink-500 pl-3 flex align-items-center gap-2'>
@@ -255,6 +279,7 @@ const EventsPage = ({ session }) => {
         </div>
       )}
 
+      {/* Sección: DESTACADOS */}
       {events.featured.length > 0 && !filters.text && !filters.type && (
         <div className='mb-6 fadein animation-duration-500'>
           <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-blue-500 pl-3'>
@@ -288,10 +313,13 @@ const EventsPage = ({ session }) => {
                     <p className='text-600 mb-4 line-clamp-2'>
                       {event.description}
                     </p>
+                    {/* Este botón es estático en destacados, podría llevar al detalle también */}
                     <Button
                       label='Ver Info Completa'
                       className='w-full'
                       outlined
+                      // Asumiendo que quieres que este también funcione:
+                      // onClick={() => navigate(`/evento/${event.id}`)}
                     />
                   </div>
                 </div>
@@ -301,6 +329,7 @@ const EventsPage = ({ session }) => {
         </div>
       )}
 
+      {/* Barra de Filtros */}
       <div className='card mb-4 p-3 border-round-xl shadow-1 surface-card flex flex-column md:flex-row gap-3 justify-content-between align-items-center'>
         <div className='flex align-items-center gap-2 w-full md:w-auto font-bold text-900'>
           <i className='pi pi-filter text-blue-500 text-xl'></i> Filtrar por:
@@ -338,6 +367,7 @@ const EventsPage = ({ session }) => {
         </div>
       </div>
 
+      {/* Pestañas de Eventos (Próximos / Pasados) */}
       <Card className='shadow-1 border-round-xl'>
         <TabView>
           <TabPanel

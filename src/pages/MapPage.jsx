@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom' // Asegúrate de importar Link y useNavigate
 import { supabase } from '../supabaseClient'
 import {
   MapContainer,
@@ -14,8 +14,8 @@ import { Button } from 'primereact/button'
 import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import AddEventDialog from '../components/AddEventDialog'
-
 import './MapPage.css'
+
 const MapController = ({ selectedEvent }) => {
   const map = useMap()
   useEffect(() => {
@@ -42,7 +42,8 @@ const LocationMarker = ({ onLocationSelect, session, showToast }) => {
   return null
 }
 
-const EventCard = ({ ev, isSelected, onClick }) => (
+// EventCard recibe ahora "onNavigate"
+const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
   <div
     onClick={() => onClick(ev)}
     className={`surface-card p-3 shadow-1 border-round-xl cursor-pointer flex gap-3 align-items-center mb-2 mx-1 event-card ${isSelected ? 'selected' : ''}`}
@@ -70,12 +71,17 @@ const EventCard = ({ ev, isSelected, onClick }) => (
       </div>
     </div>
     <div className='flex-none'>
+      {/* Botón para IR AL DETALLE */}
       <Button
         icon='pi pi-chevron-right'
         rounded
         text
         size='small'
-        className='text-400'
+        className='text-400 hover:text-primary hover:bg-gray-100'
+        onClick={(e) => {
+          e.stopPropagation() // Evita que el mapa se centre al hacer clic en ir al detalle
+          onNavigate()
+        }}
       />
     </div>
   </div>
@@ -198,8 +204,10 @@ const MapPage = ({ session }) => {
               <Marker key={ev.id} position={[ev.lat, ev.lng]}>
                 <Popup>
                   <div
-                    className='text-center p-1'
+                    className='text-center p-1 cursor-pointer'
                     style={{ minWidth: '150px' }}
+                    // Hacer click en el popup también lleva al detalle
+                    onClick={() => navigate(`/evento/${ev.id}`)}
                   >
                     {ev.image_url && (
                       <img
@@ -213,7 +221,7 @@ const MapPage = ({ session }) => {
                         }}
                       />
                     )}
-                    <h3 className='font-bold text-lg m-0 text-gray-900'>
+                    <h3 className='font-bold text-lg m-0 text-gray-900 hover:text-primary transition-colors'>
                       {ev.titulo}
                     </h3>
                     <div className='flex justify-content-center my-2'>
@@ -222,6 +230,18 @@ const MapPage = ({ session }) => {
                     <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
                       <div className='font-semibold'>
                         {ev.fecha.toLocaleDateString('es-ES')}
+                      </div>
+                      <div className='text-primary font-bold mt-1'>
+                        <Button
+                          label='Ver más info &gt;'
+                          severity='help'
+                          rounded
+                          className='shadow-1'
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/evento/${ev.id}`)
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -341,13 +361,18 @@ const MapPage = ({ session }) => {
                   onClick={handleAddClick}
                 />
               </div>
+
+              <div className='mt-3 text-center'>
+                <Link to='/eventos'>
+                  <small>Ver todos los eventos</small>
+                </Link>
+              </div>
             </div>
 
             <div className='flex flex-column gap-2'>
               <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
                 Eventos Próximos
               </h2>
-              {/* AQUÍ ESTÁ EL CAMBIO: Usamos la clase .event-separator */}
               <hr className='event-separator' />
 
               {eventos.length === 0 && (
@@ -362,6 +387,8 @@ const MapPage = ({ session }) => {
                   ev={ev}
                   isSelected={selectedEvent?.id === ev.id}
                   onClick={handleEventClick}
+                  // Pasamos la función de navegación
+                  onNavigate={() => navigate(`/evento/${ev.id}`)}
                 />
               ))}
             </div>

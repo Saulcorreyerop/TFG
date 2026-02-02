@@ -5,7 +5,8 @@ import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { Toast } from 'primereact/toast'
 import AddEventDialog from './AddEventDialog'
-import { useFavorites } from '../hooks/useFavorites' // <--- IMPORTAMOS EL HOOK
+import { useFavorites } from '../hooks/useFavorites'
+import { useNavigate } from 'react-router-dom' // <--- IMPORTADO
 
 const RESPONSIVE_OPTIONS = [
   { breakpoint: '1199px', numVisible: 3, numScroll: 1 },
@@ -14,13 +15,12 @@ const RESPONSIVE_OPTIONS = [
 ]
 
 // --- SUB-COMPONENTE: Tarjeta Individual del Carrusel ---
-// Ahora recibe "session"
 const CarouselItem = ({ event, session }) => {
-  // USAMOS EL HOOK AQUÍ
   const { isFavorite, toggleFavorite, loading } = useFavorites(
     event.id,
     session,
   )
+  const navigate = useNavigate() // <--- HOOK PARA NAVEGAR
 
   return (
     <div className='p-3 h-full'>
@@ -79,7 +79,13 @@ const CarouselItem = ({ event, session }) => {
 
           {/* Footer de la tarjeta */}
           <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
-            <div className='flex align-items-center gap-2 text-600 text-sm'>
+            {/* Usuario Clickable */}
+            <div
+              className='flex align-items-center gap-2 text-600 text-sm cursor-pointer hover:text-primary transition-colors'
+              onClick={() =>
+                event.user_id && navigate(`/usuario/${event.user_id}`)
+              }
+            >
               <div
                 className='border-circle surface-300 flex align-items-center justify-content-center'
                 style={{ width: '24px', height: '24px' }}
@@ -93,23 +99,26 @@ const CarouselItem = ({ event, session }) => {
                 {event.profiles?.username || 'Anónimo'}
               </span>
             </div>
+
             <div className='flex gap-2'>
-              {/* BOTÓN DE FAVORITO CONECTADO */}
+              {/* BOTÓN DE FAVORITO */}
               <Button
                 icon={isFavorite ? 'pi pi-heart-fill' : 'pi pi-heart'}
                 rounded
-                outlined={!isFavorite} // Relleno si es fav
+                outlined={!isFavorite}
                 severity='danger'
                 className='w-2rem h-2rem'
                 aria-label='Favorito'
                 onClick={toggleFavorite}
                 loading={loading}
               />
+              {/* BOTÓN DE VER DETALLES */}
               <Button
                 icon='pi pi-arrow-right'
                 rounded
                 className='w-2rem h-2rem'
                 aria-label='Ver detalles'
+                onClick={() => navigate(`/evento/${event.id}`)} // <--- ACCIÓN AÑADIDA
               />
             </div>
           </div>
@@ -126,7 +135,6 @@ const EventCarousel = () => {
   const [currentUserSession, setCurrentUserSession] = useState(null)
   const toast = useRef(null)
 
-  // Obtenemos la sesión al montar el componente para que los likes funcionen
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUserSession(session)
@@ -206,7 +214,6 @@ const EventCarousel = () => {
             numVisible={3}
             numScroll={1}
             responsiveOptions={RESPONSIVE_OPTIONS}
-            // PASAMOS LA SESSION AL ITEM
             itemTemplate={(event) => (
               <CarouselItem event={event} session={currentUserSession} />
             )}

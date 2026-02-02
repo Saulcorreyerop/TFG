@@ -25,6 +25,7 @@ import GaragePage from './pages/GaragePage'
 import ProfilePage from './pages/ProfilePage'
 import PublicProfile from './pages/PublicProfile'
 import CommunityPage from './pages/CommunityPage'
+import EventDetailPage from './pages/EventDetailPage'
 
 import { Helmet } from 'react-helmet-async'
 
@@ -171,6 +172,10 @@ function App() {
           <Route
             path='/login'
             element={!session ? <AuthPage /> : <Navigate to='/' />}
+          />
+          <Route
+            path='/evento/:id'
+            element={<EventDetailPage session={session} />}
           />
         </Routes>
         <Footer />

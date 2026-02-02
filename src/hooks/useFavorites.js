@@ -5,8 +5,10 @@ export const useFavorites = (eventId, session) => {
   const [isFavorite, setIsFavorite] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Comprobar estado inicial
   useEffect(() => {
-    // Definimos la función DENTRO del efecto para evitar errores de dependencias y hoisting
+    let mounted = true
+
     const checkFavorite = async () => {
       if (!session || !eventId) return
 
@@ -17,41 +19,61 @@ export const useFavorites = (eventId, session) => {
         .eq('event_id', eventId)
         .maybeSingle()
 
-      if (data) setIsFavorite(true)
+      if (mounted && data) {
+        setIsFavorite(true)
+      }
     }
 
     checkFavorite()
-  }, [eventId, session]) // Ahora las dependencias son correctas
+    return () => {
+      mounted = false
+    }
+  }, [eventId, session])
 
   const toggleFavorite = async (e) => {
-    if (e) e.stopPropagation() // Evita abrir la tarjeta si pulsas el corazón
+    if (e) e.stopPropagation()
 
     if (!session) {
-      // Puedes cambiar esto por un Toast si prefieres
-      alert('Inicia sesión para guardar favoritos')
+      // Aquí podrías disparar un toast global o alerta
       return
     }
 
     setLoading(true)
 
-    if (isFavorite) {
-      // BORRAR
-      const { error } = await supabase
-        .from('favorites')
-        .delete()
-        .eq('user_id', session.user.id)
-        .eq('event_id', eventId)
+    try {
+      if (isFavorite) {
+        // --- QUITAR LIKE ---
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', session.user.id)
+          .eq('event_id', eventId)
 
-      if (!error) setIsFavorite(false)
-    } else {
-      // AÑADIR
-      const { error } = await supabase
-        .from('favorites')
-        .insert({ user_id: session.user.id, event_id: eventId })
+        if (error) throw error
+        setIsFavorite(false)
+      } else {
+        // --- DAR LIKE ---
+        const { error } = await supabase
+          .from('favorites')
+          .insert({ user_id: session.user.id, event_id: eventId })
 
-      if (!error) setIsFavorite(true)
+        if (error) {
+          // Si el error es 409 (Conflict), significa que YA existía.
+          // Así que forzamos el estado a TRUE y hacemos como que no pasó nada.
+          if (error.code === '23505' || error.status === 409) {
+            setIsFavorite(true)
+          } else {
+            throw error
+          }
+        } else {
+          setIsFavorite(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error al cambiar favorito:', error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return { isFavorite, toggleFavorite, loading }
