@@ -6,11 +6,18 @@
    </url>
    <url>
       <loc>https://carmeetesp.netlify.app/mapa</loc>
-      <priority>0.8</priority>
+      <priority>0.9</priority>
       <changefreq>always</changefreq>
    </url>
    <url>
       <loc>https://carmeetesp.netlify.app/eventos</loc>
-      <priority>0.8</priority>
+      <priority>0.9</priority>
+      <changefreq>daily</changefreq>
+   </url>
+   
+   <url>
+      <loc>https://carmeetesp.netlify.app/comunidad</loc>
+      <priority>0.7</priority>
+      <changefreq>weekly</changefreq>
    </url>
 </urlset>
