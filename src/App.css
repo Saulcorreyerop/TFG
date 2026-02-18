@@ -20,15 +20,6 @@ body {
   padding: 1rem 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
-.hero-bg {
-  background:
-    linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.85)),
-    url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
 
 /* --- Fix Mapa --- */
 .leaflet-container {
@@ -70,4 +61,10 @@ body {
 .p-password,
 .p-password input {
   width: 100% !important;
+}
+
+@font-face {
+  font-family: 'MiFuente';
+  src: url('./fuente.woff2') format('woff2');
+  font-display: swap; /* <--- AÑADE ESTO OBLIGATORIAMENTE */
 }
