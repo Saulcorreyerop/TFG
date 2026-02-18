@@ -27,17 +27,23 @@ const Hero = () => {
       className='flex flex-column align-items-center justify-content-center text-center relative overflow-hidden'
       style={{ minHeight: '85vh' }}
     >
-      {/* --- 1. IMAGEN DE FONDO OPTIMIZADA (LCP FIX) --- */}
+      {/* --- 1. IMAGEN DE FONDO RESPONSIVE --- */}
       <div className='absolute top-0 left-0 w-full h-full z-0'>
         <img
           src='https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'
+          srcSet='
+      https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=60 600w,
+      https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80 1200w,
+      https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80 1950w
+    '
+          sizes='(max-width: 768px) 100vw, 100vw'
           alt='Fondo CarMeet'
           className='w-full h-full'
-          style={{ objectFit: 'cover' }} // Esto hace que actúe igual que background-size: cover
-          fetchPriority='high' // Prioridad máxima para Google
-          loading='eager' // Carga inmediata (no lazy)
+          style={{ objectFit: 'cover' }}
+          fetchPriority='high'
+          loading='eager'
+          decoding='async'
         />
-        {/* Capa oscura superpuesta para que se lea el texto (Overlay) */}
         <div className='absolute top-0 left-0 w-full h-full bg-black-alpha-60'></div>
       </div>
 
