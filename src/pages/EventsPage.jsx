@@ -11,6 +11,7 @@ import { Card } from 'primereact/card'
 import { addLocale } from 'primereact/api'
 import AddEventDialog from '../components/AddEventDialog'
 import { useFavorites } from '../hooks/useFavorites'
+import PageTransition from '../components/PageTransition'
 
 // Configuración global de idioma para fechas
 addLocale('es', {
@@ -245,179 +246,192 @@ const EventsPage = ({ session }) => {
   }
 
   return (
-    <div className='min-h-screen surface-ground p-3 md:p-5'>
-      <Toast ref={toast} position='top-center' className='mt-6 z-5' />
+    <PageTransition>
+      <div className='min-h-screen surface-ground p-3 md:p-5'>
+        <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-      {/* Título y Botón Crear */}
-      <div className='text-center mb-6'>
-        <h1 className='text-4xl font-extrabold text-900 mb-2'>
-          Agenda de Eventos
-        </h1>
-        <p className='text-700 text-lg'>
-          Explora todas las concentraciones, rutas y trackdays de la comunidad.
-        </p>
-        <Button
-          label='Publicar Evento'
-          icon='pi pi-plus'
-          className='mt-3 p-button-rounded shadow-3'
-          onClick={handleOpenModal}
+        {/* Título y Botón Crear */}
+        <div className='text-center mb-6'>
+          <h1 className='text-4xl font-extrabold text-900 mb-2'>
+            Agenda de Eventos
+          </h1>
+          <p className='text-700 text-lg'>
+            Explora todas las concentraciones, rutas y trackdays de la
+            comunidad.
+          </p>
+          <Button
+            label='Publicar Evento'
+            icon='pi pi-plus'
+            className='mt-3 p-button-rounded shadow-3'
+            onClick={handleOpenModal}
+          />
+        </div>
+
+        {/* Sección: TUS FAVORITOS (Solo visible si hay favoritos y no hay filtros) */}
+        {favorites.length > 0 && !filters.text && !filters.type && (
+          <div className='mb-6 fadein animation-duration-500'>
+            <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-pink-500 pl-3 flex align-items-center gap-2'>
+              <i className='pi pi-heart-fill text-pink-500'></i> Tus Favoritos
+            </h2>
+            <div className='grid'>
+              {favorites.map((ev) => (
+                <EventCard key={`fav-${ev.id}`} event={ev} session={session} />
+              ))}
+            </div>
+            <div className='border-bottom-1 surface-border my-5'></div>
+          </div>
+        )}
+
+        {/* Sección: DESTACADOS */}
+        {events.featured.length > 0 && !filters.text && !filters.type && (
+          <div className='mb-6 fadein animation-duration-500'>
+            <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-blue-500 pl-3'>
+              Destacados de la Semana
+            </h2>
+            <div className='grid'>
+              {events.featured.map((event) => (
+                <div key={`feat-${event.id}`} className='col-12 md:col-6 p-2'>
+                  <div className='surface-card shadow-3 border-round-xl overflow-hidden flex flex-column md:flex-row h-full'>
+                    <div className='w-full md:w-5 relative h-15rem md:h-auto'>
+                      <img
+                        src={event.image}
+                        className='w-full h-full object-cover'
+                        alt={event.titulo}
+                      />
+                      <Tag
+                        severity='warning'
+                        value='¡MUY PRONTO!'
+                        rounded
+                        className='absolute bottom-0 left-0 m-2'
+                      />
+                    </div>
+                    <div className='w-full md:w-7 p-4 flex flex-column justify-content-center'>
+                      <h3 className='text-2xl font-bold mb-2'>
+                        {event.titulo}
+                      </h3>
+                      <div className='flex align-items-center gap-2 mb-3'>
+                        <Tag value={event.tipo} severity='info' />
+                        <span className='text-600 text-sm'>
+                          <i className='pi pi-calendar'></i>{' '}
+                          {event.formattedDate}
+                        </span>
+                      </div>
+                      <p className='text-600 mb-4 line-clamp-2'>
+                        {event.description}
+                      </p>
+                      {/* Este botón es estático en destacados, podría llevar al detalle también */}
+                      <Button
+                        label='Ver Info Completa'
+                        className='w-full'
+                        outlined
+                        // Asumiendo que quieres que este también funcione:
+                        // onClick={() => navigate(`/evento/${event.id}`)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Barra de Filtros */}
+        <div className='card mb-4 p-3 border-round-xl shadow-1 surface-card flex flex-column md:flex-row gap-3 justify-content-between align-items-center'>
+          <div className='flex align-items-center gap-2 w-full md:w-auto font-bold text-900'>
+            <i className='pi pi-filter text-blue-500 text-xl'></i> Filtrar por:
+          </div>
+          <div className='flex flex-column md:flex-row gap-3 w-full md:w-auto'>
+            <Dropdown
+              value={filters.type}
+              options={EVENT_TYPES}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, type: e.value }))
+              }
+              placeholder='Tipo de Evento'
+              className='w-full md:w-15rem'
+              showClear
+            />
+            <span className='p-input-icon-left w-full md:w-20rem'>
+              <i className='pl-2 pi pi-search' />
+              <InputText
+                placeholder='Buscar por título...'
+                className='pl-5 w-full'
+                value={filters.text}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, text: e.target.value }))
+                }
+              />
+            </span>
+            {(filters.text || filters.type) && (
+              <Button
+                icon='pi pi-times'
+                rounded
+                text
+                severity='danger'
+                onClick={() => setFilters({ text: '', type: null })}
+                tooltip='Limpiar filtros'
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Pestañas de Eventos (Próximos / Pasados) */}
+        <Card className='shadow-1 border-round-xl'>
+          <TabView>
+            <TabPanel
+              header={`Próximos (${filteredUpcoming.length})`}
+              leftIcon='pi pi-calendar-plus mr-2'
+            >
+              <div className='grid mt-2'>
+                {filteredUpcoming.length > 0 ? (
+                  filteredUpcoming.map((ev) => (
+                    <EventCard key={ev.id} event={ev} session={session} />
+                  ))
+                ) : (
+                  <div className='col-12 text-center py-5'>
+                    <i className='pi pi-filter-slash text-4xl text-gray-300 mb-3'></i>
+                    <p className='text-600'>
+                      No hay eventos próximos con estos filtros.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabPanel>
+
+            <TabPanel
+              header={`Historial (${filteredPast.length})`}
+              leftIcon='pi pi-history mr-2'
+            >
+              <div className='grid mt-2'>
+                {filteredPast.length > 0 ? (
+                  filteredPast.map((ev) => (
+                    <EventCard
+                      key={ev.id}
+                      event={ev}
+                      isPast
+                      session={session}
+                    />
+                  ))
+                ) : (
+                  <div className='col-12 text-center py-5'>
+                    <p className='text-600'>
+                      No hay eventos pasados con estos criterios.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabPanel>
+          </TabView>
+        </Card>
+
+        <AddEventDialog
+          visible={showModal}
+          onHide={() => setShowModal(false)}
+          onEventAdded={fetchAllEvents}
+          session={session}
         />
       </div>
-
-      {/* Sección: TUS FAVORITOS (Solo visible si hay favoritos y no hay filtros) */}
-      {favorites.length > 0 && !filters.text && !filters.type && (
-        <div className='mb-6 fadein animation-duration-500'>
-          <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-pink-500 pl-3 flex align-items-center gap-2'>
-            <i className='pi pi-heart-fill text-pink-500'></i> Tus Favoritos
-          </h2>
-          <div className='grid'>
-            {favorites.map((ev) => (
-              <EventCard key={`fav-${ev.id}`} event={ev} session={session} />
-            ))}
-          </div>
-          <div className='border-bottom-1 surface-border my-5'></div>
-        </div>
-      )}
-
-      {/* Sección: DESTACADOS */}
-      {events.featured.length > 0 && !filters.text && !filters.type && (
-        <div className='mb-6 fadein animation-duration-500'>
-          <h2 className='text-2xl font-bold text-900 mb-3 ml-2 border-left-3 border-blue-500 pl-3'>
-            Destacados de la Semana
-          </h2>
-          <div className='grid'>
-            {events.featured.map((event) => (
-              <div key={`feat-${event.id}`} className='col-12 md:col-6 p-2'>
-                <div className='surface-card shadow-3 border-round-xl overflow-hidden flex flex-column md:flex-row h-full'>
-                  <div className='w-full md:w-5 relative h-15rem md:h-auto'>
-                    <img
-                      src={event.image}
-                      className='w-full h-full object-cover'
-                      alt={event.titulo}
-                    />
-                    <Tag
-                      severity='warning'
-                      value='¡MUY PRONTO!'
-                      rounded
-                      className='absolute bottom-0 left-0 m-2'
-                    />
-                  </div>
-                  <div className='w-full md:w-7 p-4 flex flex-column justify-content-center'>
-                    <h3 className='text-2xl font-bold mb-2'>{event.titulo}</h3>
-                    <div className='flex align-items-center gap-2 mb-3'>
-                      <Tag value={event.tipo} severity='info' />
-                      <span className='text-600 text-sm'>
-                        <i className='pi pi-calendar'></i> {event.formattedDate}
-                      </span>
-                    </div>
-                    <p className='text-600 mb-4 line-clamp-2'>
-                      {event.description}
-                    </p>
-                    {/* Este botón es estático en destacados, podría llevar al detalle también */}
-                    <Button
-                      label='Ver Info Completa'
-                      className='w-full'
-                      outlined
-                      // Asumiendo que quieres que este también funcione:
-                      // onClick={() => navigate(`/evento/${event.id}`)}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Barra de Filtros */}
-      <div className='card mb-4 p-3 border-round-xl shadow-1 surface-card flex flex-column md:flex-row gap-3 justify-content-between align-items-center'>
-        <div className='flex align-items-center gap-2 w-full md:w-auto font-bold text-900'>
-          <i className='pi pi-filter text-blue-500 text-xl'></i> Filtrar por:
-        </div>
-        <div className='flex flex-column md:flex-row gap-3 w-full md:w-auto'>
-          <Dropdown
-            value={filters.type}
-            options={EVENT_TYPES}
-            onChange={(e) => setFilters((prev) => ({ ...prev, type: e.value }))}
-            placeholder='Tipo de Evento'
-            className='w-full md:w-15rem'
-            showClear
-          />
-          <span className='p-input-icon-left w-full md:w-20rem'>
-            <i className='pl-2 pi pi-search' />
-            <InputText
-              placeholder='Buscar por título...'
-              className='pl-5 w-full'
-              value={filters.text}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, text: e.target.value }))
-              }
-            />
-          </span>
-          {(filters.text || filters.type) && (
-            <Button
-              icon='pi pi-times'
-              rounded
-              text
-              severity='danger'
-              onClick={() => setFilters({ text: '', type: null })}
-              tooltip='Limpiar filtros'
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Pestañas de Eventos (Próximos / Pasados) */}
-      <Card className='shadow-1 border-round-xl'>
-        <TabView>
-          <TabPanel
-            header={`Próximos (${filteredUpcoming.length})`}
-            leftIcon='pi pi-calendar-plus mr-2'
-          >
-            <div className='grid mt-2'>
-              {filteredUpcoming.length > 0 ? (
-                filteredUpcoming.map((ev) => (
-                  <EventCard key={ev.id} event={ev} session={session} />
-                ))
-              ) : (
-                <div className='col-12 text-center py-5'>
-                  <i className='pi pi-filter-slash text-4xl text-gray-300 mb-3'></i>
-                  <p className='text-600'>
-                    No hay eventos próximos con estos filtros.
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabPanel>
-
-          <TabPanel
-            header={`Historial (${filteredPast.length})`}
-            leftIcon='pi pi-history mr-2'
-          >
-            <div className='grid mt-2'>
-              {filteredPast.length > 0 ? (
-                filteredPast.map((ev) => (
-                  <EventCard key={ev.id} event={ev} isPast session={session} />
-                ))
-              ) : (
-                <div className='col-12 text-center py-5'>
-                  <p className='text-600'>
-                    No hay eventos pasados con estos criterios.
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabPanel>
-        </TabView>
-      </Card>
-
-      <AddEventDialog
-        visible={showModal}
-        onHide={() => setShowModal(false)}
-        onEventAdded={fetchAllEvents}
-        session={session}
-      />
-    </div>
+    </PageTransition>
   )
 }
 

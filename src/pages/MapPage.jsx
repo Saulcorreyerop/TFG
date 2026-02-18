@@ -15,6 +15,7 @@ import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import AddEventDialog from '../components/AddEventDialog'
 import './MapPage.css'
+import PageTransition from '../components/PageTransition'
 
 const MapController = ({ selectedEvent }) => {
   const map = useMap()
@@ -162,249 +163,251 @@ const MapPage = ({ session }) => {
     toast.current.show({ severity, summary, detail })
 
   return (
-    <div className='map-page-container'>
-      <Helmet>
-        <title>Mapa de Eventos en Vivo | CarMeetESP</title>
-        <meta
-          name='description'
-          content='Descubre concentraciones de coches en tiempo real en toda España. Mapa interactivo de eventos de motor.'
-        />
-        <link rel='canonical' href='https://carmeetesp.netlify.app/mapa' />
-      </Helmet>
+    <PageTransition>
+      <div className='map-page-container'>
+        <Helmet>
+          <title>Mapa de Eventos en Vivo | CarMeetESP</title>
+          <meta
+            name='description'
+            content='Descubre concentraciones de coches en tiempo real en toda España. Mapa interactivo de eventos de motor.'
+          />
+          <link rel='canonical' href='https://carmeetesp.netlify.app/mapa' />
+        </Helmet>
 
-      <div ref={mainContainerRef} className='map-page-container'>
-        <Toast ref={toast} position='top-center' className='mt-6 z-5' />
+        <div ref={mainContainerRef} className='map-page-container'>
+          <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-        {/* 1. SECCIÓN DEL MAPA */}
-        <div className='map-section'>
-          <MapContainer
-            center={centerSpain}
-            zoom={5}
-            minZoom={4}
-            maxBounds={spainBounds}
-            zoomControl={false}
-            className='h-full w-full'
-            style={{ background: '#f0f0f0' }}
-          >
-            <TileLayer
-              attribution='&copy; OpenStreetMap'
-              url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-            />
-            <MapController selectedEvent={selectedEvent} />
-            <LocationMarker
-              onLocationSelect={(coords) => {
-                setPosicionTemp(coords)
-                setDialogVisible(true)
-              }}
-              session={session}
-              showToast={showToast}
-            />
+          {/* 1. SECCIÓN DEL MAPA */}
+          <div className='map-section'>
+            <MapContainer
+              center={centerSpain}
+              zoom={5}
+              minZoom={4}
+              maxBounds={spainBounds}
+              zoomControl={false}
+              className='h-full w-full'
+              style={{ background: '#f0f0f0' }}
+            >
+              <TileLayer
+                attribution='&copy; OpenStreetMap'
+                url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              />
+              <MapController selectedEvent={selectedEvent} />
+              <LocationMarker
+                onLocationSelect={(coords) => {
+                  setPosicionTemp(coords)
+                  setDialogVisible(true)
+                }}
+                session={session}
+                showToast={showToast}
+              />
 
-            {eventos.map((ev) => (
-              <Marker key={ev.id} position={[ev.lat, ev.lng]}>
-                <Popup>
-                  <div
-                    className='text-center p-1 cursor-pointer'
-                    style={{ minWidth: '150px' }}
-                    // Hacer click en el popup también lleva al detalle
-                    onClick={() => navigate(`/evento/${ev.id}`)}
-                  >
-                    {ev.image_url && (
-                      <img
-                        src={ev.image_url}
-                        alt='Evento'
-                        className='w-full border-round mb-2 shadow-2'
-                        style={{
-                          height: '120px',
-                          objectFit: 'cover',
-                          display: 'block',
-                        }}
-                      />
-                    )}
-                    <h3 className='font-bold text-lg m-0 text-gray-900 hover:text-primary transition-colors'>
-                      {ev.titulo}
-                    </h3>
-                    <div className='flex justify-content-center my-2'>
-                      <Tag value={ev.tipo} severity='info' />
-                    </div>
-                    <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
-                      <div className='font-semibold'>
-                        {ev.fecha.toLocaleDateString('es-ES')}
-                      </div>
-                      <div className='text-primary font-bold mt-1'>
-                        <Button
-                          label='Ver más info &gt;'
-                          severity='help'
-                          rounded
-                          className='shadow-1'
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/evento/${ev.id}`)
+              {eventos.map((ev) => (
+                <Marker key={ev.id} position={[ev.lat, ev.lng]}>
+                  <Popup>
+                    <div
+                      className='text-center p-1 cursor-pointer'
+                      style={{ minWidth: '150px' }}
+                      // Hacer click en el popup también lleva al detalle
+                      onClick={() => navigate(`/evento/${ev.id}`)}
+                    >
+                      {ev.image_url && (
+                        <img
+                          src={ev.image_url}
+                          alt='Evento'
+                          className='w-full border-round mb-2 shadow-2'
+                          style={{
+                            height: '120px',
+                            objectFit: 'cover',
+                            display: 'block',
                           }}
                         />
+                      )}
+                      <h3 className='font-bold text-lg m-0 text-gray-900 hover:text-primary transition-colors'>
+                        {ev.titulo}
+                      </h3>
+                      <div className='flex justify-content-center my-2'>
+                        <Tag value={ev.tipo} severity='info' />
+                      </div>
+                      <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
+                        <div className='font-semibold'>
+                          {ev.fecha.toLocaleDateString('es-ES')}
+                        </div>
+                        <div className='text-primary font-bold mt-1'>
+                          <Button
+                            label='Ver más info &gt;'
+                            severity='help'
+                            rounded
+                            className='shadow-1'
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/evento/${ev.id}`)
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
 
-          {!session && (
-            <div className='absolute top-0 right-0 m-3 z-[400]'>
+            {!session && (
+              <div className='absolute top-0 right-0 m-3 z-[400]'>
+                <Button
+                  icon='pi pi-user'
+                  rounded
+                  severity='warning'
+                  aria-label='Login'
+                  onClick={() => navigate('/login')}
+                  className='shadow-3'
+                />
+              </div>
+            )}
+          </div>
+
+          {/* 2. SECCIÓN DE LA LISTA */}
+          <aside className='sidebar-section'>
+            <div
+              className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
+              onClick={scrollToTopList}
+            >
+              <div className='mobile-drag-handle'>
+                <div
+                  className='w-3rem h-1 border-round opacity-50'
+                  style={{ backgroundColor: '#d1d5db' }}
+                ></div>
+              </div>
+
+              <div className='mt-2 md:mt-0 text-center display-flex justify-content-center align-items-center flex-column w-full'>
+                <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
+                  {/* --- DRAG HANDLE (Tirador) --- */}
+                  <div className='flex justify-content-center pt-1 pb-1 w-full cursor-pointer'>
+                    <div
+                      className='border-round-xl'
+                      style={{
+                        width: '40px',
+                        height: '6px',
+                        backgroundColor: '#cbd5e1' /* Gris azulado visible */,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
+                  Eventos
+                </h1>
+                <p className='text-500 m-0 text-xs md:text-sm mt-1 text-center'>
+                  {eventos.length} disponibles
+                </p>
+              </div>
+
               <Button
-                icon='pi pi-user'
+                icon='pi pi-plus'
+                severity='help'
                 rounded
-                severity='warning'
-                aria-label='Login'
-                onClick={() => navigate('/login')}
-                className='shadow-3'
+                className='shadow-1'
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleAddClick()
+                }}
+                aria-label='Añadir'
               />
             </div>
-          )}
+
+            <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
+              <div className='p-3 border-round-xl shadow-2 mb-4 instruction-card'>
+                <div
+                  className='flex align-items-center gap-2 font-bold text-lg mb-2'
+                  style={{ color: '#2c3e50' }}
+                >
+                  <i className='pi pi-map-marker text-xl text-purple' />
+                  <span>Añadir nuevo evento</span>
+                </div>
+
+                <p className='m-0 line-height-3 text-700 text-sm mb-3'>
+                  Navega por el mapa, haz zoom en la zona exacta y
+                  <span className='font-bold text-900'>
+                    {' '}
+                    haz click sobre el lugar{' '}
+                  </span>
+                  donde comenzará el evento para crearlo.
+                </p>
+
+                <p className='m-0 line-height-3 text-700 text-sm mb-3'>
+                  - También puedes utilizar el
+                  <span className='font-bold text-900'>
+                    {' '}
+                    botón de abajo o la cruz de arriba{' '}
+                  </span>
+                  para añadirlo de una manera mas sencilla.
+                </p>
+
+                <div className='p-3 border-round-md flex align-items-start gap-2 text-xs note-box'>
+                  <i
+                    className='pi pi-info-circle text-purple'
+                    style={{ marginTop: '2px' }}
+                  />
+                  <span>
+                    <strong>Nota:</strong> Una vez que la fecha y hora del
+                    evento hayan pasado, este dejará de mostrarse
+                    automáticamente en el mapa.
+                  </span>
+                </div>
+
+                <div className='mt-3'>
+                  <Button
+                    label='Agregar Evento por Dirección'
+                    severity='help'
+                    outlined
+                    className='w-full text-purple-dark'
+                    onClick={handleAddClick}
+                  />
+                </div>
+
+                <div className='mt-3 text-center'>
+                  <Link to='/eventos'>
+                    <small>Ver todos los eventos</small>
+                  </Link>
+                </div>
+              </div>
+
+              <div className='flex flex-column gap-2'>
+                <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
+                  Eventos Próximos
+                </h2>
+                <hr className='event-separator' />
+
+                {eventos.length === 0 && (
+                  <div className='text-center p-5 text-500'>
+                    <i className='pi pi-map text-4xl mb-2 opacity-50' />
+                    <p>No hay eventos próximos.</p>
+                  </div>
+                )}
+                {eventos.map((ev) => (
+                  <EventCard
+                    key={ev.id}
+                    ev={ev}
+                    isSelected={selectedEvent?.id === ev.id}
+                    onClick={handleEventClick}
+                    // Pasamos la función de navegación
+                    onNavigate={() => navigate(`/evento/${ev.id}`)}
+                  />
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <AddEventDialog
+            visible={dialogVisible}
+            onHide={() => setDialogVisible(false)}
+            onEventAdded={fetchEventos}
+            session={session}
+            initialLat={posicionTemp.lat}
+            initialLng={posicionTemp.lng}
+          />
         </div>
-
-        {/* 2. SECCIÓN DE LA LISTA */}
-        <aside className='sidebar-section'>
-          <div
-            className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
-            onClick={scrollToTopList}
-          >
-            <div className='mobile-drag-handle'>
-              <div
-                className='w-3rem h-1 border-round opacity-50'
-                style={{ backgroundColor: '#d1d5db' }}
-              ></div>
-            </div>
-
-            <div className='mt-2 md:mt-0 text-center display-flex justify-content-center align-items-center flex-column w-full'>
-              <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
-                {/* --- DRAG HANDLE (Tirador) --- */}
-                <div className='flex justify-content-center pt-1 pb-1 w-full cursor-pointer'>
-                  <div
-                    className='border-round-xl'
-                    style={{
-                      width: '40px',
-                      height: '6px',
-                      backgroundColor: '#cbd5e1' /* Gris azulado visible */,
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
-                Eventos
-              </h1>
-              <p className='text-500 m-0 text-xs md:text-sm mt-1 text-center'>
-                {eventos.length} disponibles
-              </p>
-            </div>
-
-            <Button
-              icon='pi pi-plus'
-              severity='help'
-              rounded
-              className='shadow-1'
-              onClick={(e) => {
-                e.stopPropagation()
-                handleAddClick()
-              }}
-              aria-label='Añadir'
-            />
-          </div>
-
-          <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
-            <div className='p-3 border-round-xl shadow-2 mb-4 instruction-card'>
-              <div
-                className='flex align-items-center gap-2 font-bold text-lg mb-2'
-                style={{ color: '#2c3e50' }}
-              >
-                <i className='pi pi-map-marker text-xl text-purple' />
-                <span>Añadir nuevo evento</span>
-              </div>
-
-              <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-                Navega por el mapa, haz zoom en la zona exacta y
-                <span className='font-bold text-900'>
-                  {' '}
-                  haz click sobre el lugar{' '}
-                </span>
-                donde comenzará el evento para crearlo.
-              </p>
-
-              <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-                - También puedes utilizar el
-                <span className='font-bold text-900'>
-                  {' '}
-                  botón de abajo o la cruz de arriba{' '}
-                </span>
-                para añadirlo de una manera mas sencilla.
-              </p>
-
-              <div className='p-3 border-round-md flex align-items-start gap-2 text-xs note-box'>
-                <i
-                  className='pi pi-info-circle text-purple'
-                  style={{ marginTop: '2px' }}
-                />
-                <span>
-                  <strong>Nota:</strong> Una vez que la fecha y hora del evento
-                  hayan pasado, este dejará de mostrarse automáticamente en el
-                  mapa.
-                </span>
-              </div>
-
-              <div className='mt-3'>
-                <Button
-                  label='Agregar Evento por Dirección'
-                  severity='help'
-                  outlined
-                  className='w-full text-purple-dark'
-                  onClick={handleAddClick}
-                />
-              </div>
-
-              <div className='mt-3 text-center'>
-                <Link to='/eventos'>
-                  <small>Ver todos los eventos</small>
-                </Link>
-              </div>
-            </div>
-
-            <div className='flex flex-column gap-2'>
-              <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
-                Eventos Próximos
-              </h2>
-              <hr className='event-separator' />
-
-              {eventos.length === 0 && (
-                <div className='text-center p-5 text-500'>
-                  <i className='pi pi-map text-4xl mb-2 opacity-50' />
-                  <p>No hay eventos próximos.</p>
-                </div>
-              )}
-              {eventos.map((ev) => (
-                <EventCard
-                  key={ev.id}
-                  ev={ev}
-                  isSelected={selectedEvent?.id === ev.id}
-                  onClick={handleEventClick}
-                  // Pasamos la función de navegación
-                  onNavigate={() => navigate(`/evento/${ev.id}`)}
-                />
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <AddEventDialog
-          visible={dialogVisible}
-          onHide={() => setDialogVisible(false)}
-          onEventAdded={fetchEventos}
-          session={session}
-          initialLat={posicionTemp.lat}
-          initialLng={posicionTemp.lng}
-        />
       </div>
-    </div>
+    </PageTransition>
   )
 }
 

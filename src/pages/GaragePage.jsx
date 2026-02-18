@@ -8,6 +8,7 @@ import { Dropdown } from 'primereact/dropdown'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { SelectButton } from 'primereact/selectbutton' // Nuevo componente
 import { Toast } from 'primereact/toast'
+import PageTransition from '../components/PageTransition'
 
 import './GaragePage.css'
 
@@ -302,189 +303,191 @@ const GaragePage = ({ session }) => {
   }
 
   return (
-    <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
-      <Toast ref={toast} />
+    <PageTransition>
+      <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
+        <Toast ref={toast} />
 
-      {/* Cabecera */}
-      <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
-        <div>
-          <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
-            Mi Garaje
-          </h1>
-          <p className='text-500 mt-2 text-lg'>Tu colección personal</p>
-        </div>
-        <Button
-          label='Añadir Vehículo'
-          icon='pi pi-plus'
-          severity='help'
-          raised
-          className='px-4 py-3 border-round-3xl shadow-2'
-          onClick={openNew}
-        />
-      </div>
-
-      {/* Grid de vehículos */}
-      {vehicles.length === 0 ? (
-        <div className='garage-empty'>
-          {/* ... Tu código de empty state ... */}
-          <p className='text-center text-500'>No hay vehículos.</p>
-        </div>
-      ) : (
-        <div className='garage-grid'>
-          {vehicles.map((car) => (
-            <div key={car.id}>{carTemplate(car)}</div>
-          ))}
-        </div>
-      )}
-
-      {/* DIÁLOGO DE EDICIÓN / CREACIÓN */}
-      <Dialog
-        header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
-        visible={showDialog}
-        style={{ width: '90vw', maxWidth: '500px' }}
-        onHide={() => setShowDialog(false)}
-        className='p-fluid'
-      >
-        <div className='flex flex-column gap-4 pt-2'>
-          {/* 1. SELECCIÓN DE TIPO (COCHE O MOTO) */}
-          <div className='flex justify-content-center'>
-            <SelectButton
-              value={vehicleType}
-              onChange={(e) => {
-                if (e.value) {
-                  // Prevenir deselección
-                  setVehicleType(e.value)
-                  setForm({ ...form, marca: '', modelo: '' }) // Reseteamos marca al cambiar tipo
-                }
-              }}
-              options={typeOptions}
-              className='w-full'
-              itemTemplate={(option) => (
-                <div className='font-bold w-full text-center'>
-                  {option.label}
-                </div>
-              )}
-            />
+        {/* Cabecera */}
+        <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
+          <div>
+            <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
+              Mi Garaje
+            </h1>
+            <p className='text-500 mt-2 text-lg'>Tu colección personal</p>
           </div>
-
-          <div className='flex gap-3 flex-column md:flex-row'>
-            {/* 2. MARCA (Dropdown con filtro y editable) */}
-            <div className='flex-1'>
-              <span className='p-float-label'>
-                <Dropdown
-                  id='marca'
-                  value={form.marca}
-                  onChange={(e) => {
-                    setForm({ ...form, marca: e.value, modelo: '' }) // Reset modelo al cambiar marca
-                  }}
-                  options={makes}
-                  filter
-                  editable // <--- ESTO PERMITE ESCRIBIR SI NO ESTÁ EN LA LISTA
-                  placeholder='Selecciona o escribe'
-                  disabled={loadingAPI}
-                />
-                <label htmlFor='marca'>Marca</label>
-              </span>
-            </div>
-
-            {/* 3. MODELO (Dropdown con filtro y editable) */}
-            <div className='flex-1'>
-              <span className='p-float-label'>
-                <Dropdown
-                  id='modelo'
-                  value={form.modelo}
-                  onChange={(e) => setForm({ ...form, modelo: e.value })}
-                  options={models}
-                  filter
-                  editable // <--- ESTO PERMITE ESCRIBIR SI NO ESTÁ EN LA LISTA
-                  placeholder='Selecciona o escribe'
-                  disabled={!form.marca || loadingAPI}
-                />
-                <label htmlFor='modelo'>Modelo</label>
-              </span>
-            </div>
-          </div>
-
-          {/* Resto del formulario (CV, Año, etc) */}
-          <div className='flex gap-3'>
-            <div className='flex-1'>
-              <span className='p-float-label'>
-                <InputNumber
-                  id='cv'
-                  value={form.cv}
-                  onValueChange={(e) => setForm({ ...form, cv: e.value })}
-                  suffix=' CV'
-                />
-                <label htmlFor='cv'>Potencia</label>
-              </span>
-            </div>
-            <div className='flex-1'>
-              <span className='p-float-label'>
-                <InputNumber
-                  id='anio'
-                  value={form.anio}
-                  onValueChange={(e) => setForm({ ...form, anio: e.value })}
-                  useGrouping={false}
-                />
-                <label htmlFor='anio'>Año</label>
-              </span>
-            </div>
-          </div>
-
-          <span className='p-float-label'>
-            <Dropdown
-              id='fuel'
-              value={form.combustible}
-              options={fuelOptions}
-              onChange={(e) => setForm({ ...form, combustible: e.value })}
-            />
-            <label htmlFor='fuel'>Combustible</label>
-          </span>
-
-          <span className='p-float-label'>
-            <InputTextarea
-              id='desc'
-              value={form.descripcion}
-              onChange={(e) =>
-                setForm({ ...form, descripcion: e.target.value })
-              }
-              rows={3}
-              autoResize
-            />
-            <label htmlFor='desc'>Modificaciones / Descripción</label>
-          </span>
-
-          {/* Subida de Imagen */}
-          <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative'>
-            <input
-              type='file'
-              accept='image/*'
-              onChange={(e) => setImageFile(e.target.files[0])}
-              className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer'
-            />
-            <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
-              <i className='pi pi-image text-2xl text-600'></i>
-              <span className='text-sm text-700 font-semibold'>
-                {imageFile
-                  ? imageFile.name
-                  : form.image_url
-                    ? 'Cambiar foto actual'
-                    : 'Subir foto del vehículo'}
-              </span>
-            </div>
-          </div>
-
           <Button
-            label={editingId ? 'Guardar Cambios' : 'Guardar Vehículo'}
-            icon='pi pi-check'
+            label='Añadir Vehículo'
+            icon='pi pi-plus'
             severity='help'
-            onClick={handleSubmit}
-            loading={loading}
-            className='mt-2'
+            raised
+            className='px-4 py-3 border-round-3xl shadow-2'
+            onClick={openNew}
           />
         </div>
-      </Dialog>
-    </div>
+
+        {/* Grid de vehículos */}
+        {vehicles.length === 0 ? (
+          <div className='garage-empty'>
+            {/* ... Tu código de empty state ... */}
+            <p className='text-center text-500'>No hay vehículos.</p>
+          </div>
+        ) : (
+          <div className='garage-grid'>
+            {vehicles.map((car) => (
+              <div key={car.id}>{carTemplate(car)}</div>
+            ))}
+          </div>
+        )}
+
+        {/* DIÁLOGO DE EDICIÓN / CREACIÓN */}
+        <Dialog
+          header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
+          visible={showDialog}
+          style={{ width: '90vw', maxWidth: '500px' }}
+          onHide={() => setShowDialog(false)}
+          className='p-fluid'
+        >
+          <div className='flex flex-column gap-4 pt-2'>
+            {/* 1. SELECCIÓN DE TIPO (COCHE O MOTO) */}
+            <div className='flex justify-content-center'>
+              <SelectButton
+                value={vehicleType}
+                onChange={(e) => {
+                  if (e.value) {
+                    // Prevenir deselección
+                    setVehicleType(e.value)
+                    setForm({ ...form, marca: '', modelo: '' }) // Reseteamos marca al cambiar tipo
+                  }
+                }}
+                options={typeOptions}
+                className='w-full'
+                itemTemplate={(option) => (
+                  <div className='font-bold w-full text-center'>
+                    {option.label}
+                  </div>
+                )}
+              />
+            </div>
+
+            <div className='flex gap-3 flex-column md:flex-row'>
+              {/* 2. MARCA (Dropdown con filtro y editable) */}
+              <div className='flex-1'>
+                <span className='p-float-label'>
+                  <Dropdown
+                    id='marca'
+                    value={form.marca}
+                    onChange={(e) => {
+                      setForm({ ...form, marca: e.value, modelo: '' }) // Reset modelo al cambiar marca
+                    }}
+                    options={makes}
+                    filter
+                    editable // <--- ESTO PERMITE ESCRIBIR SI NO ESTÁ EN LA LISTA
+                    placeholder='Selecciona o escribe'
+                    disabled={loadingAPI}
+                  />
+                  <label htmlFor='marca'>Marca</label>
+                </span>
+              </div>
+
+              {/* 3. MODELO (Dropdown con filtro y editable) */}
+              <div className='flex-1'>
+                <span className='p-float-label'>
+                  <Dropdown
+                    id='modelo'
+                    value={form.modelo}
+                    onChange={(e) => setForm({ ...form, modelo: e.value })}
+                    options={models}
+                    filter
+                    editable // <--- ESTO PERMITE ESCRIBIR SI NO ESTÁ EN LA LISTA
+                    placeholder='Selecciona o escribe'
+                    disabled={!form.marca || loadingAPI}
+                  />
+                  <label htmlFor='modelo'>Modelo</label>
+                </span>
+              </div>
+            </div>
+
+            {/* Resto del formulario (CV, Año, etc) */}
+            <div className='flex gap-3'>
+              <div className='flex-1'>
+                <span className='p-float-label'>
+                  <InputNumber
+                    id='cv'
+                    value={form.cv}
+                    onValueChange={(e) => setForm({ ...form, cv: e.value })}
+                    suffix=' CV'
+                  />
+                  <label htmlFor='cv'>Potencia</label>
+                </span>
+              </div>
+              <div className='flex-1'>
+                <span className='p-float-label'>
+                  <InputNumber
+                    id='anio'
+                    value={form.anio}
+                    onValueChange={(e) => setForm({ ...form, anio: e.value })}
+                    useGrouping={false}
+                  />
+                  <label htmlFor='anio'>Año</label>
+                </span>
+              </div>
+            </div>
+
+            <span className='p-float-label'>
+              <Dropdown
+                id='fuel'
+                value={form.combustible}
+                options={fuelOptions}
+                onChange={(e) => setForm({ ...form, combustible: e.value })}
+              />
+              <label htmlFor='fuel'>Combustible</label>
+            </span>
+
+            <span className='p-float-label'>
+              <InputTextarea
+                id='desc'
+                value={form.descripcion}
+                onChange={(e) =>
+                  setForm({ ...form, descripcion: e.target.value })
+                }
+                rows={3}
+                autoResize
+              />
+              <label htmlFor='desc'>Modificaciones / Descripción</label>
+            </span>
+
+            {/* Subida de Imagen */}
+            <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative'>
+              <input
+                type='file'
+                accept='image/*'
+                onChange={(e) => setImageFile(e.target.files[0])}
+                className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer'
+              />
+              <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
+                <i className='pi pi-image text-2xl text-600'></i>
+                <span className='text-sm text-700 font-semibold'>
+                  {imageFile
+                    ? imageFile.name
+                    : form.image_url
+                      ? 'Cambiar foto actual'
+                      : 'Subir foto del vehículo'}
+                </span>
+              </div>
+            </div>
+
+            <Button
+              label={editingId ? 'Guardar Cambios' : 'Guardar Vehículo'}
+              icon='pi pi-check'
+              severity='help'
+              onClick={handleSubmit}
+              loading={loading}
+              className='mt-2'
+            />
+          </div>
+        </Dialog>
+      </div>
+    </PageTransition>
   )
 }
 

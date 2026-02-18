@@ -7,6 +7,7 @@ import { Button } from 'primereact/button'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { useNavigate } from 'react-router-dom'
 import { Tag } from 'primereact/tag'
+import PageTransition from '../components/PageTransition'
 
 const CommunityPage = () => {
   const navigate = useNavigate()
@@ -111,43 +112,45 @@ const CommunityPage = () => {
   }
 
   return (
-    <div className='min-h-screen surface-ground p-4 md:p-6'>
-      <div className='text-center mb-6'>
-        <h1 className='text-4xl font-extrabold text-900 mb-2'>Comunidad</h1>
-        <p className='text-600 text-lg'>
-          Encuentra a otros apasionados del motor
-        </p>
-      </div>
-
-      {/* Buscador */}
-      <div className='flex justify-content-center mb-6'>
-        <span className='p-input-icon-left w-full md:w-30rem'>
-          <i className='pi pi-search pl-3' />
-          <InputText
-            placeholder='Buscar usuario...'
-            className='w-full border-round-3xl p-3 pl-6 shadow-1'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </span>
-      </div>
-
-      {loading ? (
-        <div className='flex justify-content-center mt-5'>
-          <ProgressSpinner />
+    <PageTransition>
+      <div className='min-h-screen surface-ground p-4 md:p-6'>
+        <div className='text-center mb-6'>
+          <h1 className='text-4xl font-extrabold text-900 mb-2'>Comunidad</h1>
+          <p className='text-600 text-lg'>
+            Encuentra a otros apasionados del motor
+          </p>
         </div>
-      ) : (
-        <div className='grid'>
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => userCardTemplate(user))
-          ) : (
-            <div className='col-12 text-center text-600 mt-5'>
-              No se encontraron usuarios.
-            </div>
-          )}
+
+        {/* Buscador */}
+        <div className='flex justify-content-center mb-6'>
+          <span className='p-input-icon-left w-full md:w-30rem'>
+            <i className='pi pi-search pl-3' />
+            <InputText
+              placeholder='Buscar usuario...'
+              className='w-full border-round-3xl p-3 pl-6 shadow-1'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </span>
         </div>
-      )}
-    </div>
+
+        {loading ? (
+          <div className='flex justify-content-center mt-5'>
+            <ProgressSpinner />
+          </div>
+        ) : (
+          <div className='grid'>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => userCardTemplate(user))
+            ) : (
+              <div className='col-12 text-center text-600 mt-5'>
+                No se encontraron usuarios.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </PageTransition>
   )
 }
 

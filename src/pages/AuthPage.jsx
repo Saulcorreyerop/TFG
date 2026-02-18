@@ -6,6 +6,7 @@ import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { TabView, TabPanel } from 'primereact/tabview'
 import { Toast } from 'primereact/toast'
+import PageTransition from '../components/PageTransition'
 
 const AuthPage = () => {
   const toast = useRef(null)
@@ -115,134 +116,140 @@ const AuthPage = () => {
   }
 
   return (
-    <div className='flex justify-content-center align-items-center min-h-screen surface-ground p-4'>
-      <Toast ref={toast} />
-      <Card className='w-full md:w-30rem shadow-4 border-round-xl'>
-        <div className='text-center mb-5'>
-          <h2 className='text-900 font-bold mb-2'>Bienvenido a CarMeet ESP</h2>
-          <p className='text-600'>Tu comunidad de motor te espera</p>
-        </div>
+    <PageTransition>
+      <div className='flex justify-content-center align-items-center min-h-screen surface-ground p-4'>
+        <Toast ref={toast} />
+        <Card className='w-full md:w-30rem shadow-4 border-round-xl'>
+          <div className='text-center mb-5'>
+            <h2 className='text-900 font-bold mb-2'>
+              Bienvenido a CarMeet ESP
+            </h2>
+            <p className='text-600'>Tu comunidad de motor te espera</p>
+          </div>
 
-        <TabView
-          activeIndex={activeIndex}
-          onTabChange={(e) => setActiveIndex(e.index)}
-        >
-          {/* --- PANEL DE INICIO DE SESIÓN --- */}
-          <TabPanel header='Iniciar Sesión'>
-            {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
-            <form
-              onSubmit={handleLogin}
-              className='flex flex-column gap-4 pt-2 p-fluid'
-            >
-              <span className='p-float-label'>
-                <InputText
-                  id='login-input'
-                  value={loginInput}
-                  onChange={(e) => setLoginInput(e.target.value)}
-                />
-                <label htmlFor='login-input'>Correo o Nombre de Usuario</label>
-              </span>
-
-              <span className='p-float-label'>
-                <Password
-                  id='login-pass'
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  toggleMask
-                  feedback={false}
-                />
-                <label htmlFor='login-pass'>Contraseña</label>
-              </span>
-
-              <Button
-                label={loading ? 'Verificando...' : 'Entrar'}
-                icon='pi pi-sign-in'
-                loading={loading}
-              />
-
-              <div className='text-center text-600 mt-2'>
-                ¿No tienes cuenta aún?{' '}
-                <span
-                  className='font-bold text-primary cursor-pointer hover:underline'
-                  onClick={() => setActiveIndex(1)}
-                >
-                  Regístrate aquí
+          <TabView
+            activeIndex={activeIndex}
+            onTabChange={(e) => setActiveIndex(e.index)}
+          >
+            {/* --- PANEL DE INICIO DE SESIÓN --- */}
+            <TabPanel header='Iniciar Sesión'>
+              {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
+              <form
+                onSubmit={handleLogin}
+                className='flex flex-column gap-4 pt-2 p-fluid'
+              >
+                <span className='p-float-label'>
+                  <InputText
+                    id='login-input'
+                    value={loginInput}
+                    onChange={(e) => setLoginInput(e.target.value)}
+                  />
+                  <label htmlFor='login-input'>
+                    Correo o Nombre de Usuario
+                  </label>
                 </span>
-              </div>
-            </form>
-          </TabPanel>
 
-          {/* --- PANEL DE REGISTRO --- */}
-          <TabPanel header='Registrarse'>
-            {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
-            <form
-              onSubmit={handleRegister}
-              className='flex flex-column gap-4 pt-2 p-fluid'
-            >
-              <span className='p-float-label'>
-                <InputText
-                  id='reg-user'
-                  value={regUsername}
-                  onChange={(e) => setRegUsername(e.target.value)}
-                />
-                <label htmlFor='reg-user'>Nombre de Usuario</label>
-              </span>
-
-              <span className='p-float-label'>
-                <InputText
-                  id='reg-email'
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                />
-                <label htmlFor='reg-email'>Correo Electrónico</label>
-              </span>
-
-              <span className='p-float-label'>
-                <Password
-                  id='reg-pass'
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  toggleMask
-                  promptLabel='Introduce una contraseña'
-                  weakLabel='Débil'
-                  mediumLabel='Media'
-                  strongLabel='Fuerte'
-                />
-                <label htmlFor='reg-pass'>Contraseña</label>
-              </span>
-
-              <span className='p-float-label'>
-                <Password
-                  id='reg-confirm'
-                  value={regConfirmPassword}
-                  onChange={(e) => setRegConfirmPassword(e.target.value)}
-                  toggleMask
-                  feedback={false}
-                />
-                <label htmlFor='reg-confirm'>Confirmar Contraseña</label>
-              </span>
-
-              <Button
-                label={loading ? 'Creando cuenta...' : 'Crear Cuenta'}
-                icon='pi pi-user-plus'
-                severity='success'
-                loading={loading}
-              />
-
-              <div className='text-center text-600 mt-2'>
-                ¿Ya tienes cuenta?{' '}
-                <span
-                  className='font-bold text-primary cursor-pointer hover:underline'
-                  onClick={() => setActiveIndex(0)}
-                >
-                  Inicia sesión
+                <span className='p-float-label'>
+                  <Password
+                    id='login-pass'
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    toggleMask
+                    feedback={false}
+                  />
+                  <label htmlFor='login-pass'>Contraseña</label>
                 </span>
-              </div>
-            </form>
-          </TabPanel>
-        </TabView>
-      </Card>
-    </div>
+
+                <Button
+                  label={loading ? 'Verificando...' : 'Entrar'}
+                  icon='pi pi-sign-in'
+                  loading={loading}
+                />
+
+                <div className='text-center text-600 mt-2'>
+                  ¿No tienes cuenta aún?{' '}
+                  <span
+                    className='font-bold text-primary cursor-pointer hover:underline'
+                    onClick={() => setActiveIndex(1)}
+                  >
+                    Regístrate aquí
+                  </span>
+                </div>
+              </form>
+            </TabPanel>
+
+            {/* --- PANEL DE REGISTRO --- */}
+            <TabPanel header='Registrarse'>
+              {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
+              <form
+                onSubmit={handleRegister}
+                className='flex flex-column gap-4 pt-2 p-fluid'
+              >
+                <span className='p-float-label'>
+                  <InputText
+                    id='reg-user'
+                    value={regUsername}
+                    onChange={(e) => setRegUsername(e.target.value)}
+                  />
+                  <label htmlFor='reg-user'>Nombre de Usuario</label>
+                </span>
+
+                <span className='p-float-label'>
+                  <InputText
+                    id='reg-email'
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                  />
+                  <label htmlFor='reg-email'>Correo Electrónico</label>
+                </span>
+
+                <span className='p-float-label'>
+                  <Password
+                    id='reg-pass'
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    toggleMask
+                    promptLabel='Introduce una contraseña'
+                    weakLabel='Débil'
+                    mediumLabel='Media'
+                    strongLabel='Fuerte'
+                  />
+                  <label htmlFor='reg-pass'>Contraseña</label>
+                </span>
+
+                <span className='p-float-label'>
+                  <Password
+                    id='reg-confirm'
+                    value={regConfirmPassword}
+                    onChange={(e) => setRegConfirmPassword(e.target.value)}
+                    toggleMask
+                    feedback={false}
+                  />
+                  <label htmlFor='reg-confirm'>Confirmar Contraseña</label>
+                </span>
+
+                <Button
+                  label={loading ? 'Creando cuenta...' : 'Crear Cuenta'}
+                  icon='pi pi-user-plus'
+                  severity='success'
+                  loading={loading}
+                />
+
+                <div className='text-center text-600 mt-2'>
+                  ¿Ya tienes cuenta?{' '}
+                  <span
+                    className='font-bold text-primary cursor-pointer hover:underline'
+                    onClick={() => setActiveIndex(0)}
+                  >
+                    Inicia sesión
+                  </span>
+                </div>
+              </form>
+            </TabPanel>
+          </TabView>
+        </Card>
+      </div>
+    </PageTransition>
   )
 }
 

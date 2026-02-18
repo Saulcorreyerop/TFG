@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-
-// --- 1. IMPORTACIONES GLOBALES (Leaflet y PrimeReact) ---
 import { addLocale } from 'primereact/api'
-import { ProgressSpinner } from 'primereact/progressspinner' // <--- IMPORTANTE: Para el estado de carga
+import { ProgressSpinner } from 'primereact/progressspinner'
 import L from 'leaflet'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
+import { Helmet } from 'react-helmet-async'
+import { AnimatePresence } from 'framer-motion' // IMPORTANTE
 
 // Componentes
 import Header from './components/Header'
@@ -16,6 +16,7 @@ import HomeMap from './components/HomeMap'
 import Features from './components/Features'
 import EventCarousel from './components/EventCarousel'
 import Footer from './components/Footer'
+import AnimatedPage from './components/AnimatedPage' // Crearemos este wrapper
 
 // Páginas
 import MapPage from './pages/MapPage'
@@ -27,56 +28,18 @@ import PublicProfile from './pages/PublicProfile'
 import CommunityPage from './pages/CommunityPage'
 import EventDetailPage from './pages/EventDetailPage'
 
-import { Helmet } from 'react-helmet-async'
-
-// --- 2. CONFIGURACIÓN GLOBAL (Se ejecuta una sola vez) ---
-// Configuración de Español para Calendarios
+// --- CONFIGURACIÓN ---
 addLocale('es', {
   firstDayOfWeek: 1,
-  dayNames: [
-    'domingo',
-    'lunes',
-    'martes',
-    'miércoles',
-    'jueves',
-    'viernes',
-    'sábado',
-  ],
+  dayNames: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
   dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
   dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
-  monthNames: [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ],
-  monthNamesShort: [
-    'ene',
-    'feb',
-    'mar',
-    'abr',
-    'may',
-    'jun',
-    'jul',
-    'ago',
-    'sep',
-    'oct',
-    'nov',
-    'dic',
-  ],
+  monthNames: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  monthNamesShort: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
   today: 'Hoy',
   clear: 'Limpiar',
 })
 
-// Configuración de Iconos por defecto de Leaflet
 let DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
@@ -85,51 +48,60 @@ let DefaultIcon = L.icon({
   popupAnchor: [1, -34],
 })
 L.Marker.prototype.options.icon = DefaultIcon
-// ---------------------------------------------------------
 
-const Home = () => (
-  <>
+// --- HOME COMPONENT ---
+const Home = ({ session }) => (
+  <AnimatedPage>
     <Helmet>
       <title>CarMeet ESP | Eventos y Rutas de Coches en España</title>
-      <meta
-        name='description'
-        content='La mayor comunidad de coches en España. Encuentra eventos, rutas en tiempo real y concentraciones de coches cerca de ti.'
-      />
+      <meta name='description' content='La mayor comunidad de coches en España...' />
       <link rel='canonical' href='https://carmeetesp.netlify.app/' />
     </Helmet>
-    <Hero />
+    <Hero session={session} /> {/* Pasamos session al Hero */}
     <HomeMap />
     <EventCarousel />
     <Features />
-  </>
+  </AnimatedPage>
 )
+
+// --- RUTAS ANIMADAS ---
+// Creamos un componente intermedio para usar useLocation dentro del Router
+const AnimatedRoutes = ({ session }) => {
+  const location = useLocation()
+
+  return (
+    <AnimatePresence mode='wait'>
+      <Routes location={location} key={location.pathname}>
+        <Route path='/' element={<Home session={session} />} />
+        <Route path='/mapa' element={<AnimatedPage><MapPage session={session} /></AnimatedPage>} />
+        <Route path='/eventos' element={<AnimatedPage><EventsPage session={session} /></AnimatedPage>} />
+        <Route path='/comunidad' element={<AnimatedPage><CommunityPage /></AnimatedPage>} />
+        <Route path='/garaje' element={session ? <AnimatedPage><GaragePage session={session} /></AnimatedPage> : <Navigate to='/login' />} />
+        <Route path='/perfil' element={session ? <AnimatedPage><ProfilePage session={session} /></AnimatedPage> : <Navigate to='/login' />} />
+        <Route path='/usuario/:userId' element={<AnimatedPage><PublicProfile /></AnimatedPage>} />
+        <Route path='/login' element={!session ? <AnimatedPage><AuthPage /></AnimatedPage> : <Navigate to='/' />} />
+        <Route path='/evento/:id' element={<AnimatedPage><EventDetailPage session={session} /></AnimatedPage>} />
+      </Routes>
+    </AnimatePresence>
+  )
+}
 
 function App() {
   const [session, setSession] = useState(null)
-  // AÑADIMOS EL ESTADO DE CARGA (Empezamos cargando)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 1. Verificar sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false) // <--- Ya sabemos si hay usuario o no, terminamos de cargar
-    })
-
-    // 2. Escuchar cambios en la autenticación
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setLoading(false)
     })
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      setLoading(false)
+    })
     return () => subscription.unsubscribe()
   }, [])
 
-  // --- LÓGICA DE CARGA ---
-  // Si todavía estamos comprobando la sesión, mostramos un spinner en pantalla completa
-  // y no renderizamos las rutas todavía (así evitamos el redirect erróneo).
   if (loading) {
     return (
       <div className='flex align-items-center justify-content-center min-h-screen surface-ground'>
@@ -142,42 +114,7 @@ function App() {
     <BrowserRouter>
       <div className='flex flex-column min-h-screen'>
         <Header session={session} />
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/mapa' element={<MapPage session={session} />} />
-          <Route path='/eventos' element={<EventsPage session={session} />} />
-          <Route path='/comunidad' element={<CommunityPage />} />
-
-          <Route
-            path='/garaje'
-            element={
-              session ? (
-                <GaragePage session={session} />
-              ) : (
-                <Navigate to='/login' />
-              )
-            }
-          />
-          <Route
-            path='/perfil'
-            element={
-              session ? (
-                <ProfilePage session={session} />
-              ) : (
-                <Navigate to='/login' />
-              )
-            }
-          />
-          <Route path='/usuario/:userId' element={<PublicProfile />} />
-          <Route
-            path='/login'
-            element={!session ? <AuthPage /> : <Navigate to='/' />}
-          />
-          <Route
-            path='/evento/:id'
-            element={<EventDetailPage session={session} />}
-          />
-        </Routes>
+        <AnimatedRoutes session={session} />
         <Footer />
       </div>
     </BrowserRouter>
