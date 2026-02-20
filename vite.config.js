@@ -9,7 +9,7 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom', 'framer-motion'],
           leaflet: ['leaflet', 'react-leaflet'],
-          prime: ['primereact', 'primeicons'],
+          prime: ['primereact'],
         },
       },
     },
