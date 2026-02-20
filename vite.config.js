@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
+      external: ['chart.js/auto'],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'framer-motion'],
