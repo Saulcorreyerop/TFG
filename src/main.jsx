@@ -1,4 +1,3 @@
-import 'primeicons/primeicons.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { PrimeReactProvider } from 'primereact/api'
@@ -7,6 +6,7 @@ import App from './App.jsx'
 import 'leaflet/dist/leaflet.css'
 import 'primereact/resources/themes/lara-light-blue/theme.css'
 import 'primereact/resources/primereact.min.css'
+import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
 import './App.css'
 
