@@ -70,8 +70,8 @@ const EventDetailPage = ({ session }) => {
           setComments([])
         }
       }
-    } catch (err) {
-      console.error('Error fetching comments:', err)
+    } catch (error) {
+      console.error('Error fetching comments:', error)
     }
   }
 
@@ -104,8 +104,8 @@ const EventDetailPage = ({ session }) => {
           setIsAttending(data.some((a) => a.user_id === session.user.id))
         }
       }
-    } catch (err) {
-      console.error('Error fetching attendees:', err)
+    } catch (error) {
+      console.error('Error fetching attendees:', error)
     }
   }
 
@@ -125,7 +125,6 @@ const EventDetailPage = ({ session }) => {
             setLocationName(data.ubicacion)
           } else if (data.lat && data.lng) {
             try {
-              // SOLUCIÓN CORS: Quitamos los headers y pasamos el idioma en la URL
               const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.lat}&lon=${data.lng}&accept-language=es`,
               )
@@ -142,7 +141,6 @@ const EventDetailPage = ({ session }) => {
                 addr.road ? `${addr.road}, ${locality}` : locality,
               )
             } catch {
-              // SOLUCIÓN ESLINT: Eliminado el (err)
               setLocationName('Ubicación exacta en mapa')
             }
           } else {
@@ -151,8 +149,8 @@ const EventDetailPage = ({ session }) => {
 
           await Promise.all([fetchAttendees(), fetchComments()])
         }
-      } catch (err) {
-        console.error('Error fetching event:', err)
+      } catch (error) {
+        console.error('Error fetching event:', error)
       } finally {
         setLoading(false)
       }
@@ -231,8 +229,8 @@ const EventDetailPage = ({ session }) => {
         summary: isAttending ? 'Asistencia cancelada' : '¡Te has apuntado!',
         life: 3000,
       })
-    } catch (err) {
-      console.error('Error toggling attendance:', err)
+    } catch (error) {
+      console.error('Error toggling attendance:', error)
     } finally {
       setAttendingLoading(false)
     }
@@ -264,8 +262,8 @@ const EventDetailPage = ({ session }) => {
         summary: 'Comentario publicado',
         life: 2000,
       })
-    } catch (err) {
-      console.error('Error publicando comentario:', err)
+    } catch (error) {
+      console.error('Error publicando comentario:', error)
       toast.current.show({
         severity: 'error',
         summary: 'Error',
@@ -283,7 +281,6 @@ const EventDetailPage = ({ session }) => {
       try {
         await navigator.share(shareData)
       } catch {
-        // SOLUCIÓN ESLINT: Eliminado el (err)
         // Silenced error
       }
     } else {
@@ -298,14 +295,43 @@ const EventDetailPage = ({ session }) => {
   }
 
   const handleAddToCalendar = () => {
-    const start = new Date(event.fecha)
-      .toISOString()
-      .replace(/-|:|\.\d\d\d/g, '')
-    const end = new Date(new Date(event.fecha).getTime() + 2 * 60 * 60 * 1000)
-      .toISOString()
-      .replace(/-|:|\.\d\d\d/g, '')
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.titulo)}&dates=${start}/${end}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(locationName)}`
-    window.open(url, '_blank')
+    const startDate = new Date(event.fecha)
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000)
+    const formatICSDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '')
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//CarMeet ESP//Calendario//ES',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      `UID:evento-${event.id}@carmeet.esp`,
+      `DTSTAMP:${formatICSDate(new Date())}`,
+      `DTSTART:${formatICSDate(startDate)}`,
+      `DTEND:${formatICSDate(endDate)}`,
+      `SUMMARY:${event.titulo}`,
+      `DESCRIPTION:${event.description ? event.description.replace(/\r?\n/g, '\\n') : 'Evento organizado en CarMeet ESP'}`,
+      `LOCATION:${locationName}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n')
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute(
+      'download',
+      `${event.titulo.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`,
+    )
+    document.body.appendChild(link)
+
+    link.click()
+
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   if (loading)
@@ -445,7 +471,8 @@ const EventDetailPage = ({ session }) => {
 
         <div className='max-w-7xl mx-auto px-4 md:px-6 mt-6'>
           <div className='grid gap-4 md:gap-0'>
-            <div className='col-12 lg:col-8 lg:pr-5'>
+            {/* LEFT COLUMN */}
+            <div className='col-12 lg:col-8 lg:pr-5 flex-order-1 lg:flex-order-0'>
               <div className='detail-card gsap-reveal'>
                 <h2 className='text-2xl font-bold text-900 mb-4 flex align-items-center gap-3 border-bottom-1 surface-border pb-3'>
                   <i
@@ -620,9 +647,39 @@ const EventDetailPage = ({ session }) => {
                   )}
                 </div>
               </div>
+
+              {/* ORGANIZADO POR - MOBILE ONLY (Aparece abajo del todo en móvil) */}
+              <div className='detail-card gsap-reveal block lg:hidden mt-4'>
+                <div className='text-900 font-bold mb-4 text-lg uppercase tracking-wider text-500 text-sm'>
+                  Organizado por
+                </div>
+                <div
+                  className='flex align-items-center gap-4 p-3 border-round-2xl cursor-pointer hover:bg-gray-50 transition-all border-1 border-transparent hover:border-gray-200 hover:shadow-1'
+                  onClick={() => navigate(`/usuario/${event.user_id}`)}
+                >
+                  <Avatar
+                    image={event.profiles?.avatar_url || undefined}
+                    icon={
+                      !event.profiles?.avatar_url ? 'pi pi-user' : undefined
+                    }
+                    size='xlarge'
+                    shape='circle'
+                    className='shadow-1 border-2 border-white bg-blue-100 text-blue-600'
+                  />
+                  <div className='flex flex-column'>
+                    <span className='font-bold text-xl text-900'>
+                      {event.profiles?.username || 'Anónimo'}
+                    </span>
+                    <span className='text-blue-600 text-sm font-semibold mt-1 flex align-items-center gap-1'>
+                      Ver perfil y garaje <i className='pi pi-angle-right'></i>
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className='col-12 lg:col-4'>
+            {/* RIGHT COLUMN */}
+            <div className='col-12 lg:col-4 flex-order-0 lg:flex-order-1'>
               <div className='flex flex-column gap-4'>
                 <div className='detail-card gsap-reveal m-0'>
                   {!isPast && (
@@ -756,7 +813,8 @@ const EventDetailPage = ({ session }) => {
                   />
                 </div>
 
-                <div className='detail-card gsap-reveal m-0'>
+                {/* ORGANIZADO POR - DESKTOP ONLY (Se oculta en móvil para mostrarlo abajo) */}
+                <div className='detail-card gsap-reveal m-0 hidden lg:block'>
                   <div className='text-900 font-bold mb-4 text-lg uppercase tracking-wider text-500 text-sm'>
                     Organizado por
                   </div>
