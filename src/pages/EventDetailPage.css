@@ -3,8 +3,8 @@
 .event-hero {
   position: relative;
   width: 100%;
-  height: 400px;
-  background-color: #1a1a1a;
+  height: 450px;
+  background-color: #0f172a;
   overflow: hidden;
 }
 
@@ -13,7 +13,7 @@
   inset: -20px;
   background-size: cover;
   background-position: center;
-  filter: blur(30px) brightness(0.4);
+  filter: blur(40px) brightness(0.3);
   z-index: 0;
 }
 
@@ -21,44 +21,132 @@
   position: relative;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Para que los carteles no se corten */
+  object-fit: contain;
   z-index: 1;
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgba(15, 23, 42, 0.95) 0%,
+    rgba(15, 23, 42, 0.4) 50%,
+    transparent 100%
+  );
   z-index: 2;
 }
 
 .detail-card {
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f0f0f0;
-  padding: 2rem;
+  border-radius: 24px;
+  box-shadow:
+    0 12px 32px -4px rgba(0, 0, 0, 0.06),
+    0 4px 12px -4px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 2.5rem;
   margin-bottom: 1.5rem;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-.map-grid-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
+.gsap-reveal {
+  opacity: 0;
+  visibility: hidden;
+  will-change: transform, opacity;
 }
 
 .btn-attend-main {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
   border: none !important;
-  padding: 1.2rem !important;
-  font-size: 1.2rem !important;
-  border-radius: 15px !important;
-  transition: transform 0.2s !important;
+  padding: 1.25rem !important;
+  font-size: 1.15rem !important;
+  border-radius: 16px !important;
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s ease !important;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25) !important;
 }
 
-.btn-attend-main:hover {
+.btn-attend-main:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(37, 99, 235, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4) !important;
 }
-/*comentario*/
+
+.map-app-btn {
+  border-radius: 16px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+.map-app-btn.google-btn:hover {
+  background-color: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  color: #2563eb !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+.map-app-btn.waze-btn:hover {
+  background-color: #ecfeff !important;
+  border-color: #06b6d4 !important;
+  color: #0891b2 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+}
+.map-app-btn.apple-btn:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #0f172a !important;
+  color: #0f172a !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.p-dialog-mask {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(15, 23, 42, 0.6);
+}
+
+.countdown-box {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  text-align: center;
+  padding: 1.25rem 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.countdown-number {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #0f172a;
+  display: block;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.leaflet-container {
+  z-index: 1 !important;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.comment-bubble {
+  background: #f8fafc;
+  border-radius: 0 20px 20px 20px;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+}
