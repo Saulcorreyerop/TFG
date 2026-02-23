@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react' // <--- AÑADIDO Suspense
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -25,8 +25,7 @@ const HomeMap = lazy(() => import('./components/HomeMap'))
 const Features = lazy(() => import('./components/Features'))
 const EventCarousel = lazy(() => import('./components/EventCarousel'))
 
-// Páginas (Las mantenemos importadas normal para evitar parpadeos en navegación simple,
-// o podrías hacerlas lazy también si pesan mucho, pero por ahora está bien así)
+// Páginas
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
 import EventsPage from './pages/EventsPage'
@@ -35,6 +34,7 @@ import ProfilePage from './pages/ProfilePage'
 import PublicProfile from './pages/PublicProfile'
 import CommunityPage from './pages/CommunityPage'
 import EventDetailPage from './pages/EventDetailPage'
+import ContactPage from './pages/ContactPage'
 
 // --- CONFIGURACIÓN ---
 addLocale('es', {
@@ -103,10 +103,8 @@ const Home = ({ session }) => (
       <link rel='canonical' href='https://carmeetesp.netlify.app/' />
     </Helmet>
 
-    {/* El Hero es Crítico: Se carga normal sin espera */}
     <Hero session={session} />
 
-    {/* El Mapa es Pesado: Lo cargamos con Suspense */}
     <Suspense
       fallback={
         <div className='w-full h-30rem bg-gray-100 flex align-items-center justify-content-center text-gray-500'>
@@ -117,12 +115,10 @@ const Home = ({ session }) => (
       <HomeMap />
     </Suspense>
 
-    {/* El Carrusel espera su turno */}
     <Suspense fallback={<div className='w-full h-20rem bg-white'></div>}>
       <EventCarousel />
     </Suspense>
 
-    {/* Las Features al final */}
     <Suspense fallback={null}>
       <Features />
     </Suspense>
@@ -158,6 +154,14 @@ const AnimatedRoutes = ({ session }) => {
           element={
             <>
               <CommunityPage />
+            </>
+          }
+        />
+        <Route
+          path='/contacto'
+          element={
+            <>
+              <ContactPage />
             </>
           }
         />

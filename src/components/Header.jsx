@@ -55,6 +55,11 @@ const Header = ({ session }) => {
       icon: 'pi pi-users',
       command: () => navigate('/comunidad'),
     },
+    {
+      label: 'Contacto',
+      icon: 'pi pi-envelope',
+      command: () => navigate('/contacto'),
+    },
   ]
 
   const start = (

@@ -1,0 +1,145 @@
+/* src/pages/ContactPage.css */
+
+.contact-fire-container {
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* --- MOTOR DE PETARDEO (BACKFIRE) --- */
+.exhaust-particles-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.fire-flame {
+  position: absolute;
+  bottom: -40px;
+  width: 12px;
+  height: 24px;
+  background: linear-gradient(to top, #f59e0b, #ef4444);
+  border-radius: 50% 50% 20% 20%;
+  filter: blur(4px);
+  box-shadow: 0 0 20px #f97316;
+  /* Animación más rápida para simular el petardeo */
+  animation: fire-pop 1.2s infinite ease-out;
+  opacity: 0;
+}
+
+.p-0 {
+  left: 5%;
+  animation-delay: 0.1s;
+}
+.p-1 {
+  left: 15%;
+  animation-delay: 0.5s;
+  width: 15px;
+}
+.p-2 {
+  left: 30%;
+  animation-delay: 0.2s;
+}
+.p-3 {
+  left: 45%;
+  animation-delay: 0.7s;
+}
+.p-4 {
+  left: 55%;
+  animation-delay: 0.3s;
+  width: 18px;
+}
+.p-5 {
+  left: 70%;
+  animation-delay: 0.6s;
+}
+.p-6 {
+  left: 85%;
+  animation-delay: 0.9s;
+}
+.p-7 {
+  left: 95%;
+  animation-delay: 0.4s;
+}
+
+@keyframes fire-pop {
+  0% {
+    transform: translateY(0) scale(0.3);
+    opacity: 0;
+  }
+  /* Explosión súbita */
+  15% {
+    transform: translateY(-60px) scale(1.8);
+    opacity: 0.9;
+  }
+  /* Disipación rápida */
+  100% {
+    transform: translateY(-250px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* --- ESTILOS DE FORMULARIO --- */
+.title-aura-electric-v2 {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 950;
+  background: linear-gradient(90deg, #1e40af, #7e22ce);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 15px rgba(30, 64, 175, 0.3));
+  margin: 0;
+  letter-spacing: -2px;
+}
+
+.contact-form-card {
+  background: #ffffff;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  max-width: 1000px; /* Un poco más estrecho para que no se vea tan estirado en monitores grandes */
+  z-index: 10;
+}
+
+.racing-sidebar-v2 {
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+}
+
+.form-label-v2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  color: #334155;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.input-racing-v2 {
+  background: #ffffff !important;
+  border: 2px solid #f1f5f9 !important;
+  border-radius: 12px !important;
+  padding: 1rem !important;
+  font-weight: 600 !important;
+  width: 100% !important;
+}
+
+.btn-nitro-v2 {
+  background: linear-gradient(90deg, #1e40af, #7e22ce) !important;
+  border: none !important;
+  padding: 1.2rem !important;
+  border-radius: 14px !important;
+  font-weight: 900 !important;
+  color: white !important;
+}
+
+footer {
+  background: #ffffff !important;
+  border-top: 1px solid #f1f5f9 !important;
+}
