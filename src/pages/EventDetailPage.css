@@ -297,3 +297,21 @@
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: white !important;
 }
+/* Estilos extra para la edición (añadir al final del archivo) */
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* Evitar que PrimeFlex pise nuestros botones de edición en móvil */
+.creator-controls .p-button {
+  padding: 0.75rem !important;
+}
+
+.creator-controls .p-button:hover {
+  transform: translateY(-4px) scale(1.02);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  box-shadow: 0 20px 35px -5px rgba(59, 130, 246, 0.6) !important;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { Button } from 'primereact/button'
@@ -27,6 +27,10 @@ import {
   ChevronRight,
   Send,
   User,
+  Edit3,
+  Trash2,
+  Camera,
+  X,
 } from 'lucide-react'
 import './EventDetailPage.css'
 
@@ -54,20 +58,27 @@ const EventDetailPage = ({ session }) => {
   const [newComment, setNewComment] = useState('')
   const [postingComment, setPostingComment] = useState(false)
 
+  // Estados para la gestión del evento (Creador)
+  const [extraImages, setExtraImages] = useState([])
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [editDescription, setEditDescription] = useState('')
+  const [uploadingExtra, setUploadingExtra] = useState(false)
+
   const {
     isFavorite,
     toggleFavorite,
     loading: favLoading,
   } = useFavorites(id, session)
 
-  const fetchComments = async () => {
+  // 1. Envolvemos las funciones en useCallback para evitar el error de dependencias en useEffect
+  const fetchComments = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('event_comments')
         .select('*')
         .eq('event_id', parseInt(id))
         .order('created_at', { ascending: false })
-
       if (!error && data) {
         const userIds = [...new Set(data.map((c) => c.user_id))]
         if (userIds.length > 0) {
@@ -75,27 +86,25 @@ const EventDetailPage = ({ session }) => {
             .from('profiles')
             .select('*')
             .in('id', userIds)
-          const commentsWithProfiles = data.map((c) => ({
-            ...c,
-            profiles: profilesData?.find((p) => p.id === c.user_id) || {},
-          }))
-          setComments(commentsWithProfiles)
-        } else {
-          setComments([])
-        }
+          setComments(
+            data.map((c) => ({
+              ...c,
+              profiles: profilesData?.find((p) => p.id === c.user_id) || {},
+            })),
+          )
+        } else setComments([])
       }
     } catch (err) {
       console.error('Error fetching comments:', err)
     }
-  }
+  }, [id])
 
-  const fetchAttendees = async () => {
+  const fetchAttendees = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('event_attendees')
         .select('user_id')
         .eq('event_id', parseInt(id))
-
       if (!error && data) {
         const userIds = data.map((d) => d.user_id)
         if (userIds.length > 0) {
@@ -103,22 +112,33 @@ const EventDetailPage = ({ session }) => {
             .from('profiles')
             .select('*')
             .in('id', userIds)
-          const attendeesWithProfiles = data.map((att) => ({
-            ...att,
-            profiles: profilesData?.find((p) => p.id === att.user_id) || {},
-          }))
-          setAttendees(attendeesWithProfiles)
-        } else {
-          setAttendees([])
-        }
-        if (session?.user?.id) {
+          setAttendees(
+            data.map((att) => ({
+              ...att,
+              profiles: profilesData?.find((p) => p.id === att.user_id) || {},
+            })),
+          )
+        } else setAttendees([])
+        if (session?.user?.id)
           setIsAttending(data.some((a) => a.user_id === session.user.id))
-        }
       }
     } catch (err) {
       console.error('Error fetching attendees:', err)
     }
-  }
+  }, [id, session?.user?.id])
+
+  const fetchExtraImages = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('event_images')
+        .select('*')
+        .eq('event_id', parseInt(id))
+        .order('created_at', { ascending: true })
+      if (!error && data) setExtraImages(data)
+    } catch (err) {
+      console.error('Error fetching extra images:', err)
+    }
+  }, [id])
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -128,46 +148,45 @@ const EventDetailPage = ({ session }) => {
           .select('*, profiles(*)')
           .eq('id', parseInt(id))
           .single()
-
         if (!error && data) {
           setEvent(data)
-          if (data.ubicacion && data.ubicacion.trim().length > 0) {
+          if (data.ubicacion && data.ubicacion.trim().length > 0)
             setLocationName(data.ubicacion)
-          } else if (data.lat && data.lng) {
+          else if (data.lat && data.lng) {
             try {
               const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.lat}&lon=${data.lng}&accept-language=es`,
               )
-              if (!response.ok) throw new Error('Geocoding error')
               const geoData = await response.json()
-              const addr = geoData.address
               const locality =
-                addr.city ||
-                addr.town ||
-                addr.village ||
-                addr.municipality ||
+                geoData.address.city ||
+                geoData.address.town ||
+                geoData.address.village ||
                 'Ubicación en mapa'
               setLocationName(
-                addr.road ? `${addr.road}, ${locality}` : locality,
+                geoData.address.road
+                  ? `${geoData.address.road}, ${locality}`
+                  : locality,
               )
-            } catch (err) {
-              console.error('Geocoding API falló:', err)
+            } catch {
               setLocationName('Ubicación exacta en mapa')
             }
-          } else {
-            setLocationName('Ubicación no especificada')
-          }
-          await Promise.all([fetchAttendees(), fetchComments()])
+          } else setLocationName('Ubicación no especificada')
+
+          await Promise.all([
+            fetchAttendees(),
+            fetchComments(),
+            fetchExtraImages(),
+          ])
         }
       } catch (err) {
-        console.error('Error fetching event data:', err)
+        console.error('Error fetching event:', err)
       } finally {
         setLoading(false)
       }
     }
     fetchEvent()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, session?.user?.id])
+  }, [id, fetchAttendees, fetchComments, fetchExtraImages]) // 2. Añadidas las dependencias requeridas
 
   useEffect(() => {
     if (!event) return
@@ -199,17 +218,16 @@ const EventDetailPage = ({ session }) => {
       })
     setAttendingLoading(true)
     try {
-      if (isAttending) {
+      if (isAttending)
         await supabase
           .from('event_attendees')
           .delete()
           .eq('event_id', parseInt(id))
           .eq('user_id', session.user.id)
-      } else {
+      else
         await supabase
           .from('event_attendees')
           .insert({ event_id: parseInt(id), user_id: session.user.id })
-      }
       await fetchAttendees()
       toast.current.show({
         severity: 'success',
@@ -219,7 +237,7 @@ const EventDetailPage = ({ session }) => {
         life: 3000,
       })
     } catch (err) {
-      console.error('Error al modificar asistencia:', err)
+      console.error('Error attending:', err)
     } finally {
       setAttendingLoading(false)
     }
@@ -234,11 +252,13 @@ const EventDetailPage = ({ session }) => {
       })
     setPostingComment(true)
     try {
-      const { error } = await supabase.from('event_comments').insert({
-        event_id: parseInt(id),
-        user_id: session.user.id,
-        content: newComment.trim(),
-      })
+      const { error } = await supabase
+        .from('event_comments')
+        .insert({
+          event_id: parseInt(id),
+          user_id: session.user.id,
+          content: newComment.trim(),
+        })
       if (error) throw error
       setNewComment('')
       await fetchComments()
@@ -248,27 +268,111 @@ const EventDetailPage = ({ session }) => {
         life: 2000,
       })
     } catch (err) {
-      console.error('Error publicando comentario:', err)
+      console.error('Error posting comment:', err) // 3. Uso de la variable err
       toast.current.show({
         severity: 'error',
         summary: 'Error',
         detail: 'No se pudo publicar el comentario.',
-        life: 3000,
       })
     } finally {
       setPostingComment(false)
     }
   }
 
+  // Lógica de Gestión (Creador)
+  const handleSaveDescription = async () => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ description: editDescription })
+        .eq('id', parseInt(id))
+      if (error) throw error
+      setEvent((prev) => ({ ...prev, description: editDescription }))
+      setShowEditModal(false)
+      toast.current.show({
+        severity: 'success',
+        summary: 'Guardado',
+        detail: 'Descripción actualizada correctamente',
+      })
+    } catch (error) {
+      console.error('Error saving description:', error) // Uso de la variable error
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo guardar la descripción',
+      })
+    }
+  }
+
+  const handleUploadExtraImage = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploadingExtra(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${event.id}/${Math.random()}.${fileExt}`
+      const { error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(fileName, file)
+      if (uploadError) throw uploadError
+      const { data } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(fileName)
+      await supabase
+        .from('event_images')
+        .insert({ event_id: parseInt(id), image_url: data.publicUrl })
+      await fetchExtraImages()
+      toast.current.show({
+        severity: 'success',
+        summary: 'Foto subida',
+        detail: 'Añadida a la descripción',
+      })
+    } catch (error) {
+      console.error('Error uploading extra image:', error) // Uso de la variable error
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Fallo al subir la foto',
+      })
+    } finally {
+      setUploadingExtra(false)
+    }
+  }
+
+  const handleDeleteExtraImage = async (imageId) => {
+    try {
+      await supabase.from('event_images').delete().eq('id', imageId)
+      setExtraImages((prev) => prev.filter((img) => img.id !== imageId))
+    } catch (error) {
+      console.error('Error deleting extra image:', error)
+    } // Uso de la variable error
+  }
+
+  const handleDeleteEvent = async () => {
+    try {
+      await supabase.from('events').delete().eq('id', parseInt(id))
+      toast.current.show({
+        severity: 'success',
+        summary: 'Evento Eliminado',
+        detail: 'Serás redirigido...',
+      })
+      setTimeout(() => navigate('/eventos'), 1500)
+    } catch (error) {
+      console.error('Error deleting event:', error) // Uso de la variable error
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo eliminar el evento',
+      })
+    }
+  }
+
   const handleShare = async () => {
-    const shareData = { title: event?.titulo, url: window.location.href }
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch (err) {
-        console.error('Operación de compartir cancelada o fallida:', err)
-      }
-    } else {
+    if (navigator.share)
+      navigator
+        .share({ title: event?.titulo, url: window.location.href })
+        .catch(() => {})
+    else {
       navigator.clipboard.writeText(window.location.href)
       toast.current.show({
         severity: 'success',
@@ -283,7 +387,6 @@ const EventDetailPage = ({ session }) => {
     const startDate = new Date(event.fecha)
     const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000)
     const formatICSDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '')
-
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -295,13 +398,12 @@ const EventDetailPage = ({ session }) => {
       `DTSTART:${formatICSDate(startDate)}`,
       `DTEND:${formatICSDate(endDate)}`,
       `SUMMARY:${event.titulo}`,
-      `DESCRIPTION:${event.description ? event.description.replace(/\r?\n/g, '\\n') : 'Evento organizado en CarMeet ESP'}`,
+      `DESCRIPTION:${event.description ? event.description.replace(/\r?\n/g, '\\n') : 'Evento en CarMeet ESP'}`,
       `LOCATION:${locationName}`,
       'STATUS:CONFIRMED',
       'END:VEVENT',
       'END:VCALENDAR',
     ].join('\r\n')
-
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -325,26 +427,8 @@ const EventDetailPage = ({ session }) => {
           borderRadius='48px'
           className='mb-6'
         ></Skeleton>
-        <div className='grid gap-4 md:gap-0'>
-          <div className='col-12 lg:col-8 lg:pr-5'>
-            <Skeleton
-              width='100%'
-              height='300px'
-              borderRadius='32px'
-              className='mb-4'
-            ></Skeleton>
-          </div>
-          <div className='col-12 lg:col-4'>
-            <Skeleton
-              width='100%'
-              height='500px'
-              borderRadius='32px'
-            ></Skeleton>
-          </div>
-        </div>
       </div>
     )
-
   if (!event)
     return (
       <div className='flex flex-column justify-content-center align-items-center min-h-screen bg-gray-50 p-6'>
@@ -373,19 +457,17 @@ const EventDetailPage = ({ session }) => {
     minute: '2-digit',
   })
   const isPast = dateObj < new Date()
-
+  const isCreator = session?.user?.id === event.user_id
   const queryParam =
     event.lat && event.lng
       ? `${event.lat},${event.lng}`
       : encodeURIComponent(locationName)
-  // URL oficial y universal para abrir Google Maps correctamente
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${queryParam}`
 
   const staggerContainer = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.1 } },
   }
-
   const itemAnim = {
     hidden: { opacity: 0, y: 30 },
     show: {
@@ -393,6 +475,36 @@ const EventDetailPage = ({ session }) => {
       y: 0,
       transition: { type: 'spring', stiffness: 300, damping: 24 },
     },
+  }
+
+  // Componente Reutilizable de Panel de Control
+  const CreatorControls = () => {
+    if (!isCreator) return null
+    return (
+      <div className='mt-4 pt-4 border-top-1 surface-border flex gap-3 creator-controls'>
+        <Button
+          label='Editar Detalles'
+          icon={<Edit3 size={18} className='mr-2' />}
+          className='p-button-outlined flex-1 border-round-xl font-bold'
+          onClick={(e) => {
+            e.stopPropagation()
+            setEditDescription(event.description || '')
+            setShowEditModal(true)
+          }}
+        />
+        <Button
+          label='Eliminar'
+          icon={<Trash2 size={18} className='mr-2' />}
+          severity='danger'
+          text
+          className='flex-1 border-round-xl font-bold hover:surface-200'
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowDeleteModal(true)
+          }}
+        />
+      </div>
+    )
   }
 
   return (
@@ -493,16 +605,31 @@ const EventDetailPage = ({ session }) => {
                   {event.description ||
                     'El organizador no ha proporcionado una descripción detallada para este evento.'}
                 </p>
+
+                {/* GALERÍA EXTRA EN LA DESCRIPCIÓN */}
+                {extraImages.length > 0 && (
+                  <div className='mt-5 grid'>
+                    {extraImages.map((img) => (
+                      <div key={img.id} className='col-12 md:col-6'>
+                        <img
+                          src={img.image_url}
+                          alt='Extra'
+                          className='w-full border-round-2xl shadow-2 object-cover'
+                          style={{ height: '240px' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </MotionDiv>
 
               <MotionDiv variants={itemAnim} className='fichar-card'>
                 <h2 className='text-2xl md:text-3xl font-black text-900 mb-4 flex align-items-center gap-4'>
                   <div className='icon-box bg-red-50 text-red-500'>
                     <MapPin size={28} />
-                  </div>
+                  </div>{' '}
                   Ubicación
                 </h2>
-
                 <div className='flex align-items-center gap-4 mb-5 p-2'>
                   <div className='flex flex-column'>
                     <span className='font-black text-2xl text-900'>
@@ -513,7 +640,6 @@ const EventDetailPage = ({ session }) => {
                     </span>
                   </div>
                 </div>
-
                 {event.lat && event.lng && (
                   <div className='mb-5 shadow-3 border-round-3xl overflow-hidden border-2 border-gray-100'>
                     <MapContainer
@@ -530,7 +656,6 @@ const EventDetailPage = ({ session }) => {
                     </MapContainer>
                   </div>
                 )}
-
                 <div className='grid gap-3 m-0 mt-4'>
                   <div className='col-12 md:col p-0'>
                     <a
@@ -578,10 +703,9 @@ const EventDetailPage = ({ session }) => {
                 <h2 className='text-2xl md:text-3xl font-black text-900 mb-4 flex align-items-center gap-4'>
                   <div className='icon-box bg-purple-50 text-purple-500'>
                     <MessageSquare size={28} />
-                  </div>
+                  </div>{' '}
                   Muro del Evento
                 </h2>
-
                 <div className='flex flex-column gap-3 mb-6 mt-4'>
                   <InputTextarea
                     value={newComment}
@@ -602,7 +726,6 @@ const EventDetailPage = ({ session }) => {
                     />
                   </div>
                 </div>
-
                 <div className='flex flex-column gap-5'>
                   {comments.length > 0 ? (
                     comments.map((c) => (
@@ -684,6 +807,7 @@ const EventDetailPage = ({ session }) => {
                     </span>
                   </div>
                 </div>
+                <CreatorControls />
               </MotionDiv>
             </div>
 
@@ -771,7 +895,6 @@ const EventDetailPage = ({ session }) => {
                         className='bg-blue-100 text-blue-700 font-black border-round-2xl px-3 py-1 text-sm'
                       />
                     </div>
-
                     <div className='relative z-1 mb-4'>
                       {attendees.length > 0 ? (
                         <AvatarGroup>
@@ -804,7 +927,6 @@ const EventDetailPage = ({ session }) => {
                         </div>
                       )}
                     </div>
-
                     <div className='text-900 text-xs font-black pt-4 border-top-1 surface-border flex align-items-center justify-content-between uppercase tracking-widest relative z-1'>
                       <span>Ver lista completa</span>
                       <ChevronRight size={18} />
@@ -863,11 +985,13 @@ const EventDetailPage = ({ session }) => {
                       </span>
                     </div>
                   </div>
+                  <CreatorControls />
                 </MotionDiv>
               </div>
             </div>
           </MotionDiv>
 
+          {/* DIÁLOGO: ASISTENTES */}
           <Dialog
             header={
               <span className='text-2xl font-black text-900'>Asistentes</span>
@@ -922,6 +1046,116 @@ const EventDetailPage = ({ session }) => {
                   </span>
                 </div>
               )}
+            </div>
+          </Dialog>
+
+          {/* DIÁLOGO: EDITAR EVENTO (Creador) */}
+          <Dialog
+            header={
+              <span className='text-2xl font-black text-900'>
+                Editar Descripción y Fotos
+              </span>
+            }
+            visible={showEditModal}
+            onHide={() => setShowEditModal(false)}
+            breakpoints={{ '960px': '90vw' }}
+            style={{ width: '40vw' }}
+            className='border-round-3xl shadow-8'
+            contentClassName='p-5'
+            headerClassName='px-5 pt-5 pb-2 border-none'
+          >
+            <div className='flex flex-column gap-4 pt-2'>
+              <div>
+                <label className='block text-sm font-bold text-700 mb-2'>
+                  Descripción del evento
+                </label>
+                <InputTextarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={5}
+                  autoResize
+                  className='w-full border-round-xl p-3'
+                />
+              </div>
+
+              <div>
+                <label className='block text-sm font-bold text-700 mb-2'>
+                  Fotos Adicionales
+                </label>
+                <div className='grid gap-2 mb-3'>
+                  {extraImages.map((img) => (
+                    <div key={img.id} className='col-4 relative'>
+                      <img
+                        src={img.image_url}
+                        alt='Extra'
+                        className='w-full border-round-xl object-cover'
+                        style={{ height: '100px' }}
+                      />
+                      <Button
+                        icon={<X size={14} />}
+                        className='p-button-rounded p-button-danger p-button-sm absolute top-0 right-0 m-1'
+                        style={{ width: '24px', height: '24px' }}
+                        onClick={() => handleDeleteExtraImage(img.id)}
+                      />
+                    </div>
+                  ))}
+                  <div className='col-4'>
+                    <div
+                      className='border-dashed border-2 border-300 border-round-xl flex align-items-center justify-content-center relative hover:bg-gray-50 transition-colors'
+                      style={{ height: '100px' }}
+                    >
+                      <input
+                        type='file'
+                        accept='image/*'
+                        onChange={handleUploadExtraImage}
+                        className='absolute inset-0 w-full h-full opacity-0 cursor-pointer z-1'
+                        disabled={uploadingExtra}
+                      />
+                      <div className='text-center text-500'>
+                        {uploadingExtra ? (
+                          <i className='pi pi-spin pi-spinner text-xl'></i>
+                        ) : (
+                          <Camera size={24} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Button
+                label='Guardar Cambios'
+                className='btn-fichar-primary w-full mt-3'
+                onClick={handleSaveDescription}
+              />
+            </div>
+          </Dialog>
+
+          {/* DIÁLOGO: CONFIRMAR ELIMINACIÓN */}
+          <Dialog
+            header='¿Eliminar Evento?'
+            visible={showDeleteModal}
+            onHide={() => setShowDeleteModal(false)}
+            style={{ width: '30vw' }}
+            breakpoints={{ '960px': '80vw' }}
+            className='border-round-2xl'
+          >
+            <p className='m-0 mb-4 line-height-3'>
+              Esta acción es irreversible. Se borrarán los detalles, asistentes
+              y comentarios asociados a este evento.
+            </p>
+            <div className='flex justify-content-end gap-3'>
+              <Button
+                label='Cancelar'
+                outlined
+                onClick={() => setShowDeleteModal(false)}
+                className='border-round-xl font-bold'
+              />
+              <Button
+                label='Sí, Eliminar'
+                severity='danger'
+                onClick={handleDeleteEvent}
+                className='border-round-xl font-bold'
+              />
             </div>
           </Dialog>
         </div>
