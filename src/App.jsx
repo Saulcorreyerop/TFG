@@ -19,7 +19,6 @@ import { AnimatePresence } from 'framer-motion'
 import Header from './components/Header'
 import Hero from './components/Hero'
 import Footer from './components/Footer'
-import AnimatedPage from './components/AnimatedPage'
 
 // Componentes NO CRÍTICOS (Lazy Loading - Se cargan después)
 const HomeMap = lazy(() => import('./components/HomeMap'))
@@ -94,7 +93,7 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 // --- HOME OPTIMIZADA ---
 const Home = ({ session }) => (
-  <AnimatedPage>
+  <>
     <Helmet>
       <title>CarMeet ESP | Eventos y Rutas de Coches en España</title>
       <meta
@@ -127,7 +126,7 @@ const Home = ({ session }) => (
     <Suspense fallback={null}>
       <Features />
     </Suspense>
-  </AnimatedPage>
+  </>
 )
 
 // --- RUTAS ANIMADAS ---
@@ -141,34 +140,34 @@ const AnimatedRoutes = ({ session }) => {
         <Route
           path='/mapa'
           element={
-            <AnimatedPage>
+            <>
               <MapPage session={session} />
-            </AnimatedPage>
+            </>
           }
         />
         <Route
           path='/eventos'
           element={
-            <AnimatedPage>
+            <>
               <EventsPage session={session} />
-            </AnimatedPage>
+            </>
           }
         />
         <Route
           path='/comunidad'
           element={
-            <AnimatedPage>
+            <>
               <CommunityPage />
-            </AnimatedPage>
+            </>
           }
         />
         <Route
           path='/garaje'
           element={
             session ? (
-              <AnimatedPage>
+              <>
                 <GaragePage session={session} />
-              </AnimatedPage>
+              </>
             ) : (
               <Navigate to='/login' />
             )
@@ -178,9 +177,9 @@ const AnimatedRoutes = ({ session }) => {
           path='/perfil'
           element={
             session ? (
-              <AnimatedPage>
+              <>
                 <ProfilePage session={session} />
-              </AnimatedPage>
+              </>
             ) : (
               <Navigate to='/login' />
             )
@@ -189,18 +188,18 @@ const AnimatedRoutes = ({ session }) => {
         <Route
           path='/usuario/:userId'
           element={
-            <AnimatedPage>
+            <>
               <PublicProfile />
-            </AnimatedPage>
+            </>
           }
         />
         <Route
           path='/login'
           element={
             !session ? (
-              <AnimatedPage>
+              <>
                 <AuthPage />
-              </AnimatedPage>
+              </>
             ) : (
               <Navigate to='/' />
             )
@@ -209,9 +208,9 @@ const AnimatedRoutes = ({ session }) => {
         <Route
           path='/evento/:id'
           element={
-            <AnimatedPage>
+            <>
               <EventDetailPage session={session} />
-            </AnimatedPage>
+            </>
           }
         />
       </Routes>

@@ -68,3 +68,132 @@ body {
   src: url('./fuente.woff2') format('woff2');
   font-display: swap; /* <--- AÑADE ESTO OBLIGATORIAMENTE */
 }
+
+/* --- FOOTER PREMIUM REDESIGN --- */
+.footer-premium {
+  background-color: #0f172a !important; /* Fondo negro azulado obligatorio */
+  color: #ffffff !important;
+  margin-top: auto;
+  border-top-left-radius: 40px;
+  border-top-right-radius: 40px;
+  padding: 3rem 1rem 1.5rem 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .footer-brand {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+  }
+  .footer-link-btn {
+    justify-content: center;
+  }
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.logo-icon-container {
+  background: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+  padding: 0.5rem;
+  border-radius: 12px;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+.logo-highlight {
+  color: #60a5fa;
+}
+
+.brand-description {
+  color: #94a3b8;
+  line-height: 1.6;
+  max-width: 350px;
+  margin-bottom: 1.5rem;
+}
+
+.social-links {
+  display: flex;
+  gap: 1rem;
+}
+.social-btn {
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 0.6rem;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+.social-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.nav-title {
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-link-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  transition: 0.3s;
+  width: 100%;
+}
+.footer-link-btn:hover {
+  color: #ffffff;
+  transform: translateX(5px);
+}
+.link-arrow {
+  color: #334155;
+}
+.footer-link-btn:hover .link-arrow {
+  color: #60a5fa;
+}
+
+.footer-bottom {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 0.85rem;
+}

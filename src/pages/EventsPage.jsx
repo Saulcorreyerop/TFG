@@ -234,8 +234,8 @@ const EventsPage = ({ session }) => {
   }, [session])
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchAllEvents()
-    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAllEvents])
 
   const filterList = useCallback(
@@ -400,10 +400,10 @@ const EventsPage = ({ session }) => {
               showClear
             />
             <span className='p-input-icon-left w-full md:w-20rem'>
-              <i className='pi pi-search text-500' />
+              <i className='pi pi-search text-500 pl-2' />
               <InputText
                 placeholder='Buscar por título...'
-                className='w-full border-round-lg'
+                className='w-full border-round-lg pl-5'
                 value={filters.text}
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, text: e.target.value }))
