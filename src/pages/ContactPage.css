@@ -1,145 +1,200 @@
-/* src/pages/ContactPage.css */
+/* AISLAMIENTO TOTAL BAJO .contact-premium-v3 */
 
-.contact-fire-container {
-  min-height: 100vh;
+.contact-premium-v3 {
   background: #ffffff;
+  min-height: 90vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
   position: relative;
-  overflow: hidden;
+  /* Eliminamos el overflow: hidden para permitir scroll natural si fuera necesario */
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+  z-index: 1; /* Nivel base para que no pise el header global */
 }
 
-/* --- MOTOR DE PETARDEO (BACKFIRE) --- */
-.exhaust-particles-bg {
+/* --- MOTOR DE FOGONAZOS (BACKFIRE) --- */
+.contact-premium-v3 .backfire-system {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 0; /* Al fondo del todo */
   pointer-events: none;
 }
 
-.fire-flame {
+.contact-premium-v3 .flame-v3 {
   position: absolute;
   bottom: -40px;
   width: 12px;
-  height: 24px;
+  height: 28px;
   background: linear-gradient(to top, #f59e0b, #ef4444);
   border-radius: 50% 50% 20% 20%;
   filter: blur(4px);
   box-shadow: 0 0 20px #f97316;
-  /* Animación más rápida para simular el petardeo */
-  animation: fire-pop 1.2s infinite ease-out;
+  animation: v3-pop 1.2s infinite ease-out;
   opacity: 0;
 }
 
-.p-0 {
-  left: 5%;
+/* Distribución repartida */
+.contact-premium-v3 .f-0 {
+  left: 10%;
   animation-delay: 0.1s;
 }
-.p-1 {
-  left: 15%;
-  animation-delay: 0.5s;
-  width: 15px;
-}
-.p-2 {
+.contact-premium-v3 .f-1 {
   left: 30%;
+  animation-delay: 0.5s;
+  transform: scale(1.4);
+}
+.contact-premium-v3 .f-2 {
+  left: 50%;
   animation-delay: 0.2s;
 }
-.p-3 {
-  left: 45%;
-  animation-delay: 0.7s;
-}
-.p-4 {
-  left: 55%;
-  animation-delay: 0.3s;
-  width: 18px;
-}
-.p-5 {
+.contact-premium-v3 .f-3 {
   left: 70%;
-  animation-delay: 0.6s;
+  animation-delay: 0.8s;
 }
-.p-6 {
-  left: 85%;
-  animation-delay: 0.9s;
-}
-.p-7 {
-  left: 95%;
-  animation-delay: 0.4s;
+.contact-premium-v3 .f-4 {
+  left: 90%;
+  animation-delay: 0.3s;
+  transform: scale(1.6);
 }
 
-@keyframes fire-pop {
+@keyframes v3-pop {
   0% {
     transform: translateY(0) scale(0.3);
     opacity: 0;
   }
-  /* Explosión súbita */
   15% {
-    transform: translateY(-60px) scale(1.8);
-    opacity: 0.9;
+    transform: translateY(-70px) scale(1.8);
+    opacity: 1;
   }
-  /* Disipación rápida */
   100% {
-    transform: translateY(-250px) scale(0.5);
+    transform: translateY(-350px) scale(0.5);
     opacity: 0;
   }
 }
 
-/* --- ESTILOS DE FORMULARIO --- */
-.title-aura-electric-v2 {
+/* --- TEXTOS --- */
+.contact-premium-v3 .v3-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  z-index: 2;
+  position: relative;
+}
+.contact-premium-v3 .v3-tag {
+  color: #1e40af;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+}
+.contact-premium-v3 .v3-aura-title {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 950;
   background: linear-gradient(90deg, #1e40af, #7e22ce);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 15px rgba(30, 64, 175, 0.3));
+  filter: drop-shadow(0 0 12px rgba(30, 64, 175, 0.3));
   margin: 0;
-  letter-spacing: -2px;
 }
 
-.contact-form-card {
-  background: #ffffff;
+/* --- CARD: BAJAMOS EL Z-INDEX --- */
+.contact-premium-v3 .v3-container {
+  max-width: 1050px;
+  width: 100%;
+  margin: 0 auto;
+  z-index: 2; /* Bajado de 10 a 2 para evitar que se sobreponga al header/footer */
+  position: relative;
+}
+
+.contact-premium-v3 .v3-card {
+  background: white;
   border-radius: 24px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
-  width: 100%;
-  max-width: 1000px; /* Un poco más estrecho para que no se vea tan estirado en monitores grandes */
-  z-index: 10;
 }
 
-.racing-sidebar-v2 {
-  background: #f8fafc;
+.contact-premium-v3 .v3-sidebar {
+  background: #fbfcfd;
   border-right: 1px solid #e2e8f0;
 }
 
-.form-label-v2 {
+.contact-premium-v3 .v3-icon-box {
+  background: linear-gradient(135deg, #1e40af, #7e22ce);
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 15px rgba(30, 64, 175, 0.2);
+}
+
+.contact-premium-v3 .v3-info-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.contact-premium-v3 .v3-info-row label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+.contact-premium-v3 .v3-info-row span {
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.contact-premium-v3 .v3-socials {
+  color: #cbd5e1;
+}
+
+/* --- INPUTS --- */
+.contact-premium-v3 .v3-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 800;
-  color: #334155;
+  color: #475569;
   font-size: 0.75rem;
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
-.input-racing-v2 {
+.contact-premium-v3 .v3-input {
   background: #ffffff !important;
   border: 2px solid #f1f5f9 !important;
-  border-radius: 12px !important;
-  padding: 1rem !important;
+  border-radius: 10px !important;
+  padding: 0.9rem !important;
   font-weight: 600 !important;
   width: 100% !important;
 }
 
-.btn-nitro-v2 {
+.contact-premium-v3 .v3-input:focus {
+  border-color: #1e40af !important;
+  box-shadow: 0 0 10px rgba(30, 64, 175, 0.1) !important;
+}
+
+.contact-premium-v3 .v3-nitro-btn {
   background: linear-gradient(90deg, #1e40af, #7e22ce) !important;
   border: none !important;
   padding: 1.2rem !important;
   border-radius: 14px !important;
   font-weight: 900 !important;
   color: white !important;
+  box-shadow: 0 10px 20px rgba(30, 64, 175, 0.2) !important;
+  transition: transform 0.2s ease;
 }
 
-footer {
-  background: #ffffff !important;
-  border-top: 1px solid #f1f5f9 !important;
+.contact-premium-v3 .v3-nitro-btn:active {
+  transform: scale(0.98);
+}
+
+/* ASEGURAMOS QUE EL FOOTER TENGA PRIORIDAD VISUAL */
+footer,
+.footer-container {
+  position: relative;
+  z-index: 10 !important; /* El footer siempre encima del contenido de contacto al scrollear */
 }

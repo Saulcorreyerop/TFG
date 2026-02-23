@@ -59,62 +59,50 @@ const ContactPage = () => {
 
   return (
     <PageTransition>
-      <div className='contact-fire-container'>
+      <div className='contact-premium-v3'>
         <Toast ref={toast} position='top-center' />
 
-        {/* FONDO DE PETARDEOS (BACKFIRE) */}
-        <div className='exhaust-particles-bg'>
+        <div className='backfire-system'>
           {[...Array(20)].map((_, i) => (
-            <div key={i} className={`fire-flame p-${i % 10}`}></div>
+            <div key={i} className={`flame-v3 f-${i % 10}`}></div>
           ))}
         </div>
 
-        {/* MARGEN SUPERIOR REDUCIDO: pt-2 para pegar más al header */}
-        <div
-          className='max-w-7xl mx-auto px-4 w-full flex flex-column align-items-center justify-content-start pt-2 pb-4'
-          style={{ minHeight: '85vh' }}
-        >
-          <div className='text-center mb-3 mt-2'>
+        <div className='v3-container'>
+          <div className='v3-header'>
             <div className='flex align-items-center justify-content-center gap-2 mb-1'>
               <Flame className='text-orange-500' size={20} />
-              <span className='text-blue-700 font-black uppercase text-xs tracking-tighter'>
-                Línea Directa
-              </span>
+              <span className='v3-tag'>Soporte Técnico</span>
             </div>
-            <h1 className='title-aura-electric-v2'>¿Pisamos a fondo?</h1>
-            <p className='text-gray-600 mt-2'>
-              ¿Tienes alguna duda, sugerencia o quieres colaborar? No dudes en
-              dejar tu mensaje.
-            </p>
+            <h1 className='v3-aura-title'>¿Pisamos a fondo?</h1>
+            <span className='v3-tag'>
+              ¿Tienes alguna recomendación, duda o quieres colaborar? No dudes
+              en mandar tu mensaje ahora mismo.
+            </span>
           </div>
 
-          <div className='contact-form-card grid grid-nogutter shadow-4'>
-            {/* IZQUIERDA: INFO BOX */}
-            <div className='col-12 lg:col-4 racing-sidebar-v2 p-5'>
-              <div className='flex flex-column gap-6 h-full justify-content-center'>
-                <div className='racing-info-row'>
-                  <div className='icon-circle-aura'>
-                    <Mail size={20} />
-                    <label className='r-label-v2'>Email:</label>
+          <div className='v3-card grid grid-nogutter shadow-4'>
+            <div className='col-12 lg:col-4 v3-sidebar p-5 flex flex-column justify-content-center'>
+              <div className='flex flex-column gap-5'>
+                <div className='v3-info-row'>
+                  <div className='v3-icon-box'>
+                    <Mail size={22} />
                   </div>
                   <div className='flex flex-column'>
-                    <span className='r-value-v2'>carmeetespa@gmail.com</span>
+                    <label>Escríbenos</label>
+                    <span>carmeetespa@gmail.com</span>
                   </div>
                 </div>
-
-                <div className='racing-info-row'>
-                  <div className='flex flex-column'>
-                    <span className='r-value-v2'>
-                      Por y para todos los aficionados y amantes del mundo
-                      motor.
-                    </span>
+                <div className='flex gap-4 pt-3 justify-content-center lg:justify-content-start v3-socials'>
+                  <div className='v3-info-row'>
+                    <div className='flex flex-column'>
+                      <label>Redes Sociales</label>
+                      <span>Sigueme</span>
+                    </div>
                   </div>
-                </div>
-
-                <div className='flex gap-4 pt-3 justify-content-center lg:justify-content-start'>
                   <Instagram
-                    className='social-racing-btn'
                     size={24}
+                    className='cursor-pointer hover:text-blue-600 transition-colors'
                     onClick={() =>
                       window.open(
                         'https://www.instagram.com/saulcorreyerop/',
@@ -123,8 +111,8 @@ const ContactPage = () => {
                     }
                   />
                   <Twitter
-                    className='social-racing-btn'
                     size={24}
+                    className='cursor-pointer hover:text-blue-400 transition-colors'
                     onClick={() =>
                       window.open(
                         'https://twitter.com/saulcorreyerop',
@@ -133,70 +121,69 @@ const ContactPage = () => {
                     }
                   />
                   <Globe
-                    className='social-racing-btn'
                     size={24}
+                    className='cursor-pointer hover:text-purple-600 transition-colors'
                     onClick={() =>
-                      window.open('https://extreweb.ct.ws', '_blank')
+                      window.open('https:/extreweb.ct.ws', '_blank')
                     }
                   />
                 </div>
               </div>
             </div>
 
-            {/* DERECHA: FORMULARIO TODO AL 100% DE ANCHO */}
             <div className='col-12 lg:col-8 p-5 md:p-6 bg-white'>
               <form
                 ref={form}
                 onSubmit={sendEmail}
                 className='flex flex-column gap-4'
               >
-                {/* PILOTO Y CORREO AHORA VAN POR SEPARADO (100% ANCHO) */}
-                <div className='field m-0'>
-                  <label className='form-label-v2'>
-                    <User size={14} /> Piloto
-                  </label>
-                  <InputText
-                    name='user_name'
-                    required
-                    className='input-racing-v2'
-                    placeholder='Tu nombre'
-                  />
+                <div className='grid m-0'>
+                  <div className='col-12 md:col-6 p-0 md:pr-2 field m-0'>
+                    <label className='v3-label'>
+                      <User size={14} /> Piloto
+                    </label>
+                    <InputText
+                      name='user_name'
+                      required
+                      className='v3-input'
+                      placeholder='Tu nombre'
+                    />
+                  </div>
+                  <div className='col-12 md:col-6 p-0 md:pl-2 field m-0'>
+                    <label className='v3-label'>
+                      <Mail size={14} /> Correo
+                    </label>
+                    <InputText
+                      name='user_email'
+                      type='email'
+                      required
+                      className='v3-input'
+                      placeholder='tu@email.com'
+                    />
+                  </div>
                 </div>
 
                 <div className='field m-0'>
-                  <label className='form-label-v2'>
-                    <Mail size={14} /> Correo
-                  </label>
-                  <InputText
-                    name='user_email'
-                    type='email'
-                    required
-                    className='input-racing-v2'
-                    placeholder='tu@email.com'
-                  />
-                </div>
-
-                <div className='field m-0'>
-                  <label className='form-label-v2'>
-                    <Tag size={14} /> Asunto de la transmisión
+                  <label className='v3-label'>
+                    <Tag size={14} /> Asunto
                   </label>
                   <InputText
                     name='subject'
                     required
-                    className='input-racing-v2'
+                    className='v3-input'
                     placeholder='¿Qué necesitas?'
                   />
                 </div>
 
                 <div className='field m-0'>
-                  <label className='form-label-v2'>
+                  <label className='v3-label'>
                     <MessageSquare size={14} /> Detalles técnicos
                   </label>
                   <InputTextarea
                     name='message'
                     required
                     rows={8}
-                    className='input-racing-v2'
+                    className='v3-input'
                     placeholder='Escribe aquí...'
                     style={{ resize: 'none' }}
                   />
@@ -205,9 +192,9 @@ const ContactPage = () => {
                 <Button
                   type='submit'
                   loading={loading}
-                  className='btn-nitro-v2 mt-2'
+                  className='v3-nitro-btn mt-2'
                 >
-                  <span>Enviar mensaje</span>
+                  <span>INICIAR ENVÍO</span>
                   <Send size={20} className='ml-3' />
                 </Button>
               </form>
