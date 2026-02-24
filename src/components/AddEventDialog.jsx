@@ -32,11 +32,11 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-function LocationSelector({ setPosicion, cerrarMapa }) {
+// COMPONENTE ACTUALIZADO PARA DEVOLVER LAS COORDENADAS AL PADRE
+function LocationSelector({ onLocationSelect }) {
   useMapEvents({
     click(e) {
-      setPosicion(e.latlng)
-      cerrarMapa()
+      onLocationSelect(e.latlng)
     },
   })
   return null
@@ -65,6 +65,7 @@ const AddEventDialog = ({
     lat: null,
     lng: null,
     direccion: '',
+    ubicacion: '', // AÑADIDO: Para guardar el texto en la BD
   })
 
   useEffect(() => {
@@ -105,20 +106,73 @@ const AddEventDialog = ({
     }
   }
 
+  // CUANDO EL USUARIO ELIGE UNA DIRECCIÓN DEL BUSCADOR
   const onAddressSelect = (e) => {
     const selected = e.value
+    // Recortamos el texto largo a algo más limpio (Ej: "Madrid, España")
+    const shortUbicacion = selected.label.split(',').slice(0, 2).join(',')
+
     setNuevoEvento({
       ...nuevoEvento,
       direccion: selected.label,
+      ubicacion: shortUbicacion, // Guardamos la ciudad
       lat: selected.lat,
       lng: selected.lng,
     })
     toast.current.show({
       severity: 'success',
       summary: 'Ubicación Fijada',
-      detail: 'Coordenadas actualizadas correctamente.',
+      detail: shortUbicacion,
       life: 2000,
     })
+  }
+
+  // NUEVO: REVERSE GEOCODING CUANDO EL USUARIO PINCHA EN EL MAPA
+  const handleLocationSelect = async (latlng) => {
+    setShowMapModal(false)
+    setNuevoEvento((prev) => ({ ...prev, lat: latlng.lat, lng: latlng.lng }))
+
+    toast.current.show({
+      severity: 'info',
+      summary: 'Analizando ubicación...',
+      detail: 'Traduciendo coordenadas...',
+      life: 1500,
+    })
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1`,
+      )
+      const data = await response.json()
+
+      // Intentamos sacar la ciudad o pueblo, y la provincia
+      const address = data.address || {}
+      const city =
+        address.city || address.town || address.village || address.county || ''
+      const state = address.state || ''
+
+      const ubicacionFormat = city ? `${city}, ${state}` : data.display_name
+
+      setNuevoEvento((prev) => ({
+        ...prev,
+        direccion: data.display_name,
+        ubicacion: ubicacionFormat,
+      }))
+
+      toast.current.show({
+        severity: 'success',
+        summary: 'Ubicación detectada',
+        detail: ubicacionFormat,
+        life: 3000,
+      })
+    } catch (error) {
+      console.error(error)
+      // Si falla, guardamos al menos un genérico para que no crashee
+      setNuevoEvento((prev) => ({
+        ...prev,
+        ubicacion: 'Ubicación seleccionada en mapa',
+      }))
+    }
   }
 
   const uploadImage = async (file) => {
@@ -180,6 +234,7 @@ const AddEventDialog = ({
         ? nuevoEvento.tipo.value
         : nuevoEvento.tipo
 
+    // ENVIAMOS EL DATO DE UBICACIÓN A SUPABASE
     const { error } = await supabase.from('events').insert([
       {
         titulo: nuevoEvento.titulo,
@@ -189,6 +244,10 @@ const AddEventDialog = ({
         image_url: imageUrl,
         lat: nuevoEvento.lat,
         lng: nuevoEvento.lng,
+        ubicacion:
+          nuevoEvento.ubicacion ||
+          nuevoEvento.direccion ||
+          'Ubicación desconocida', // AÑADIDO AQUI
         user_id: session.user.id,
       },
     ])
@@ -216,6 +275,7 @@ const AddEventDialog = ({
         lat: null,
         lng: null,
         direccion: '',
+        ubicacion: '',
       })
       if (onEventAdded) onEventAdded()
       onHide()
@@ -456,6 +516,14 @@ const AddEventDialog = ({
                 </div>
               </div>
             </div>
+
+            {/* Opcional: mostrar la ubicación traducida debajo para confirmar */}
+            {nuevoEvento.ubicacion && (
+              <div className='mt-3 text-sm font-bold text-blue-600'>
+                <i className='pi pi-check-circle mr-2'></i>
+                Ciudad guardada: {nuevoEvento.ubicacion}
+              </div>
+            )}
           </div>
 
           <div className='field m-0'>
@@ -566,12 +634,7 @@ const AddEventDialog = ({
             style={{ height: '100%', width: '100%' }}
           >
             <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
-            <LocationSelector
-              setPosicion={(pos) =>
-                setNuevoEvento({ ...nuevoEvento, lat: pos.lat, lng: pos.lng })
-              }
-              cerrarMapa={() => setShowMapModal(false)}
-            />
+            <LocationSelector onLocationSelect={handleLocationSelect} />
             {nuevoEvento.lat && (
               <Marker position={[nuevoEvento.lat, nuevoEvento.lng]} />
             )}

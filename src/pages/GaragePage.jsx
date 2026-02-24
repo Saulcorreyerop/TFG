@@ -6,9 +6,10 @@ import { Dialog } from 'primereact/dialog'
 import { InputNumber } from 'primereact/inputnumber'
 import { Dropdown } from 'primereact/dropdown'
 import { InputTextarea } from 'primereact/inputtextarea'
-import { SelectButton } from 'primereact/selectbutton' // Nuevo componente
+import { SelectButton } from 'primereact/selectbutton'
 import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
+import imageCompression from 'browser-image-compression'
 
 import './GaragePage.css'
 
@@ -18,13 +19,11 @@ const GaragePage = ({ session }) => {
   const [showDialog, setShowDialog] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // --- ESTADOS PARA LA API DE COCHES ---
-  const [vehicleType, setVehicleType] = useState('car') // 'car' o 'motorcycle'
-  const [makes, setMakes] = useState([]) // Lista de Marcas
-  const [models, setModels] = useState([]) // Lista de Modelos
-  const [loadingAPI, setLoadingAPI] = useState(false) // Carga de datos API
+  const [vehicleType, setVehicleType] = useState('car')
+  const [makes, setMakes] = useState([])
+  const [models, setModels] = useState([])
+  const [loadingAPI, setLoadingAPI] = useState(false)
 
-  // Estado para editar o crear
   const [editingId, setEditingId] = useState(null)
 
   const [form, setForm] = useState({
@@ -46,24 +45,20 @@ const GaragePage = ({ session }) => {
   ]
 
   const typeOptions = [
-    { label: 'Coche', value: 'passenger car' }, // Valor que pide la API
+    { label: 'Coche', value: 'passenger car' },
     { label: 'Moto', value: 'motorcycle' },
   ]
-
-  // --- EFECTOS ---
 
   useEffect(() => {
     if (session) fetchVehicles()
   }, [session])
 
-  // 1. Cuando cambia el tipo de vehículo, buscamos las MARCAS
   useEffect(() => {
     if (showDialog) {
       fetchMakes(vehicleType)
     }
   }, [vehicleType, showDialog])
 
-  // 2. Cuando cambia la MARCA seleccionada, buscamos los MODELOS
   useEffect(() => {
     if (form.marca && showDialog) {
       fetchModels(form.marca, vehicleType)
@@ -72,17 +67,13 @@ const GaragePage = ({ session }) => {
     }
   }, [form.marca, vehicleType, showDialog])
 
-  // --- FUNCIONES API NHTSA ---
-
   const fetchMakes = async (type) => {
     setLoadingAPI(true)
     try {
-      // API Gratuita del gobierno de US (NHTSA)
       const response = await fetch(
         `https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/${type}?format=json`,
       )
       const data = await response.json()
-      // Formateamos para el Dropdown de PrimeReact
       const formattedMakes = data.Results.map((item) => ({
         label: item.MakeName.trim(),
         value: item.MakeName.trim(),
@@ -97,7 +88,6 @@ const GaragePage = ({ session }) => {
   }
 
   const fetchModels = async (make, type) => {
-    // Si la marca no está en la lista (es custom), no llamamos a la API
     if (!makes.find((m) => m.value.toLowerCase() === make.toLowerCase())) return
 
     setLoadingAPI(true)
@@ -106,7 +96,6 @@ const GaragePage = ({ session }) => {
         `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${make}/vehicleType/${type}?format=json`,
       )
       const data = await response.json()
-      // Filtramos duplicados y formateamos
       const uniqueModels = [
         ...new Set(data.Results.map((item) => item.Model_Name.trim())),
       ]
@@ -121,8 +110,6 @@ const GaragePage = ({ session }) => {
       setLoadingAPI(false)
     }
   }
-
-  // --- CRUD DB ---
 
   const fetchVehicles = async () => {
     const { data } = await supabase
@@ -143,7 +130,7 @@ const GaragePage = ({ session }) => {
       descripcion: '',
       image_url: null,
     })
-    setVehicleType('passenger car') // Reset a coche por defecto
+    setVehicleType('passenger car')
     setEditingId(null)
     setImageFile(null)
     setShowDialog(true)
@@ -159,8 +146,6 @@ const GaragePage = ({ session }) => {
       descripcion: car.descripcion,
       image_url: car.image_url,
     })
-    // Intentamos adivinar el tipo para la edición, o lo dejamos en coche por defecto
-    // (Idealmente deberías guardar el 'tipo' en la base de datos también)
     setVehicleType('passenger car')
     setEditingId(car.id)
     setImageFile(null)
@@ -168,14 +153,23 @@ const GaragePage = ({ session }) => {
   }
 
   const handleUpload = async (file) => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${session.user.id}/${Math.random()}.${fileExt}`
+    const options = {
+      maxSizeMB: 0.8,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+      fileType: 'image/webp',
+      initialQuality: 0.8,
+    }
+
+    const compressedFile = await imageCompression(file, options)
+    const fileName = `${session.user.id}/${Date.now()}.webp`
     const filePath = `${fileName}`
 
-    // NOTA: Asegúrate de que tu bucket se llame igual aquí ('vehicle-images' o 'vehicles')
     const { error: uploadError } = await supabase.storage
       .from('vehicles')
-      .upload(filePath, file)
+      .upload(filePath, compressedFile, {
+        contentType: 'image/webp',
+      })
 
     if (uploadError) throw uploadError
 
@@ -190,13 +184,18 @@ const GaragePage = ({ session }) => {
       let finalImageUrl = form.image_url
 
       if (imageFile) {
+        toast.current.show({
+          severity: 'info',
+          summary: 'Optimizando',
+          detail: 'Comprimiendo imagen...',
+          life: 2000,
+        })
         finalImageUrl = await handleUpload(imageFile)
       }
 
       const vehicleData = {
         ...form,
         image_url: finalImageUrl,
-        // Si tienes una columna 'tipo' en Supabase, añade: tipo: vehicleType
       }
 
       if (editingId) {
@@ -249,7 +248,6 @@ const GaragePage = ({ session }) => {
     }
   }
 
-  // ... (El carTemplate se mantiene igual que tu código original)
   const carTemplate = (car) => {
     const header = (
       <div className='garage-image-container'>
@@ -307,7 +305,6 @@ const GaragePage = ({ session }) => {
       <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
         <Toast ref={toast} />
 
-        {/* Cabecera */}
         <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
           <div>
             <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
@@ -325,10 +322,8 @@ const GaragePage = ({ session }) => {
           />
         </div>
 
-        {/* Grid de vehículos */}
         {vehicles.length === 0 ? (
           <div className='garage-empty'>
-            {/* ... Tu código de empty state ... */}
             <p className='text-center text-500'>No hay vehículos.</p>
           </div>
         ) : (
@@ -339,7 +334,6 @@ const GaragePage = ({ session }) => {
           </div>
         )}
 
-        {/* DIÁLOGO DE EDICIÓN / CREACIÓN */}
         <Dialog
           header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
           visible={showDialog}
@@ -348,15 +342,13 @@ const GaragePage = ({ session }) => {
           className='p-fluid'
         >
           <div className='flex flex-column gap-4 pt-2'>
-            {/* 1. SELECCIÓN DE TIPO (COCHE O MOTO) */}
             <div className='flex justify-content-center'>
               <SelectButton
                 value={vehicleType}
                 onChange={(e) => {
                   if (e.value) {
-                    // Prevenir deselección
                     setVehicleType(e.value)
-                    setForm({ ...form, marca: '', modelo: '' }) // Reseteamos marca al cambiar tipo
+                    setForm({ ...form, marca: '', modelo: '' })
                   }
                 }}
                 options={typeOptions}
@@ -370,18 +362,17 @@ const GaragePage = ({ session }) => {
             </div>
 
             <div className='flex gap-3 flex-column md:flex-row'>
-              {/* 2. MARCA (Dropdown con filtro y editable) */}
               <div className='flex-1'>
                 <span className='p-float-label'>
                   <Dropdown
                     id='marca'
                     value={form.marca}
                     onChange={(e) => {
-                      setForm({ ...form, marca: e.value, modelo: '' }) // Reset modelo al cambiar marca
+                      setForm({ ...form, marca: e.value, modelo: '' })
                     }}
                     options={makes}
                     filter
-                    editable // <--- ESTO PERMITE ESCRIBIR SI NO ESTÁ EN LA LISTA
+                    editable
                     placeholder='Selecciona o escribe'
                     disabled={loadingAPI}
                   />
@@ -389,7 +380,6 @@ const GaragePage = ({ session }) => {
                 </span>
               </div>
 
-              {/* 3. MODELO (Dropdown con filtro y editable) */}
               <div className='flex-1'>
                 <span className='p-float-label'>
                   <Dropdown
@@ -398,7 +388,7 @@ const GaragePage = ({ session }) => {
                     onChange={(e) => setForm({ ...form, modelo: e.value })}
                     options={models}
                     filter
-                    editable // <--- ESTO PERMITE ESCRIBIR SI NO ESTÁ EN LA LISTA
+                    editable
                     placeholder='Selecciona o escribe'
                     disabled={!form.marca || loadingAPI}
                   />
@@ -407,7 +397,6 @@ const GaragePage = ({ session }) => {
               </div>
             </div>
 
-            {/* Resto del formulario (CV, Año, etc) */}
             <div className='flex gap-3'>
               <div className='flex-1'>
                 <span className='p-float-label'>
@@ -456,7 +445,6 @@ const GaragePage = ({ session }) => {
               <label htmlFor='desc'>Modificaciones / Descripción</label>
             </span>
 
-            {/* Subida de Imagen */}
             <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative'>
               <input
                 type='file'

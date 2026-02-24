@@ -15,17 +15,14 @@ import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import { Helmet } from 'react-helmet-async'
 import { AnimatePresence } from 'framer-motion'
 
-// Componentes CRÍTICOS (Se cargan al instante)
 import Header from './components/Header'
 import Hero from './components/Hero'
 import Footer from './components/Footer'
 
-// Componentes NO CRÍTICOS (Lazy Loading - Se cargan después)
 const HomeMap = lazy(() => import('./components/HomeMap'))
 const Features = lazy(() => import('./components/Features'))
 const EventCarousel = lazy(() => import('./components/EventCarousel'))
 
-// Páginas
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
 import EventsPage from './pages/EventsPage'
@@ -36,7 +33,6 @@ import CommunityPage from './pages/CommunityPage'
 import EventDetailPage from './pages/EventDetailPage'
 import ContactPage from './pages/ContactPage'
 
-// --- CONFIGURACIÓN ---
 addLocale('es', {
   firstDayOfWeek: 1,
   dayNames: [
@@ -91,7 +87,6 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-// --- HOME OPTIMIZADA ---
 const Home = ({ session }) => (
   <>
     <Helmet>
@@ -125,7 +120,6 @@ const Home = ({ session }) => (
   </>
 )
 
-// --- RUTAS ANIMADAS ---
 const AnimatedRoutes = ({ session }) => {
   const location = useLocation()
 
@@ -145,6 +139,7 @@ const AnimatedRoutes = ({ session }) => {
             </>
           }
         />
+
         <Route
           path='/eventos'
           element={
@@ -153,6 +148,15 @@ const AnimatedRoutes = ({ session }) => {
             </>
           }
         />
+        <Route
+          path='/eventos/:provincia'
+          element={
+            <>
+              <EventsPage session={session} />
+            </>
+          }
+        />
+
         <Route
           path='/comunidad'
           element={

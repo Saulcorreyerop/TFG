@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { Dropdown } from 'primereact/dropdown'
@@ -52,7 +52,6 @@ addLocale('es', {
   clear: 'Limpiar',
 })
 
-// AÑADIDO: Propiedad 'theme' para darle un color único a cada categoría
 const EVENT_TYPES = [
   { label: 'Todos los tipos', value: null, theme: 'blue' },
   {
@@ -76,6 +75,15 @@ const EVENT_TYPES = [
     theme: 'orange',
   },
 ]
+
+const normalizeText = (text) => {
+  if (!text) return ''
+  return String(text)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
 
 const formatEventData = (ev) => {
   const date = new Date(ev.fecha)
@@ -237,7 +245,19 @@ const TimelineEventCard = React.memo(({ event, isPast = false, session }) => {
 })
 
 const EventsPage = ({ session }) => {
-  const navigate = useNavigate() // <-- AÑADIDO: Esto soluciona el error de navigate is not defined
+  const navigate = useNavigate()
+  const { provincia } = useParams()
+
+  let activeLocation = null
+  if (provincia) {
+    try {
+      activeLocation = decodeURIComponent(provincia).replace(/-/g, ' ').trim()
+    } catch (error) {
+      console.error(error)
+      activeLocation = provincia.replace(/-/g, ' ').trim()
+    }
+  }
+
   const [events, setEvents] = useState({ upcoming: [], past: [], featured: [] })
   const [favorites, setFavorites] = useState([])
   const [filters, setFilters] = useState({ text: '', type: null })
@@ -287,20 +307,38 @@ const EventsPage = ({ session }) => {
 
   const filterList = useCallback(
     (list) => {
+      const locToSearch = normalizeText(activeLocation)
+      const textToSearch = normalizeText(filters.text)
+
       return list.filter((e) => {
-        const matchText = e.titulo
-          .toLowerCase()
-          .includes(filters.text.toLowerCase())
+        // Extraemos ABSOLUTAMENTE TODO el evento a texto bruto (incluyendo objetos anidados de Leaflet/Supabase)
+        const textoCompleto = normalizeText(JSON.stringify(e))
+
+        const matchText =
+          textToSearch === '' || textoCompleto.includes(textToSearch)
+
         const matchType = filters.type
           ? filters.type
-              .toLowerCase()
               .split(',')
-              .some((val) => e.tipo?.toLowerCase().trim() === val.trim())
+              .some((val) => normalizeText(e.tipo).includes(normalizeText(val)))
           : true
-        return matchText && matchType
+
+        const matchLocation =
+          locToSearch === '' || textoCompleto.includes(locToSearch)
+
+        // 🔴 CHIVATO DE DEPURACIÓN PARA LA CONSOLA (F12)
+        if (locToSearch !== '') {
+          console.log(`--- EVALUANDO EVENTO: ${e.titulo} ---`)
+          console.log(
+            `¿Encuentra la palabra "${locToSearch}"?: ${matchLocation}`,
+          )
+          console.log(`Textos que está leyendo el filtro:`, textoCompleto)
+        }
+
+        return matchText && matchType && matchLocation
       })
     },
-    [filters],
+    [filters, activeLocation],
   )
 
   const filteredUpcoming = useMemo(
@@ -331,15 +369,18 @@ const EventsPage = ({ session }) => {
 
         <div className='max-w-8xl mx-auto'>
           <div className='grid grid-nogutter'>
-            {/* === BARRA LATERAL FIJA === */}
             <div className='col-12 lg:col-3 lg:pr-5 relative'>
               <div className='sticky-sidebar py-6 px-4 lg:px-0'>
                 <div className='mb-6'>
-                  <h1 className='text-4xl font-black m-0 tracking-tight text-900'>
-                    Agenda de Eventos
+                  <h1 className='text-4xl font-black m-0 tracking-tight text-900 capitalize'>
+                    {activeLocation
+                      ? `Eventos en ${activeLocation}`
+                      : 'Agenda de Eventos'}
                   </h1>
                   <p className='text-500 font-medium mt-2'>
-                    Explora las KDDs y rutas de la comunidad.
+                    {activeLocation
+                      ? `Descubre las mejores KDDs y rutas en ${activeLocation}.`
+                      : 'Explora las KDDs y rutas de la comunidad.'}
                   </p>
 
                   <Button
@@ -348,6 +389,15 @@ const EventsPage = ({ session }) => {
                     className='w-full mt-4 btn-create-modern'
                     onClick={handleOpenModal}
                   />
+
+                  {activeLocation && (
+                    <Button
+                      label='Ver toda España'
+                      icon='pi pi-map'
+                      className='p-button-outlined p-button-secondary w-full mt-3 font-bold'
+                      onClick={() => navigate('/eventos')}
+                    />
+                  )}
                 </div>
 
                 <div className='mb-6'>
@@ -358,7 +408,7 @@ const EventsPage = ({ session }) => {
                     <Search size={16} className='search-icon' />
                     <input
                       type='text'
-                      placeholder='Busca por nombre del evento...'
+                      placeholder='Busca por nombre...'
                       value={filters.text}
                       onChange={(e) =>
                         setFilters((prev) => ({
@@ -372,7 +422,6 @@ const EventsPage = ({ session }) => {
                     {EVENT_TYPES.map((type, i) => (
                       <div
                         key={i}
-                        // Aquí aplicamos el colorTheme dinámico a la clase active
                         className={`category-item ${filters.type === type.value ? `active theme-${type.theme}` : ''}`}
                         onClick={() =>
                           setFilters((prev) => ({
@@ -385,7 +434,6 @@ const EventsPage = ({ session }) => {
                           {type.icon || <Grid size={16} />}
                         </span>
                         <span className='font-bold text-sm'>{type.label}</span>
-                        {/* El indicador también cogerá el color por CSS */}
                         {filters.type === type.value && (
                           <div className='ml-auto w-2 h-2 border-circle indicator'></div>
                         )}
@@ -422,16 +470,16 @@ const EventsPage = ({ session }) => {
               </div>
             </div>
 
-            {/* === CONTENIDO PRINCIPAL === */}
             <div className='col-12 lg:col-9 py-6 px-4 lg:pl-5 border-left-1 border-gray-200 content-area'>
-              {/* DESTACADO */}
-              {events.featured.length > 0 && !filters.text && !filters.type && (
-                <div className='mb-8'>
-                  <TechnicalCoverCard event={events.featured[0]} />
-                </div>
-              )}
+              {events.featured.length > 0 &&
+                !filters.text &&
+                !filters.type &&
+                !activeLocation && (
+                  <div className='mb-8'>
+                    <TechnicalCoverCard event={events.featured[0]} />
+                  </div>
+                )}
 
-              {/* TABS TÉCNICOS */}
               <div className='flex align-items-center justify-content-between mb-5 border-bottom-2 border-gray-100 pb-2'>
                 <div className='flex gap-5'>
                   <button
@@ -459,7 +507,6 @@ const EventsPage = ({ session }) => {
                 </div>
               </div>
 
-              {/* LISTA DE EVENTOS */}
               <div className='flex flex-column gap-4'>
                 <AnimatePresence mode='popLayout'>
                   {currentList.length > 0 ? (

@@ -6,30 +6,28 @@ import { Button } from 'primereact/button'
 import { useNavigate } from 'react-router-dom'
 import { Card } from 'primereact/card'
 import { Tag } from 'primereact/tag'
-import { Dialog } from 'primereact/dialog' // Nuevo
-import { InputText } from 'primereact/inputtext' // Nuevo
-import { Toast } from 'primereact/toast' // Nuevo
+import { Dialog } from 'primereact/dialog'
+import { InputText } from 'primereact/inputtext'
+import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
+import imageCompression from 'browser-image-compression'
 
 const ProfilePage = ({ session }) => {
   const navigate = useNavigate()
   const toast = useRef(null)
 
-  // Datos del perfil
   const [profile, setProfile] = useState(null)
   const [myVehicles, setMyVehicles] = useState([])
   const [favorites, setFavorites] = useState([])
 
-  // Estados para la Edición
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [loading, setLoading] = useState(false)
   const [editForm, setEditForm] = useState({
     username: '',
     avatar_url: null,
   })
-  const [avatarFile, setAvatarFile] = useState(null) // Archivo nuevo seleccionado
+  const [avatarFile, setAvatarFile] = useState(null)
 
-  // --- CARGA DE DATOS ---
   const getProfile = async () => {
     const { data } = await supabase
       .from('profiles')
@@ -37,7 +35,6 @@ const ProfilePage = ({ session }) => {
       .eq('id', session.user.id)
       .single()
     setProfile(data)
-    // Inicializamos el formulario con los datos actuales
     if (data) {
       setEditForm({
         username: data.username || '',
@@ -76,21 +73,27 @@ const ProfilePage = ({ session }) => {
     }
   }, [session])
 
-  // --- LÓGICA DE EDICIÓN ---
-
   const handleAvatarUpload = async (file) => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${session.user.id}-${Math.random()}.${fileExt}`
+    const options = {
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 800,
+      useWebWorker: true,
+      fileType: 'image/webp',
+      initialQuality: 0.8,
+    }
+
+    const compressedFile = await imageCompression(file, options)
+    const fileName = `${session.user.id}-${Date.now()}.webp`
     const filePath = `${fileName}`
 
-    // Subir al bucket 'avatars'
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, file)
+      .upload(filePath, compressedFile, {
+        contentType: 'image/webp',
+      })
 
     if (uploadError) throw uploadError
 
-    // Obtener URL pública
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
     return data.publicUrl
   }
@@ -100,12 +103,16 @@ const ProfilePage = ({ session }) => {
     try {
       let finalAvatarUrl = editForm.avatar_url
 
-      // 1. Si hay archivo nuevo, lo subimos
       if (avatarFile) {
+        toast.current.show({
+          severity: 'info',
+          summary: 'Optimizando',
+          detail: 'Procesando imagen de perfil...',
+          life: 2000,
+        })
         finalAvatarUrl = await handleAvatarUpload(avatarFile)
       }
 
-      // 2. Actualizamos la tabla profiles
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -124,7 +131,7 @@ const ProfilePage = ({ session }) => {
       })
       setShowEditDialog(false)
       setAvatarFile(null)
-      getProfile() // Refrescamos los datos en pantalla
+      getProfile()
     } catch (error) {
       console.error(error)
       toast.current.show({
@@ -142,7 +149,6 @@ const ProfilePage = ({ session }) => {
       <div className='p-5 text-center'>Inicia sesión para ver tu perfil</div>
     )
 
-  // Plantilla de evento favorito (igual que tenías)
   const eventTemplate = (event) => {
     return (
       <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
@@ -172,7 +178,6 @@ const ProfilePage = ({ session }) => {
       <div className='max-w-4xl mx-auto p-4 md:p-6'>
         <Toast ref={toast} />
 
-        {/* Cabecera del Perfil */}
         <div className='bg-white shadow-2 border-round-2xl p-6 mb-4 flex flex-column md:flex-row align-items-center gap-5'>
           <div className='relative'>
             <Avatar
@@ -180,7 +185,7 @@ const ProfilePage = ({ session }) => {
               size='xlarge'
               shape='circle'
               className='bg-indigo-100 text-indigo-600 w-8rem h-8rem text-5xl shadow-2'
-              image={profile?.avatar_url} // Muestra la imagen si existe
+              image={profile?.avatar_url}
             />
           </div>
 
@@ -196,7 +201,7 @@ const ProfilePage = ({ session }) => {
                 size='small'
                 outlined
                 severity='secondary'
-                onClick={() => setShowEditDialog(true)} // <--- AHORA ABRE EL DIÁLOGO
+                onClick={() => setShowEditDialog(true)}
               />
               <Button
                 label='Cerrar Sesión'
@@ -208,7 +213,6 @@ const ProfilePage = ({ session }) => {
             </div>
           </div>
 
-          {/* Stats Rápidos */}
           <div className='flex gap-4 text-center border-top-1 md:border-top-none md:border-left-1 border-200 pt-3 md:pt-0 md:pl-5'>
             <div>
               <div className='text-2xl font-bold text-purple-600'>
@@ -229,7 +233,6 @@ const ProfilePage = ({ session }) => {
           </div>
         </div>
 
-        {/* Pestañas de Contenido */}
         <div className='card'>
           <TabView className='custom-tabview'>
             <TabPanel header='Mis Vehículos' leftIcon='pi pi-car mr-2'>
@@ -293,7 +296,6 @@ const ProfilePage = ({ session }) => {
           </TabView>
         </div>
 
-        {/* --- DIÁLOGO DE EDICIÓN DE PERFIL --- */}
         <Dialog
           header='Editar Perfil'
           visible={showEditDialog}
@@ -302,7 +304,6 @@ const ProfilePage = ({ session }) => {
           className='p-fluid'
         >
           <div className='flex flex-column gap-4 pt-3'>
-            {/* 1. Cambio de Avatar */}
             <div className='flex flex-column align-items-center gap-3'>
               <Avatar
                 image={
@@ -316,7 +317,6 @@ const ProfilePage = ({ session }) => {
                 className='w-8rem h-8rem text-5xl bg-gray-100'
               />
 
-              {/* Input file oculto pero funcional */}
               <div className='relative'>
                 <input
                   type='file'
@@ -334,7 +334,6 @@ const ProfilePage = ({ session }) => {
               </div>
             </div>
 
-            {/* 2. Cambio de Nombre */}
             <span className='p-float-label mt-2'>
               <InputText
                 id='username'
@@ -346,7 +345,6 @@ const ProfilePage = ({ session }) => {
               <label htmlFor='username'>Nombre de Usuario</label>
             </span>
 
-            {/* 3. Botones */}
             <Button
               label='Guardar Cambios'
               icon='pi pi-check'
