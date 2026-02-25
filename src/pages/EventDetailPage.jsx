@@ -231,45 +231,42 @@ const EventDetailPage = ({ session }) => {
           .from('event_attendees')
           .insert({ event_id: parseInt(id), user_id: session.user.id })
 
-        // --- LÓGICA INTELIGENTE DE NOTIFICACIONES (Asistencia) ---
-        // 1. Buscamos a todos los que ya están apuntados al evento
-        const { data: attendeesData } = await supabase
-          .from('event_attendees')
-          .select('user_id')
-          .eq('event_id', parseInt(id))
-
+        // --- LÓGICA INTELIGENTE (CORREGIDA USANDO EL ESTADO LOCAL) ---
         let usersToNotify = new Set()
 
-        // 2. Añadimos al creador del evento a la lista (si no eres tú mismo)
+        // 1. Añadimos al creador del evento
         if (event.user_id !== session.user.id) {
           usersToNotify.add(event.user_id)
         }
 
-        // 3. Añadimos al resto de asistentes a la lista (excluyéndote a ti mismo)
-        if (attendeesData) {
-          attendeesData.forEach((a) => {
-            if (a.user_id !== session.user.id) usersToNotify.add(a.user_id)
-          })
-        }
+        // 2. Añadimos a los asistentes que ya están en la pantalla (estado 'attendees')
+        attendees.forEach((a) => {
+          if (a.user_id !== session.user.id) {
+            usersToNotify.add(a.user_id)
+          }
+        })
 
-        // 4. Preparamos el paquete de notificaciones
         const notificationsToInsert = Array.from(usersToNotify).map(
           (userId) => ({
-            user_id: userId, // Usuario que recibe el aviso
-            actor_id: session.user.id, // Tú, que te acabas de apuntar
+            user_id: userId,
+            actor_id: session.user.id,
             tipo: 'asistencia',
             evento_id: parseInt(id),
           }),
         )
 
-        // 5. Enviamos todas las notificaciones de golpe
+        // 3. Enviamos todo de golpe
         if (notificationsToInsert.length > 0) {
-          await supabase.from('notifications').insert(notificationsToInsert)
+          const { error: notifError } = await supabase
+            .from('notifications')
+            .insert(notificationsToInsert)
+          if (notifError)
+            console.error('Error al insertar notificaciones:', notifError)
         }
-        // ---------------------------------------------------------
+        // -------------------------------------------------------------
       }
 
-      await fetchAttendees()
+      await fetchAttendees() // Actualizamos la lista visualmente
       toast.current.show({
         severity: 'success',
         summary: isAttending
