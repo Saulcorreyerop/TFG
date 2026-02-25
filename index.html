@@ -26,24 +26,9 @@
     <meta name="googlebot" content="index, follow" />
 
     <title>CarMeet ESP | Eventos y Rutas de Coches en España</title>
-    <!--Creada por Saúl Correyero Pañero-->
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker
-            .register('/sw.js')
-            .then((registration) => {
-              console.log('SW registrado con éxito: ', registration.scope)
-            })
-            .catch((err) => {
-              console.log('Fallo en el registro del SW: ', err)
-            })
-        })
-      }
-    </script>
   </body>
 </html>
