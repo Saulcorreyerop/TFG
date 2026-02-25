@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { Avatar } from 'primereact/avatar'
-import { TabView, TabPanel } from 'primereact/tabview'
 import { Button } from 'primereact/button'
 import { useNavigate } from 'react-router-dom'
-import { Card } from 'primereact/card'
 import { Tag } from 'primereact/tag'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
-import { Share2 } from 'lucide-react'
+import {
+  Share2,
+  Car,
+  Flag,
+  CheckCircle,
+  Heart,
+  Calendar,
+  MapPin,
+  PlusCircle,
+  LogOut,
+  Image as ImageIcon,
+} from 'lucide-react'
+import './ProfilePage.css' // Importamos los nuevos estilos
 
 const ProfilePage = ({ session }) => {
   const navigate = useNavigate()
@@ -19,7 +29,15 @@ const ProfilePage = ({ session }) => {
 
   const [profile, setProfile] = useState(null)
   const [myVehicles, setMyVehicles] = useState([])
+
+  // Estados de Eventos
   const [favorites, setFavorites] = useState([])
+  const [attendingEvents, setAttendingEvents] = useState([])
+  const [createdEvents, setCreatedEvents] = useState([])
+
+  // Estados de Seguidores
+  const [followersCount, setFollowersCount] = useState(0)
+  const [followingCount, setFollowingCount] = useState(0)
 
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -29,50 +47,78 @@ const ProfilePage = ({ session }) => {
   })
   const [avatarFile, setAvatarFile] = useState(null)
 
-  const getProfile = async () => {
-    const { data } = await supabase
+  useEffect(() => {
+    if (session) {
+      fetchAllData()
+    }
+    // eslint-disable-next-line
+  }, [session])
+
+  const fetchAllData = async () => {
+    // 1. Perfil
+    const { data: profData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single()
-    setProfile(data)
-    if (data) {
+    setProfile(profData)
+    if (profData)
       setEditForm({
-        username: data.username || '',
-        avatar_url: data.avatar_url,
+        username: profData.username || '',
+        avatar_url: profData.avatar_url,
       })
-    }
-  }
 
-  const getVehicles = async () => {
-    const { data } = await supabase
+    // 2. Vehículos
+    const { data: vehData } = await supabase
       .from('vehicles')
       .select('id, marca, modelo, image_url')
       .eq('user_id', session.user.id)
-    if (data) setMyVehicles(data)
-  }
+    if (vehData) setMyVehicles(vehData)
 
-  const getFavorites = async () => {
-    const { data, error } = await supabase
+    // 3. Favoritos
+    const { data: favData } = await supabase
       .from('favorites')
       .select(`event_id, events (*)`)
       .eq('user_id', session.user.id)
+    if (favData)
+      setFavorites(
+        favData.map((item) => item.events).filter((ev) => ev !== null),
+      )
 
-    if (!error && data) {
-      const formattedEvents = data
-        .map((item) => item.events)
-        .filter((ev) => ev !== null)
-      setFavorites(formattedEvents)
+    // 4. Asistencias
+    const { data: attData } = await supabase
+      .from('event_attendees')
+      .select(`event_id, events (*)`)
+      .eq('user_id', session.user.id)
+    if (attData)
+      setAttendingEvents(
+        attData.map((item) => item.events).filter((ev) => ev !== null),
+      )
+
+    // 5. Creados
+    const { data: creData } = await supabase
+      .from('events')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('fecha', { ascending: false })
+    if (creData) setCreatedEvents(creData)
+
+    // 6. Seguidores
+    try {
+      const { count: f1 } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', session.user.id)
+      const { count: f2 } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', session.user.id)
+      setFollowersCount(f1 || 0)
+      setFollowingCount(f2 || 0)
+    } catch (err) {
+      console.warn('Tabla follows no lista aún o error:', err)
     }
   }
-
-  useEffect(() => {
-    if (session) {
-      getProfile()
-      getVehicles()
-      getFavorites()
-    }
-  }, [session])
 
   const handleAvatarUpload = async (file) => {
     const options = {
@@ -82,19 +128,12 @@ const ProfilePage = ({ session }) => {
       fileType: 'image/webp',
       initialQuality: 0.8,
     }
-
     const compressedFile = await imageCompression(file, options)
-    const fileName = `${session.user.id}-${Date.now()}.webp`
-    const filePath = `${fileName}`
-
+    const filePath = `${session.user.id}-${Date.now()}.webp`
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, compressedFile, {
-        contentType: 'image/webp',
-      })
-
+      .upload(filePath, compressedFile, { contentType: 'image/webp' })
     if (uploadError) throw uploadError
-
     const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
     return data.publicUrl
   }
@@ -103,7 +142,6 @@ const ProfilePage = ({ session }) => {
     setLoading(true)
     try {
       let finalAvatarUrl = editForm.avatar_url
-
       if (avatarFile) {
         toast.current.show({
           severity: 'info',
@@ -113,7 +151,6 @@ const ProfilePage = ({ session }) => {
         })
         finalAvatarUrl = await handleAvatarUpload(avatarFile)
       }
-
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -122,9 +159,7 @@ const ProfilePage = ({ session }) => {
           updated_at: new Date(),
         })
         .eq('id', session.user.id)
-
       if (error) throw error
-
       toast.current.show({
         severity: 'success',
         summary: 'Actualizado',
@@ -132,9 +167,9 @@ const ProfilePage = ({ session }) => {
       })
       setShowEditDialog(false)
       setAvatarFile(null)
-      getProfile()
-    } catch (error) {
-      console.error(error)
+      fetchAllData()
+    } catch (err) {
+      console.error('Error guardando perfil:', err)
       toast.current.show({
         severity: 'error',
         summary: 'Error',
@@ -147,24 +182,16 @@ const ProfilePage = ({ session }) => {
 
   const handleShareMyProfile = async () => {
     const profileUrl = `${window.location.origin}/usuario/${session.user.id}`
-    const shareData = {
-      title: `Mi Garaje en CarMeet ESP`,
-      text: `¡Echa un vistazo a mi garaje en CarMeet ESP!`,
-      url: profileUrl,
-    }
-
     if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch (error) {
-        console.log('Error compartiendo:', error)
-      }
+      navigator
+        .share({ title: `Perfil de ${profile?.username}`, url: profileUrl })
+        .catch(() => {})
     } else {
       navigator.clipboard.writeText(profileUrl)
       toast.current.show({
         severity: 'success',
         summary: 'Enlace copiado',
-        detail: 'El enlace de tu perfil público se ha copiado al portapapeles.',
+        detail: 'Enlace copiado al portapapeles.',
         life: 3000,
       })
     }
@@ -172,170 +199,246 @@ const ProfilePage = ({ session }) => {
 
   if (!session)
     return (
-      <div className='p-5 text-center'>Inicia sesión para ver tu perfil</div>
-    )
-
-  const eventTemplate = (event) => {
-    return (
-      <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
-        <Card
-          title={<h4 className='m-0 text-lg'>{event.titulo}</h4>}
-          className='shadow-1 hover:shadow-3 transition-all cursor-pointer h-full'
-          onClick={() => navigate('/eventos')}
-        >
-          <div className='flex flex-column gap-2'>
-            <div className='flex align-items-center gap-2 text-sm text-500'>
-              <i className='pi pi-calendar'></i>
-              <span>{new Date(event.fecha).toLocaleDateString()}</span>
-            </div>
-            <div className='flex align-items-center gap-2 text-sm text-500'>
-              <i className='pi pi-map-marker'></i>
-              <span>{event.ubicacion}</span>
-            </div>
-            <Tag value={event.tipo} severity='info' className='w-min mt-2' />
-          </div>
-        </Card>
+      <div className='p-5 text-center font-bold text-xl'>
+        Inicia sesión para ver tu perfil
       </div>
     )
-  }
+
+  // --- PLANTILLA DE TARJETA DE EVENTO MODERNIZADA ---
+  const renderEventCard = (event) => (
+    <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
+      <div
+        className='event-card-modern'
+        onClick={() => navigate(`/evento/${event.id}`)}
+      >
+        <div className='event-card-body'>
+          <Tag
+            value={event.tipo}
+            className='w-min mb-3 bg-blue-50 text-blue-700 font-bold'
+          />
+          <h4 className='m-0 mb-3 text-xl font-black text-900 line-clamp-1'>
+            {event.titulo}
+          </h4>
+
+          <div className='mt-auto flex flex-column gap-2'>
+            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+              <Calendar size={16} className='text-blue-500' />
+              <span>
+                {new Date(event.fecha).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+              <MapPin size={16} className='text-red-500' />
+              <span className='line-clamp-1'>
+                {event.ubicacion || 'Ubicación en mapa'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <PageTransition>
-      <div className='max-w-4xl mx-auto p-4 md:p-6'>
+      <div className='max-w-6xl mx-auto p-3 md:p-5'>
         <Toast ref={toast} />
 
-        <div className='bg-white shadow-2 border-round-2xl p-6 mb-4 flex flex-column md:flex-row align-items-center gap-5'>
+        {/* HEADER DEL PERFIL */}
+        <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 border-100'>
           <div className='relative'>
             <Avatar
               icon='pi pi-user'
               size='xlarge'
               shape='circle'
-              className='bg-indigo-100 text-indigo-600 w-8rem h-8rem text-5xl shadow-2'
+              className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white'
               image={profile?.avatar_url}
             />
           </div>
 
-          <div className='text-center md:text-left flex-1'>
-            <h1 className='text-3xl font-bold m-0 text-900'>
+          <div className='text-center lg:text-left flex-1'>
+            <h1 className='text-3xl font-black m-0 text-900'>
               {profile?.username || 'Usuario'}
             </h1>
-            <p className='text-500 mt-1'>{session.user.email}</p>
-            <div className='flex flex-wrap gap-2 justify-content-center md:justify-content-start mt-3'>
+            <p className='text-500 mt-1 font-medium'>{session.user.email}</p>
+            <div className='flex flex-wrap gap-2 justify-content-center lg:justify-content-start mt-3'>
               <Button
                 label='Editar Perfil'
                 icon='pi pi-pencil'
                 size='small'
                 outlined
-                severity='secondary'
+                className='border-round-xl font-bold'
                 onClick={() => setShowEditDialog(true)}
               />
               <Button
-                label='Compartir Perfil'
+                label='Compartir'
                 icon={<Share2 size={16} className='mr-2' />}
                 size='small'
                 outlined
                 severity='info'
+                className='border-round-xl font-bold'
                 onClick={handleShareMyProfile}
               />
               <Button
-                label='Cerrar Sesión'
-                icon='pi pi-power-off'
+                icon={<LogOut size={16} />}
                 size='small'
                 severity='danger'
+                text
+                className='border-round-xl hover:bg-red-50'
                 onClick={() => supabase.auth.signOut()}
+                tooltip='Cerrar Sesión'
               />
             </div>
           </div>
 
-          <div className='flex gap-4 text-center border-top-1 md:border-top-none md:border-left-1 border-200 pt-3 md:pt-0 md:pl-5'>
+          {/* ESTADÍSTICAS */}
+          <div className='flex gap-4 md:gap-5 text-center border-top-1 lg:border-top-none lg:border-left-1 border-200 pt-4 lg:pt-0 lg:pl-5 w-full lg:w-auto justify-content-center'>
             <div>
-              <div className='text-2xl font-bold text-purple-600'>
+              <div className='text-2xl font-black text-900'>
                 {myVehicles.length}
               </div>
-              <div className='text-xs font-semibold text-500 uppercase'>
-                Vehículos
+              <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                Coches
               </div>
             </div>
             <div>
-              <div className='text-2xl font-bold text-purple-600'>
-                {favorites.length}
+              <div className='text-2xl font-black text-900'>
+                {followersCount}
               </div>
-              <div className='text-xs font-semibold text-500 uppercase'>
-                Eventos Fav
+              <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                Seguidores
+              </div>
+            </div>
+            <div>
+              <div className='text-2xl font-black text-900'>
+                {followingCount}
+              </div>
+              <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                Seguidos
               </div>
             </div>
           </div>
         </div>
 
-        <div className='card'>
-          <TabView className='custom-tabview'>
-            <TabPanel header='Mis Vehículos' leftIcon='pi pi-car mr-2'>
-              <div className='flex flex-wrap gap-3'>
-                {myVehicles.length === 0 && (
-                  <p className='text-500'>Aún no has añadido vehículos.</p>
-                )}
-
-                {myVehicles.map((v) => (
-                  <div
-                    key={v.id}
-                    className='surface-card shadow-1 border-round p-2 w-10rem cursor-pointer hover:shadow-3 transition-all'
-                    onClick={() => navigate('/garaje')}
-                  >
-                    <div className='h-6rem w-full bg-gray-100 border-round overflow-hidden mb-2'>
-                      {v.image_url ? (
-                        <img
-                          src={v.image_url}
-                          className='w-full h-full object-cover'
-                          alt='coche'
-                        />
-                      ) : (
-                        <div className='flex h-full align-items-center justify-content-center'>
-                          <i className='pi pi-image text-300'></i>
-                        </div>
-                      )}
-                    </div>
-                    <div className='font-bold text-sm text-center text-900'>
-                      {v.marca} {v.modelo}
-                    </div>
-                  </div>
-                ))}
-
+        {/* --- SECCIÓN EN CASCADA 1: GARAJE --- */}
+        <section className='profile-section'>
+          <h2 className='profile-section-title'>
+            <Car className='text-purple-600' size={28} /> Mi Garaje
+          </h2>
+          <div className='grid m-0'>
+            {myVehicles.map((v) => (
+              <div key={v.id} className='col-12 sm:col-6 lg:col-3 p-2'>
                 <div
-                  className='border-2 border-dashed border-300 border-round p-2 w-10rem flex flex-column align-items-center justify-content-center cursor-pointer hover:bg-gray-50 transition-all text-500 hover:text-purple-600'
+                  className='vehicle-card'
                   onClick={() => navigate('/garaje')}
                 >
-                  <i className='pi pi-plus-circle text-2xl mb-1'></i>
-                  <span className='font-bold text-sm'>Añadir</span>
+                  <div className='vehicle-img-wrapper'>
+                    {v.image_url ? (
+                      <img src={v.image_url} alt={`${v.marca} ${v.modelo}`} />
+                    ) : (
+                      <div className='flex h-full align-items-center justify-content-center text-300'>
+                        <ImageIcon size={40} />
+                      </div>
+                    )}
+                  </div>
+                  <div className='p-3 text-center'>
+                    <div className='font-black text-lg text-900 mb-1 line-clamp-1'>
+                      {v.marca}
+                    </div>
+                    <div className='text-sm text-600 line-clamp-1 font-medium'>
+                      {v.modelo}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </TabPanel>
+            ))}
 
-            <TabPanel header='Eventos Favoritos' leftIcon='pi pi-heart mr-2'>
-              {favorites.length === 0 ? (
-                <div className='text-center p-5'>
-                  <i className='pi pi-heart text-4xl text-300 mb-3'></i>
-                  <p className='text-500'>Aún no tienes eventos favoritos.</p>
-                  <Button
-                    label='Explorar Eventos'
-                    text
-                    onClick={() => navigate('/mapa')}
-                  />
-                </div>
-              ) : (
-                <div className='grid'>
-                  {favorites.map((favEvent) => eventTemplate(favEvent))}
-                </div>
-              )}
-            </TabPanel>
-          </TabView>
-        </div>
+            {/* Botón de Añadir Coche siempre visible al final */}
+            <div className='col-12 sm:col-6 lg:col-3 p-2'>
+              <div
+                className='add-vehicle-card'
+                onClick={() => navigate('/garaje')}
+              >
+                <PlusCircle size={36} className='mb-2' />
+                <span className='font-bold text-lg'>Añadir Vehículo</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
+        {/* --- SECCIÓN EN CASCADA 2: EVENTOS CREADOS --- */}
+        <section className='profile-section'>
+          <h2 className='profile-section-title'>
+            <Flag className='text-blue-600' size={28} /> Eventos Organizados
+          </h2>
+          {createdEvents.length === 0 ? (
+            <div className='empty-state-box'>
+              <Flag size={48} className='text-300 mb-3 mx-auto' />
+              <span className='block font-bold text-lg'>
+                No has organizado ningún evento.
+              </span>
+              <span className='block text-sm mt-1'>
+                Crea tu primera KDD o ruta desde el mapa.
+              </span>
+            </div>
+          ) : (
+            <div className='grid m-0'>{createdEvents.map(renderEventCard)}</div>
+          )}
+        </section>
+
+        {/* --- SECCIÓN EN CASCADA 3: ASISTENCIAS --- */}
+        <section className='profile-section'>
+          <h2 className='profile-section-title'>
+            <CheckCircle className='text-emerald-600' size={28} /> Me Apunto
+          </h2>
+          {attendingEvents.length === 0 ? (
+            <div className='empty-state-box'>
+              <CheckCircle size={48} className='text-300 mb-3 mx-auto' />
+              <span className='block font-bold text-lg'>
+                No te has apuntado a nada aún.
+              </span>
+              <span className='block text-sm mt-1'>
+                Explora la agenda y únete a la comunidad.
+              </span>
+            </div>
+          ) : (
+            <div className='grid m-0'>
+              {attendingEvents.map(renderEventCard)}
+            </div>
+          )}
+        </section>
+
+        {/* --- SECCIÓN EN CASCADA 4: FAVORITOS --- */}
+        <section className='profile-section mb-0'>
+          <h2 className='profile-section-title'>
+            <Heart className='text-pink-500' size={28} /> Eventos Favoritos
+          </h2>
+          {favorites.length === 0 ? (
+            <div className='empty-state-box'>
+              <Heart size={48} className='text-300 mb-3 mx-auto' />
+              <span className='block font-bold text-lg'>
+                No tienes eventos en favoritos.
+              </span>
+              <span className='block text-sm mt-1'>
+                Guarda los que te llamen la atención para no perderlos de vista.
+              </span>
+            </div>
+          ) : (
+            <div className='grid m-0'>{favorites.map(renderEventCard)}</div>
+          )}
+        </section>
+
+        {/* MODAL EDITAR PERFIL */}
         <Dialog
-          header='Editar Perfil'
+          header={<span className='text-xl font-black'>Editar Perfil</span>}
           visible={showEditDialog}
-          style={{ width: '90vw', maxWidth: '450px' }}
+          style={{ width: '90vw', maxWidth: '400px' }}
           onHide={() => setShowEditDialog(false)}
-          className='p-fluid'
+          className='border-round-2xl shadow-8'
         >
           <div className='flex flex-column gap-4 pt-3'>
             <div className='flex flex-column align-items-center gap-3'>
@@ -348,9 +451,8 @@ const ProfilePage = ({ session }) => {
                 icon={!editForm.avatar_url && !avatarFile ? 'pi pi-user' : null}
                 size='xlarge'
                 shape='circle'
-                className='w-8rem h-8rem text-5xl bg-gray-100'
+                className='w-8rem h-8rem text-5xl bg-gray-100 border-2 border-gray-200'
               />
-
               <div className='relative'>
                 <input
                   type='file'
@@ -361,30 +463,28 @@ const ProfilePage = ({ session }) => {
                 />
                 <label
                   htmlFor='avatar-upload'
-                  className='p-button p-component p-button-outlined p-button-secondary p-button-sm cursor-pointer'
+                  className='p-button p-component p-button-outlined p-button-secondary p-button-sm cursor-pointer border-round-xl font-bold'
                 >
                   <i className='pi pi-camera mr-2'></i> Cambiar Foto
                 </label>
               </div>
             </div>
-
-            <span className='p-float-label mt-2'>
+            <span className='p-float-label mt-3'>
               <InputText
                 id='username'
                 value={editForm.username}
                 onChange={(e) =>
                   setEditForm({ ...editForm, username: e.target.value })
                 }
+                className='w-full border-round-xl p-3'
               />
               <label htmlFor='username'>Nombre de Usuario</label>
             </span>
-
             <Button
               label='Guardar Cambios'
-              icon='pi pi-check'
               onClick={handleSaveProfile}
               loading={loading}
-              severity='help'
+              className='w-full border-round-xl py-3 font-bold mt-2'
             />
           </div>
         </Dialog>

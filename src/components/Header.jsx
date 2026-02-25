@@ -151,7 +151,10 @@ const Header = ({ session }) => {
 
   const handleNotificationClick = (notif) => {
     op.current.hide()
-    if (notif.evento_id) {
+    // Si la notificación es de nuevo seguidor, llévalo al perfil del seguidor en vez de a un evento
+    if (notif.tipo === 'nuevo_seguidor') {
+      navigate(`/comunidad`) // Opcional: podrías navegar a `/usuario/${notif.actor_id}` si tienes ese dato accesible
+    } else if (notif.evento_id) {
       navigate(`/evento/${notif.evento_id}`)
     }
   }
@@ -380,14 +383,20 @@ const Header = ({ session }) => {
                     <span className='font-bold text-900'>
                       {notif.profiles?.username || 'Alguien'}
                     </span>
+                    {/* LOGICA DE TEXTO DE NOTIFICACIONES */}
                     {notif.tipo === 'comentario'
                       ? ' ha comentado en '
                       : notif.tipo === 'nuevo_evento'
                         ? ' ha publicado un nuevo evento: '
-                        : ' va a asistir a '}
-                    <span className='font-bold text-blue-600'>
-                      {notif.events?.titulo}
-                    </span>
+                        : notif.tipo === 'nuevo_seguidor'
+                          ? ' ha empezado a seguirte.'
+                          : ' va a asistir a '}
+                    {/* Ocultamos el título del evento si el aviso es solo de que te han seguido */}
+                    {!notif.tipo.includes('seguidor') && (
+                      <span className='font-bold text-blue-600'>
+                        {notif.events?.titulo}
+                      </span>
+                    )}
                   </p>
                   <span className='text-xs text-500 font-bold mt-2 flex align-items-center gap-1'>
                     <i className='pi pi-clock text-xs'></i>{' '}
@@ -412,7 +421,6 @@ const Header = ({ session }) => {
         className='w-full md:w-20rem p-0'
       >
         <div className='flex flex-column h-full bg-white'>
-          {/* SECCIÓN SUPERIOR OPTIMIZADA (Menos Padding) */}
           <div className='p-3 border-bottom-1 border-100 bg-gray-50'>
             <div className='flex justify-content-between align-items-center mb-3'>
               <h2 className='text-xl font-black text-900 m-0'>Menú</h2>
@@ -430,7 +438,7 @@ const Header = ({ session }) => {
                   image={displayAvatar}
                   icon={!displayAvatar ? 'pi pi-user' : null}
                   shape='circle'
-                  size='large' /* Reducido de xlarge a large */
+                  size='large'
                   className='bg-blue-100 text-blue-600 border-1 border-blue-200'
                 />
                 <div>
@@ -445,7 +453,7 @@ const Header = ({ session }) => {
             ) : (
               <Button
                 label='Iniciar Sesión'
-                className='w-full font-bold border-round-xl shadow-2 py-2' /* Reducido de py-3 a py-2 */
+                className='w-full font-bold border-round-xl shadow-2 py-2'
                 style={{
                   backgroundColor: '#2563eb',
                   color: '#ffffff',
@@ -459,7 +467,6 @@ const Header = ({ session }) => {
             )}
           </div>
 
-          {/* LISTA DE ENLACES OPTIMIZADA (Menos Padding) */}
           <div className='flex-1 overflow-y-auto p-3 flex flex-column gap-1'>
             {navItems.map((item) => {
               const isActive = location.pathname.startsWith(item.path)
@@ -470,7 +477,7 @@ const Header = ({ session }) => {
                     setMobileMenuOpen(false)
                     navigate(item.path)
                   }}
-                  className='flex align-items-center gap-3 p-2 border-round-lg text-md transition-all font-bold cursor-pointer' /* Reducido p-3 a p-2, y text-lg a text-md */
+                  className='flex align-items-center gap-3 p-2 border-round-lg text-md transition-all font-bold cursor-pointer'
                   style={{
                     color: item.color,
                     backgroundColor: isActive ? item.bgHover : 'transparent',
@@ -486,7 +493,6 @@ const Header = ({ session }) => {
             })}
           </div>
 
-          {/* BOTÓN DE CERRAR SESIÓN OPTIMIZADO */}
           {session && (
             <div className='p-3 border-top-1 border-100 bg-gray-50'>
               <Button
@@ -494,7 +500,7 @@ const Header = ({ session }) => {
                 icon={<LogOut size={18} className='mr-2' />}
                 severity='danger'
                 text
-                className='w-full font-bold border-round-xl bg-red-50 hover:bg-red-100 text-red-600 py-2 p-button-text' /* Reducido py-3 a py-2 */
+                className='w-full font-bold border-round-xl bg-red-50 hover:bg-red-100 text-red-600 py-2 p-button-text'
                 onClick={() => {
                   setMobileMenuOpen(false)
                   handleLogoutConfirmation()
