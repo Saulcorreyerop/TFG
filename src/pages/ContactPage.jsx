@@ -115,7 +115,7 @@ const ContactPage = () => {
                     className='cursor-pointer hover:text-blue-400 transition-colors'
                     onClick={() =>
                       window.open(
-                        'https://twitter.com/saulcorreyerop',
+                        'https://twitter.com/saulcorreyerop8',
                         '_blank',
                       )
                     }
