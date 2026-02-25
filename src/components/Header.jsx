@@ -32,6 +32,16 @@ const timeAgo = (dateString) => {
   return date.toLocaleDateString()
 }
 
+// Función auxiliar para tener el código de textos más limpio
+const getNotificationText = (tipo) => {
+  if (tipo === 'comentario') return ' ha comentado en '
+  if (tipo === 'nuevo_evento') return ' ha publicado un nuevo evento: '
+  if (tipo === 'nuevo_seguidor') return ' ha empezado a seguirte.'
+  if (tipo === 'solicitud_crew') return ' quiere unirse a tu Crew: '
+  if (tipo === 'crew_aceptada') return ' te ha aceptado en la Crew: '
+  return ' va a asistir a '
+}
+
 const Header = ({ session }) => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -100,9 +110,10 @@ const Header = ({ session }) => {
       .from('notifications')
       .select(
         `
-        id, created_at, tipo, leida, evento_id,
+        id, created_at, tipo, leida, evento_id, crew_id,
         profiles!notifications_actor_id_fkey (username, avatar_url),
-        events (titulo)
+        events (titulo),
+        crews (name)
       `,
       )
       .eq('user_id', session.user.id)
@@ -151,9 +162,14 @@ const Header = ({ session }) => {
 
   const handleNotificationClick = (notif) => {
     op.current.hide()
+    // Navegación inteligente basada en el tipo
     if (notif.tipo === 'nuevo_seguidor') {
-      // Ahora te lleva al perfil exacto del que te ha seguido 👇
       navigate(`/usuario/${notif.profiles?.username}`)
+    } else if (
+      notif.tipo === 'solicitud_crew' ||
+      notif.tipo === 'crew_aceptada'
+    ) {
+      navigate(`/crew/${notif.crews?.name}`)
     } else if (notif.evento_id) {
       navigate(`/evento/${notif.evento_id}`)
     }
@@ -383,20 +399,27 @@ const Header = ({ session }) => {
                     <span className='font-bold text-900'>
                       {notif.profiles?.username || 'Alguien'}
                     </span>
-                    {/* LOGICA DE TEXTO DE NOTIFICACIONES */}
-                    {notif.tipo === 'comentario'
-                      ? ' ha comentado en '
-                      : notif.tipo === 'nuevo_evento'
-                        ? ' ha publicado un nuevo evento: '
-                        : notif.tipo === 'nuevo_seguidor'
-                          ? ' ha empezado a seguirte.'
-                          : ' va a asistir a '}
-                    {/* Ocultamos el título del evento si el aviso es solo de que te han seguido */}
-                    {!notif.tipo.includes('seguidor') && (
-                      <span className='font-bold text-blue-600'>
-                        {notif.events?.titulo}
-                      </span>
-                    )}
+
+                    {/* TEXTO FORMATEADO SEGÚN TIPO */}
+                    {getNotificationText(notif.tipo)}
+
+                    {/* EVENTOS (Si no es seguidor ni crew) */}
+                    {!notif.tipo.includes('seguidor') &&
+                      !notif.tipo.includes('crew') &&
+                      notif.events?.titulo && (
+                        <span className='font-bold text-blue-600'>
+                          {notif.events?.titulo}
+                        </span>
+                      )}
+
+                    {/* CREWS (Si es solicitud o aceptación) */}
+                    {(notif.tipo === 'solicitud_crew' ||
+                      notif.tipo === 'crew_aceptada') &&
+                      notif.crews?.name && (
+                        <span className='font-bold text-blue-600'>
+                          {notif.crews?.name}
+                        </span>
+                      )}
                   </p>
                   <span className='text-xs text-500 font-bold mt-2 flex align-items-center gap-1'>
                     <i className='pi pi-clock text-xs'></i>{' '}

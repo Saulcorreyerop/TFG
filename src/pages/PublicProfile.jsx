@@ -16,19 +16,19 @@ import {
   Calendar,
   MapPin,
   Image as ImageIcon,
+  Shield,
 } from 'lucide-react'
-import './ProfilePage.css' // Reutilizamos los estilos modernos del perfil
+import './ProfilePage.css'
 
 const PublicProfile = () => {
-  // Capturamos el parámetro (puede ser el ID largo o el Username)
   const { userId, username } = useParams()
   const identifier = username || userId
-
   const navigate = useNavigate()
   const toast = useRef(null)
 
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [userCrew, setUserCrew] = useState(null)
   const [vehicles, setVehicles] = useState([])
   const [createdEvents, setCreatedEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -49,13 +49,12 @@ const PublicProfile = () => {
     const fetchPublicData = async () => {
       setLoading(true)
       try {
-        // 1. Identificar si el parámetro es un UUID (ID largo) o un Username
         const isUUID =
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
             identifier,
           )
 
-        // 2. Buscar Perfil
+        // 1. Buscar Perfil (incluye la biografía nueva)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -65,8 +64,20 @@ const PublicProfile = () => {
         if (profileError || !profileData)
           throw new Error('Usuario no encontrado')
         setProfile(profileData)
+        const actualUserId = profileData.id
 
-        const actualUserId = profileData.id // Usamos su ID real para buscar el resto de cosas
+        // 2. Buscar si pertenece a alguna Crew
+        const { data: crewMemberData } = await supabase
+          .from('crew_members')
+          .select('crews(*)')
+          .eq('user_id', actualUserId)
+          .eq('status', 'approved')
+          .limit(1)
+          .maybeSingle()
+
+        if (crewMemberData && crewMemberData.crews) {
+          setUserCrew(crewMemberData.crews)
+        }
 
         // 3. Vehículos
         const { data: vehicleData } = await supabase
@@ -156,7 +167,6 @@ const PublicProfile = () => {
   }
 
   const handleShare = () => {
-    // Forzamos a que comparta el enlace con su nombre de usuario amigable
     const url = `${window.location.origin}/usuario/${profile.username}`
     if (navigator.share) {
       navigator
@@ -188,7 +198,6 @@ const PublicProfile = () => {
 
   const isMyOwnProfile = session?.user?.id === profile.id
 
-  // Plantilla Modernizada de Eventos
   const renderEventCard = (event) => (
     <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
       <div
@@ -254,7 +263,7 @@ const PublicProfile = () => {
             icon='pi pi-user'
             size='xlarge'
             shape='circle'
-            className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white'
+            className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white flex-shrink-0'
             image={profile.avatar_url}
           />
 
@@ -262,10 +271,40 @@ const PublicProfile = () => {
             <h1 className='text-3xl font-black m-0 text-900'>
               {profile.username || 'Usuario'}
             </h1>
-            <p className='text-500 mt-1 font-medium'>Miembro de CarMeet ESP</p>
+
+            {/* Bio del Usuario */}
+            {profile.bio ? (
+              <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto md:mx-0'>
+                {profile.bio}
+              </p>
+            ) : (
+              <p className='text-500 mt-1 mb-0 font-medium'>
+                Miembro de CarMeet ESP
+              </p>
+            )}
+
+            {/* Crew del Usuario (Solo si pertenece a una) */}
+            {userCrew && (
+              <div className='mt-3'>
+                <div
+                  className='inline-flex align-items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 border-300'
+                  onClick={() => navigate(`/crew/${userCrew.name}`)}
+                >
+                  <Avatar
+                    image={userCrew.profile_image_url}
+                    icon={!userCrew.profile_image_url && <Shield size={14} />}
+                    shape='circle'
+                    className='w-2rem h-2rem shadow-1'
+                  />
+                  <span className='font-bold text-sm text-900'>
+                    {userCrew.name}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {!isMyOwnProfile && (
-              <div className='mt-3'>
+              <div className='mt-4'>
                 <Button
                   label={isFollowing ? 'Siguiendo' : 'Seguir'}
                   icon={
@@ -275,7 +314,16 @@ const PublicProfile = () => {
                       <UserPlus size={18} className='mr-2' />
                     )
                   }
-                  className={`border-round-xl font-bold px-4 ${isFollowing ? 'p-button-outlined p-button-secondary' : 'btn-fichar-primary'}`}
+                  className={`border-round-xl font-bold px-4 ${isFollowing ? 'p-button-outlined p-button-secondary' : ''}`}
+                  style={
+                    !isFollowing
+                      ? {
+                          backgroundColor: '#2563eb',
+                          color: '#ffffff',
+                          border: 'none',
+                        }
+                      : {}
+                  }
                   onClick={handleFollowToggle}
                   loading={followLoading}
                 />
@@ -330,7 +378,6 @@ const PublicProfile = () => {
               {vehicles.map((v) => (
                 <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
                   <div className='vehicle-card cursor-default hover:-translate-y-1 hover:shadow-2'>
-                    {/* Aumentamos la altura de la imagen a 240px para que se vea más espectacular */}
                     <div
                       className='vehicle-img-wrapper'
                       style={{ height: '240px' }}

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { Tag } from 'primereact/tag'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
+import { InputTextarea } from 'primereact/inputtextarea'
 import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
@@ -20,8 +21,9 @@ import {
   PlusCircle,
   LogOut,
   Image as ImageIcon,
+  Shield,
 } from 'lucide-react'
-import './ProfilePage.css' // Importamos los nuevos estilos
+import './ProfilePage.css'
 
 const ProfilePage = ({ session }) => {
   const navigate = useNavigate()
@@ -29,6 +31,7 @@ const ProfilePage = ({ session }) => {
 
   const [profile, setProfile] = useState(null)
   const [myVehicles, setMyVehicles] = useState([])
+  const [myCrew, setMyCrew] = useState(null)
 
   // Estados de Eventos
   const [favorites, setFavorites] = useState([])
@@ -44,6 +47,7 @@ const ProfilePage = ({ session }) => {
   const [editForm, setEditForm] = useState({
     username: '',
     avatar_url: null,
+    bio: '',
   })
   const [avatarFile, setAvatarFile] = useState(null)
 
@@ -61,12 +65,15 @@ const ProfilePage = ({ session }) => {
       .select('*')
       .eq('id', session.user.id)
       .single()
+
     setProfile(profData)
-    if (profData)
+    if (profData) {
       setEditForm({
         username: profData.username || '',
         avatar_url: profData.avatar_url,
+        bio: profData.bio || '',
       })
+    }
 
     // 2. Vehículos
     const { data: vehData } = await supabase
@@ -75,7 +82,20 @@ const ProfilePage = ({ session }) => {
       .eq('user_id', session.user.id)
     if (vehData) setMyVehicles(vehData)
 
-    // 3. Favoritos
+    // 3. Mi Crew (La primera en la que esté aprobado)
+    const { data: crewMemberData } = await supabase
+      .from('crew_members')
+      .select('crews(*)')
+      .eq('user_id', session.user.id)
+      .eq('status', 'approved')
+      .limit(1)
+      .maybeSingle()
+
+    if (crewMemberData && crewMemberData.crews) {
+      setMyCrew(crewMemberData.crews)
+    }
+
+    // 4. Favoritos
     const { data: favData } = await supabase
       .from('favorites')
       .select(`event_id, events (*)`)
@@ -85,7 +105,7 @@ const ProfilePage = ({ session }) => {
         favData.map((item) => item.events).filter((ev) => ev !== null),
       )
 
-    // 4. Asistencias
+    // 5. Asistencias
     const { data: attData } = await supabase
       .from('event_attendees')
       .select(`event_id, events (*)`)
@@ -95,7 +115,7 @@ const ProfilePage = ({ session }) => {
         attData.map((item) => item.events).filter((ev) => ev !== null),
       )
 
-    // 5. Creados
+    // 6. Creados
     const { data: creData } = await supabase
       .from('events')
       .select('*')
@@ -103,7 +123,7 @@ const ProfilePage = ({ session }) => {
       .order('fecha', { ascending: false })
     if (creData) setCreatedEvents(creData)
 
-    // 6. Seguidores
+    // 7. Seguidores
     try {
       const { count: f1 } = await supabase
         .from('follows')
@@ -156,6 +176,7 @@ const ProfilePage = ({ session }) => {
         .update({
           username: editForm.username,
           avatar_url: finalAvatarUrl,
+          bio: editForm.bio,
           updated_at: new Date(),
         })
         .eq('id', session.user.id)
@@ -182,7 +203,6 @@ const ProfilePage = ({ session }) => {
 
   const handleShareMyProfile = async () => {
     const profileUrl = `${window.location.origin}/usuario/${profile?.username}`
-
     if (navigator.share) {
       navigator
         .share({ title: `Perfil de ${profile?.username}`, url: profileUrl })
@@ -205,7 +225,6 @@ const ProfilePage = ({ session }) => {
       </div>
     )
 
-  // --- PLANTILLA DE TARJETA DE EVENTO MODERNIZADA ---
   const renderEventCard = (event) => (
     <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
       <div
@@ -220,7 +239,6 @@ const ProfilePage = ({ session }) => {
           <h4 className='m-0 mb-3 text-xl font-black text-900 line-clamp-1'>
             {event.titulo}
           </h4>
-
           <div className='mt-auto flex flex-column gap-2'>
             <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
               <Calendar size={16} className='text-blue-500' />
@@ -265,8 +283,51 @@ const ProfilePage = ({ session }) => {
             <h1 className='text-3xl font-black m-0 text-900'>
               {profile?.username || 'Usuario'}
             </h1>
-            <p className='text-500 mt-1 font-medium'>{session.user.email}</p>
-            <div className='flex flex-wrap gap-2 justify-content-center lg:justify-content-start mt-3'>
+
+            {/* Biografía */}
+            {profile?.bio ? (
+              <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto lg:mx-0'>
+                {profile.bio}
+              </p>
+            ) : (
+              <p className='text-500 mt-1 mb-0 font-medium'>
+                {session.user.email}
+              </p>
+            )}
+
+            {/* Crew Badge */}
+            <div className='mt-3'>
+              {myCrew ? (
+                <div
+                  className='inline-flex align-items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 border-300'
+                  onClick={() => navigate(`/crew/${myCrew.name}`)}
+                >
+                  <Avatar
+                    image={myCrew.profile_image_url}
+                    icon={!myCrew.profile_image_url && <Shield size={14} />}
+                    shape='circle'
+                    className='w-2rem h-2rem shadow-1'
+                  />
+                  <span className='font-bold text-sm text-900'>
+                    {myCrew.name}
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className='inline-flex align-items-center gap-2 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer border-round-3xl px-3 py-2 border-1 border-blue-200'
+                  onClick={() =>
+                    navigate('/comunidad', { state: { tab: 'crews' } })
+                  }
+                >
+                  <Shield size={16} className='text-blue-600' />
+                  <span className='font-bold text-sm text-blue-700'>
+                    Descubrir Crews
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className='flex flex-wrap gap-2 justify-content-center lg:justify-content-start mt-4'>
               <Button
                 label='Editar Perfil'
                 icon='pi pi-pencil'
@@ -357,8 +418,6 @@ const ProfilePage = ({ session }) => {
                 </div>
               </div>
             ))}
-
-            {/* Botón de Añadir Coche siempre visible al final */}
             <div className='col-12 sm:col-6 lg:col-3 p-2'>
               <div
                 className='add-vehicle-card'
@@ -382,9 +441,6 @@ const ProfilePage = ({ session }) => {
               <span className='block font-bold text-lg'>
                 No has organizado ningún evento.
               </span>
-              <span className='block text-sm mt-1'>
-                Crea tu primera KDD o ruta desde el mapa.
-              </span>
             </div>
           ) : (
             <div className='grid m-0'>{createdEvents.map(renderEventCard)}</div>
@@ -401,9 +457,6 @@ const ProfilePage = ({ session }) => {
               <CheckCircle size={48} className='text-300 mb-3 mx-auto' />
               <span className='block font-bold text-lg'>
                 No te has apuntado a nada aún.
-              </span>
-              <span className='block text-sm mt-1'>
-                Explora la agenda y únete a la comunidad.
               </span>
             </div>
           ) : (
@@ -423,9 +476,6 @@ const ProfilePage = ({ session }) => {
               <Heart size={48} className='text-300 mb-3 mx-auto' />
               <span className='block font-bold text-lg'>
                 No tienes eventos en favoritos.
-              </span>
-              <span className='block text-sm mt-1'>
-                Guarda los que te llamen la atención para no perderlos de vista.
               </span>
             </div>
           ) : (
@@ -470,22 +520,41 @@ const ProfilePage = ({ session }) => {
                 </label>
               </div>
             </div>
-            <span className='p-float-label mt-3'>
-              <InputText
-                id='username'
-                value={editForm.username}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, username: e.target.value })
-                }
-                className='w-full border-round-xl p-3'
-              />
-              <label htmlFor='username'>Nombre de Usuario</label>
-            </span>
+
+            <div className='flex flex-column gap-3 mt-3'>
+              <span className='p-float-label'>
+                <InputText
+                  id='username'
+                  value={editForm.username}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, username: e.target.value })
+                  }
+                  className='w-full border-round-xl p-3'
+                />
+                <label htmlFor='username'>Nombre de Usuario</label>
+              </span>
+
+              <span className='p-float-label'>
+                <InputTextarea
+                  id='bio'
+                  value={editForm.bio}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, bio: e.target.value })
+                  }
+                  className='w-full border-round-xl p-3'
+                  rows={3}
+                  autoResize
+                />
+                <label htmlFor='bio'>Biografía (Opcional)</label>
+              </span>
+            </div>
+
             <Button
               label='Guardar Cambios'
               onClick={handleSaveProfile}
               loading={loading}
               className='w-full border-round-xl py-3 font-bold mt-2'
+              style={{ backgroundColor: '#2563eb' }}
             />
           </div>
         </Dialog>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useNavigate, Link } from 'react-router-dom' // Asegúrate de importar Link y useNavigate
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import {
   MapContainer,
@@ -43,17 +43,19 @@ const LocationMarker = ({ onLocationSelect, session, showToast }) => {
   return null
 }
 
-// EventCard recibe ahora "onNavigate"
 const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
   <div
     onClick={() => onClick(ev)}
     className={`surface-card p-3 shadow-1 border-round-xl cursor-pointer flex gap-3 align-items-center mb-2 mx-1 event-card ${isSelected ? 'selected' : ''}`}
   >
-    <div className='w-4rem h-4rem border-round-lg overflow-hidden flex-none shadow-1 bg-gray-100'>
+    {/* CONTENEDOR DE IMAGEN BLINDADO: flex-shrink-0 impide que se aplaste */}
+    <div className='w-4rem h-4rem border-round-lg overflow-hidden flex-shrink-0 shadow-1 bg-gray-100 relative'>
       <img
         src={ev.image_url || 'https://via.placeholder.com/150'}
-        alt='mini'
-        className='w-full h-full object-cover'
+        alt={ev.titulo}
+        className='w-full h-full'
+        /* objectFit forzado nativamente para asegurar que nunca se deforme */
+        style={{ objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
       />
     </div>
     <div className='flex-grow-1 overflow-hidden min-w-0'>
@@ -72,7 +74,6 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
       </div>
     </div>
     <div className='flex-none'>
-      {/* Botón para IR AL DETALLE */}
       <Button
         icon='pi pi-chevron-right'
         rounded
@@ -80,7 +81,7 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
         size='small'
         className='text-400 hover:text-primary hover:bg-gray-100'
         onClick={(e) => {
-          e.stopPropagation() // Evita que el mapa se centre al hacer clic en ir al detalle
+          e.stopPropagation()
           onNavigate()
         }}
       />
@@ -208,20 +209,25 @@ const MapPage = ({ session }) => {
                     <div
                       className='text-center p-1 cursor-pointer'
                       style={{ minWidth: '150px' }}
-                      // Hacer click en el popup también lleva al detalle
                       onClick={() => navigate(`/evento/${ev.id}`)}
                     >
                       {ev.image_url && (
-                        <img
-                          src={ev.image_url}
-                          alt='Evento'
-                          className='w-full border-round mb-2 shadow-2'
-                          style={{
-                            height: '120px',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                        />
+                        <div
+                          className='w-full relative bg-gray-100 mb-2 border-round overflow-hidden shadow-2'
+                          style={{ height: '120px' }}
+                        >
+                          <img
+                            src={ev.image_url}
+                            alt='Evento'
+                            className='w-full h-full'
+                            style={{
+                              objectFit: 'cover',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                            }}
+                          />
+                        </div>
                       )}
                       <h3 className='font-bold text-lg m-0 text-gray-900 hover:text-primary transition-colors'>
                         {ev.titulo}
@@ -235,7 +241,7 @@ const MapPage = ({ session }) => {
                         </div>
                         <div className='text-primary font-bold mt-1'>
                           <Button
-                            label='Ver más info &gt;'
+                            label='Ver más info >'
                             severity='help'
                             rounded
                             className='shadow-1'
@@ -279,16 +285,15 @@ const MapPage = ({ session }) => {
                 ></div>
               </div>
 
-              <div className='mt-2 md:mt-0 text-center display-flex justify-content-center align-items-center flex-column w-full'>
+              <div className='mt-2 md:mt-0 text-center flex justify-content-center align-items-center flex-column w-full'>
                 <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
-                  {/* --- DRAG HANDLE (Tirador) --- */}
                   <div className='flex justify-content-center pt-1 pb-1 w-full cursor-pointer'>
                     <div
                       className='border-round-xl'
                       style={{
                         width: '40px',
                         height: '6px',
-                        backgroundColor: '#cbd5e1' /* Gris azulado visible */,
+                        backgroundColor: '#cbd5e1',
                       }}
                     ></div>
                   </div>
@@ -389,7 +394,6 @@ const MapPage = ({ session }) => {
                     ev={ev}
                     isSelected={selectedEvent?.id === ev.id}
                     onClick={handleEventClick}
-                    // Pasamos la función de navegación
                     onNavigate={() => navigate(`/evento/${ev.id}`)}
                   />
                 ))}

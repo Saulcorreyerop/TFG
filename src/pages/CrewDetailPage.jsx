@@ -88,6 +88,7 @@ const CrewDetailPage = ({ session }) => {
     if (crewName) fetchCrewData()
   }, [crewName, fetchCrewData])
 
+  // --- SOLICITAR UNIRSE ---
   const handleJoinRequest = async () => {
     if (!session) return navigate('/login')
     try {
@@ -96,7 +97,20 @@ const CrewDetailPage = ({ session }) => {
         user_id: session.user.id,
         status: 'pending',
       })
-      toast.current.show({ severity: 'success', summary: 'Solicitud enviada' })
+
+      // Añadimos el crew_id para que la notificación sepa a dónde enlazar
+      await supabase.from('notifications').insert({
+        user_id: crew.created_by,
+        actor_id: session.user.id,
+        tipo: 'solicitud_crew',
+        crew_id: crew.id, // <-- LÍNEA NUEVA
+      })
+
+      toast.current.show({
+        severity: 'success',
+        summary: 'Solicitud enviada',
+        detail: 'El administrador ha sido notificado.',
+      })
       fetchCrewData()
     } catch (err) {
       console.error(err)
@@ -108,42 +122,35 @@ const CrewDetailPage = ({ session }) => {
     }
   }
 
-  const handleActionRequest = async (requestId, action) => {
+  // --- ACEPTAR / RECHAZAR SOLICITUD ---
+  const handleActionRequest = async (requestId, action, applicantId) => {
     try {
       if (action === 'approve') {
-        const { error } = await supabase
+        await supabase
           .from('crew_members')
           .update({ status: 'approved' })
           .eq('id', requestId)
 
-        if (error) throw error
+        // Añadimos el crew_id para notificar que ha sido aceptado
+        await supabase.from('notifications').insert({
+          user_id: applicantId,
+          actor_id: session.user.id,
+          tipo: 'crew_aceptada',
+          crew_id: crew.id, // <-- LÍNEA NUEVA
+        })
+
         toast.current.show({
           severity: 'success',
           summary: 'Aceptado',
-          detail: 'Nuevo miembro en el club',
+          detail: 'Miembro añadido y notificado.',
         })
       } else {
-        const { error } = await supabase
-          .from('crew_members')
-          .delete()
-          .eq('id', requestId)
-
-        if (error) throw error
-        toast.current.show({
-          severity: 'info',
-          summary: 'Rechazado',
-          detail: 'Petición eliminada',
-        })
+        await supabase.from('crew_members').delete().eq('id', requestId)
+        toast.current.show({ severity: 'info', summary: 'Petición eliminada' })
       }
-      // Recargamos los datos sin refrescar la página completa
       fetchCrewData()
     } catch (err) {
-      console.error('Error de permisos:', err.message)
-      toast.current.show({
-        severity: 'error',
-        summary: 'Error de permisos',
-        detail: 'No tienes permiso para gestionar esta crew',
-      })
+      console.error(err)
     }
   }
 
@@ -160,7 +167,6 @@ const CrewDetailPage = ({ session }) => {
       <div className='min-h-screen bg-gray-50 pb-8'>
         <Toast ref={toast} />
 
-        {/* BANNER */}
         <div className='relative w-full h-15rem md:h-20rem bg-gray-900 overflow-hidden'>
           {crew.banner_image_url ? (
             <img
@@ -173,7 +179,8 @@ const CrewDetailPage = ({ session }) => {
           )}
           <div className='absolute top-0 left-0 p-4'>
             <button
-              className='w-3rem h-3rem border-circle bg-white shadow-3 flex align-items-center justify-content-center border-none cursor-pointer'
+              type='button'
+              className='w-3rem h-3rem border-circle bg-white shadow-3 flex align-items-center justify-content-center border-none cursor-pointer hover:bg-gray-100 transition-colors'
               onClick={() => navigate(-1)}
             >
               <ArrowLeft size={20} className='text-900' />
@@ -181,7 +188,6 @@ const CrewDetailPage = ({ session }) => {
           </div>
         </div>
 
-        {/* INFO PRINCIPAL */}
         <div className='max-w-7xl mx-auto px-4 -mt-6rem relative z-2'>
           <div className='bg-white border-round-3xl shadow-3 p-4 md:p-6 border-1 border-100'>
             <div className='flex flex-column md:flex-row align-items-center gap-5 text-center md:text-left'>
@@ -216,7 +222,8 @@ const CrewDetailPage = ({ session }) => {
 
                 {!userStatus ? (
                   <button
-                    className='px-6 py-3 border-none font-bold text-white border-round-xl cursor-pointer shadow-2'
+                    type='button'
+                    className='px-6 py-3 border-none font-bold text-white border-round-xl cursor-pointer shadow-2 transition-all hover:scale-105'
                     style={{ backgroundColor: '#2563eb' }}
                     onClick={handleJoinRequest}
                   >
@@ -245,7 +252,6 @@ const CrewDetailPage = ({ session }) => {
               </div>
             </div>
 
-            {/* PANEL ADMIN: PETICIONES PENDIENTES */}
             {isAdmin && pendingRequests.length > 0 && (
               <div className='mt-8 p-5 bg-blue-50 border-round-3xl border-1 border-blue-100'>
                 <h3 className='text-blue-900 font-black text-xl mb-4 flex align-items-center gap-3'>
@@ -274,8 +280,13 @@ const CrewDetailPage = ({ session }) => {
                         <div className='flex gap-2'>
                           <button
                             type='button'
+                            /* NUEVO: Le pasamos req.user_id para poder notificarle */
                             onClick={() =>
-                              handleActionRequest(req.id, 'approve')
+                              handleActionRequest(
+                                req.id,
+                                'approve',
+                                req.user_id,
+                              )
                             }
                             className='w-2rem h-2rem border-circle flex align-items-center justify-content-center cursor-pointer shadow-1 border-none transition-transform hover:scale-110 active:scale-95'
                             style={{
@@ -287,8 +298,9 @@ const CrewDetailPage = ({ session }) => {
                           </button>
                           <button
                             type='button'
+                            /* NUEVO: Le pasamos req.user_id también al rechazar */
                             onClick={() =>
-                              handleActionRequest(req.id, 'reject')
+                              handleActionRequest(req.id, 'reject', req.user_id)
                             }
                             className='w-2rem h-2rem border-circle flex align-items-center justify-content-center cursor-pointer shadow-1 border-none transition-transform hover:scale-110 active:scale-95'
                             style={{
@@ -306,10 +318,9 @@ const CrewDetailPage = ({ session }) => {
               </div>
             )}
 
-            {/* LISTA DE MIEMBROS */}
             <div className='mt-8'>
               <h2 className='text-2xl font-black text-900 mb-5 flex align-items-center gap-3'>
-                <Users className='text-blue-600' /> Miembros del Club
+                <Users className='text-blue-600' size={28} /> Miembros del Club
               </h2>
               <div className='grid m-0'>
                 {members.map((m) => (
@@ -343,10 +354,10 @@ const CrewDetailPage = ({ session }) => {
               </div>
             </div>
 
-            {/* VEHÍCULOS DE LA CREW */}
             <div className='mt-8'>
               <h2 className='text-2xl font-black text-900 mb-5 flex align-items-center gap-3'>
-                <Car className='text-blue-600' /> Vehículos de nuestra Crew
+                <Car className='text-blue-600' size={28} /> Vehículos de nuestra
+                Crew
               </h2>
               <div className='grid m-0'>
                 {crewVehicles.length > 0 ? (
@@ -355,34 +366,41 @@ const CrewDetailPage = ({ session }) => {
                       key={v.id}
                       className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'
                     >
-                      <div className='bg-white border-1 border-100 border-round-2xl overflow-hidden shadow-1 hover:shadow-3 transition-all'>
-                        <div className='h-10rem w-full bg-gray-100 relative'>
+                      <div
+                        className='bg-white border-1 border-100 border-round-2xl overflow-hidden shadow-1 hover:shadow-3 transition-all cursor-pointer flex flex-column h-full'
+                        onClick={() => navigate(`/usuario/${v.owner}`)}
+                      >
+                        <div
+                          className='w-full bg-gray-100 relative'
+                          style={{ height: '220px' }}
+                        >
                           <img
                             src={v.image_url}
-                            className='w-full h-full object-cover'
-                            alt={v.make}
+                            className='w-full h-full'
+                            style={{ objectFit: 'cover' }}
+                            alt={`${v.make} ${v.model}`}
                           />
-                          <div className='absolute bottom-0 right-0 p-2'>
+                          <div className='absolute bottom-0 right-0 p-3'>
                             <Tag
                               value={v.fuel_type}
-                              severity='secondary'
-                              className='opacity-90'
+                              className='bg-black-alpha-60 backdrop-blur-sm px-3 border-round-xl'
                             />
                           </div>
                         </div>
-                        <div className='p-3'>
-                          <div className='font-black text-900 text-lg uppercase line-clamp-1'>
+                        <div className='p-4 text-center bg-white flex-1 flex flex-column justify-content-center'>
+                          <h3 className='font-black text-xl text-900 mb-1 m-0 line-clamp-1'>
                             {v.make} {v.model}
-                          </div>
-                          <div className='text-500 text-sm font-bold'>
-                            Propietario: {v.owner}
+                          </h3>
+                          <div className='text-500 text-sm font-bold mt-2'>
+                            Propietario:{' '}
+                            <span className='text-blue-600'>{v.owner}</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className='col-12 text-center p-5 text-500 font-bold'>
+                  <div className='col-12 text-center p-5 text-500 font-bold border-2 border-dashed border-300 border-round-2xl bg-gray-50'>
                     Aún no hay vehículos registrados en esta Crew.
                   </div>
                 )}

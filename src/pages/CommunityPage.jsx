@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient'
 import { InputText } from 'primereact/inputtext'
 import { Button } from 'primereact/button'
 import { ProgressSpinner } from 'primereact/progressspinner'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Tag } from 'primereact/tag'
 import { Dialog } from 'primereact/dialog'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -22,10 +22,11 @@ import {
 
 const CommunityPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const toast = useRef(null)
 
   const [session, setSession] = useState(null)
-  const [activeTab, setActiveTab] = useState('explorar') // 'explorar', 'siguiendo', 'crews'
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'explorar')
 
   const [allUsers, setAllUsers] = useState([])
   const [followingUsers, setFollowingUsers] = useState([])
