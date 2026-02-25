@@ -412,11 +412,15 @@ const Header = ({ session }) => {
         className='w-full md:w-20rem p-0'
       >
         <div className='flex flex-column h-full bg-white'>
-          <div className='p-4 border-bottom-1 border-100 bg-gray-50'>
-            <h2 className='text-2xl font-black text-900 m-0 mb-4'>Menú</h2>
+          {/* SECCIÓN SUPERIOR OPTIMIZADA (Menos Padding) */}
+          <div className='p-3 border-bottom-1 border-100 bg-gray-50'>
+            <div className='flex justify-content-between align-items-center mb-3'>
+              <h2 className='text-xl font-black text-900 m-0'>Menú</h2>
+            </div>
+
             {session ? (
               <div
-                className='flex align-items-center gap-3 bg-white p-3 border-round-2xl shadow-1 border-1 border-200 cursor-pointer hover:border-blue-300 transition-colors'
+                className='flex align-items-center gap-3 bg-white p-2 border-round-xl shadow-1 border-1 border-200 cursor-pointer hover:border-blue-300 transition-colors'
                 onClick={() => {
                   setMobileMenuOpen(false)
                   navigate('/perfil')
@@ -426,14 +430,14 @@ const Header = ({ session }) => {
                   image={displayAvatar}
                   icon={!displayAvatar ? 'pi pi-user' : null}
                   shape='circle'
-                  size='xlarge'
+                  size='large' /* Reducido de xlarge a large */
                   className='bg-blue-100 text-blue-600 border-1 border-blue-200'
                 />
                 <div>
-                  <div className='font-bold text-900 text-lg'>
+                  <div className='font-bold text-900 text-md'>
                     {displayName}
                   </div>
-                  <div className='text-sm text-blue-600 font-bold mt-1'>
+                  <div className='text-xs text-blue-600 font-bold mt-1'>
                     Ver mi perfil <i className='pi pi-arrow-right text-xs'></i>
                   </div>
                 </div>
@@ -441,7 +445,7 @@ const Header = ({ session }) => {
             ) : (
               <Button
                 label='Iniciar Sesión'
-                className='w-full font-bold border-round-xl shadow-2 py-3'
+                className='w-full font-bold border-round-xl shadow-2 py-2' /* Reducido de py-3 a py-2 */
                 style={{
                   backgroundColor: '#2563eb',
                   color: '#ffffff',
@@ -455,7 +459,8 @@ const Header = ({ session }) => {
             )}
           </div>
 
-          <div className='flex-1 overflow-y-auto p-4 flex flex-column gap-2'>
+          {/* LISTA DE ENLACES OPTIMIZADA (Menos Padding) */}
+          <div className='flex-1 overflow-y-auto p-3 flex flex-column gap-1'>
             {navItems.map((item) => {
               const isActive = location.pathname.startsWith(item.path)
               return (
@@ -465,7 +470,7 @@ const Header = ({ session }) => {
                     setMobileMenuOpen(false)
                     navigate(item.path)
                   }}
-                  className='flex align-items-center gap-3 p-3 border-round-xl text-lg transition-all font-bold cursor-pointer'
+                  className='flex align-items-center gap-3 p-2 border-round-lg text-md transition-all font-bold cursor-pointer' /* Reducido p-3 a p-2, y text-lg a text-md */
                   style={{
                     color: item.color,
                     backgroundColor: isActive ? item.bgHover : 'transparent',
@@ -481,14 +486,15 @@ const Header = ({ session }) => {
             })}
           </div>
 
+          {/* BOTÓN DE CERRAR SESIÓN OPTIMIZADO */}
           {session && (
-            <div className='p-4 border-top-1 border-100 bg-gray-50'>
+            <div className='p-3 border-top-1 border-100 bg-gray-50'>
               <Button
                 label='Cerrar Sesión'
                 icon={<LogOut size={18} className='mr-2' />}
                 severity='danger'
                 text
-                className='w-full font-bold border-round-xl bg-red-50 hover:bg-red-100 text-red-600 py-3 p-button-text'
+                className='w-full font-bold border-round-xl bg-red-50 hover:bg-red-100 text-red-600 py-2 p-button-text' /* Reducido py-3 a py-2 */
                 onClick={() => {
                   setMobileMenuOpen(false)
                   handleLogoutConfirmation()
