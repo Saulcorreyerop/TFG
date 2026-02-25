@@ -812,13 +812,17 @@ const EventDetailPage = ({ session }) => {
                           shape='circle'
                           size='xlarge'
                           className='flex-shrink-0 bg-white text-blue-600 cursor-pointer shadow-2 border-2 border-white'
-                          onClick={() => navigate(`/usuario/${c.user_id}`)}
+                          onClick={() =>
+                            navigate(`/usuario/${c.profiles?.username}`)
+                          }
                         />
                         <div className='flex-1 comment-bubble'>
                           <div className='flex justify-content-between align-items-center mb-2'>
                             <span
                               className='font-bold text-900 text-lg cursor-pointer hover:text-blue-600 transition-colors'
-                              onClick={() => navigate(`/usuario/${c.user_id}`)}
+                              onClick={() =>
+                                navigate(`/usuario/${c.profiles?.username}`)
+                              }
                             >
                               {c.profiles?.username}
                             </span>
@@ -856,7 +860,9 @@ const EventDetailPage = ({ session }) => {
                 </div>
                 <div
                   className='flex align-items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity'
-                  onClick={() => navigate(`/usuario/${event.user_id}`)}
+                  onClick={() =>
+                    navigate(`/usuario/${event.profiles?.username}`)
+                  }
                 >
                   <Avatar
                     image={event.profiles?.avatar_url || undefined}
@@ -1034,7 +1040,9 @@ const EventDetailPage = ({ session }) => {
                   </div>
                   <div
                     className='flex align-items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity'
-                    onClick={() => navigate(`/usuario/${event.user_id}`)}
+                    onClick={() =>
+                      navigate(`/usuario/${event.profiles?.username}`)
+                    }
                   >
                     <Avatar
                       image={event.profiles?.avatar_url || undefined}
@@ -1087,7 +1095,7 @@ const EventDetailPage = ({ session }) => {
                     className='flex align-items-center justify-content-between p-4 border-round-3xl hover:bg-gray-50 transition-colors cursor-pointer border-2 border-transparent hover:border-gray-100'
                     onClick={() => {
                       setShowAttendeesModal(false)
-                      navigate(`/usuario/${a.user_id}`)
+                      navigate(`/usuario/${a.profiles?.username}`)
                     }}
                   >
                     <div className='flex align-items-center gap-4'>

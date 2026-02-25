@@ -181,7 +181,8 @@ const ProfilePage = ({ session }) => {
   }
 
   const handleShareMyProfile = async () => {
-    const profileUrl = `${window.location.origin}/usuario/${session.user.id}`
+    const profileUrl = `${window.location.origin}/usuario/${profile?.username}`
+
     if (navigator.share) {
       navigator
         .share({ title: `Perfil de ${profile?.username}`, url: profileUrl })

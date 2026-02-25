@@ -151,9 +151,9 @@ const Header = ({ session }) => {
 
   const handleNotificationClick = (notif) => {
     op.current.hide()
-    // Si la notificación es de nuevo seguidor, llévalo al perfil del seguidor en vez de a un evento
     if (notif.tipo === 'nuevo_seguidor') {
-      navigate(`/comunidad`) // Opcional: podrías navegar a `/usuario/${notif.actor_id}` si tienes ese dato accesible
+      // Ahora te lleva al perfil exacto del que te ha seguido 👇
+      navigate(`/usuario/${notif.profiles?.username}`)
     } else if (notif.evento_id) {
       navigate(`/evento/${notif.evento_id}`)
     }

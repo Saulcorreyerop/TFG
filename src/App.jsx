@@ -32,6 +32,7 @@ import PublicProfile from './pages/PublicProfile'
 import CommunityPage from './pages/CommunityPage'
 import EventDetailPage from './pages/EventDetailPage'
 import ContactPage from './pages/ContactPage'
+import CrewDetailPage from './pages/CrewDetailPage'
 
 addLocale('es', {
   firstDayOfWeek: 1,
@@ -198,7 +199,7 @@ const AnimatedRoutes = ({ session }) => {
           }
         />
         <Route
-          path='/usuario/:userId'
+          path='/usuario/:username'
           element={
             <>
               <PublicProfile />
@@ -224,6 +225,10 @@ const AnimatedRoutes = ({ session }) => {
               <EventDetailPage session={session} />
             </>
           }
+        />
+        <Route
+          path='/crew/:crewName'
+          element={<CrewDetailPage session={session} />}
         />
       </Routes>
     </AnimatePresence>

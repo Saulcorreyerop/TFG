@@ -3,16 +3,27 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { Avatar } from 'primereact/avatar'
 import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
 import { Tag } from 'primereact/tag'
-import { TabView, TabPanel } from 'primereact/tabview'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
-import { Share2, UserPlus, UserCheck } from 'lucide-react'
+import {
+  Share2,
+  UserPlus,
+  UserCheck,
+  Car,
+  Flag,
+  Calendar,
+  MapPin,
+  Image as ImageIcon,
+} from 'lucide-react'
+import './ProfilePage.css' // Reutilizamos los estilos modernos del perfil
 
 const PublicProfile = () => {
-  const { userId } = useParams()
+  // Capturamos el parámetro (puede ser el ID largo o el Username)
+  const { userId, username } = useParams()
+  const identifier = username || userId
+
   const navigate = useNavigate()
   const toast = useRef(null)
 
@@ -38,49 +49,59 @@ const PublicProfile = () => {
     const fetchPublicData = async () => {
       setLoading(true)
       try {
-        // 1. Perfil
+        // 1. Identificar si el parámetro es un UUID (ID largo) o un Username
+        const isUUID =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            identifier,
+          )
+
+        // 2. Buscar Perfil
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', userId)
+          .eq(isUUID ? 'id' : 'username', identifier)
           .single()
-        if (profileError) throw profileError
+
+        if (profileError || !profileData)
+          throw new Error('Usuario no encontrado')
         setProfile(profileData)
 
-        // 2. Vehículos
+        const actualUserId = profileData.id // Usamos su ID real para buscar el resto de cosas
+
+        // 3. Vehículos
         const { data: vehicleData } = await supabase
           .from('vehicles')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user_id', actualUserId)
         if (vehicleData) setVehicles(vehicleData)
 
-        // 3. Eventos Creados por él
+        // 4. Eventos Creados por él
         const { data: eventsData } = await supabase
           .from('events')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user_id', actualUserId)
           .order('fecha', { ascending: false })
         if (eventsData) setCreatedEvents(eventsData)
 
-        // 4. Estadísticas de Seguidores
+        // 5. Estadísticas de Seguidores
         const { count: f1 } = await supabase
           .from('follows')
           .select('*', { count: 'exact', head: true })
-          .eq('following_id', userId)
+          .eq('following_id', actualUserId)
         const { count: f2 } = await supabase
           .from('follows')
           .select('*', { count: 'exact', head: true })
-          .eq('follower_id', userId)
+          .eq('follower_id', actualUserId)
         setFollowersCount(f1 || 0)
         setFollowingCount(f2 || 0)
 
-        // 5. ¿Lo sigo yo?
+        // 6. ¿Lo sigo yo?
         if (session?.user?.id) {
           const { data: followData } = await supabase
             .from('follows')
             .select('id')
             .eq('follower_id', session.user.id)
-            .eq('following_id', userId)
+            .eq('following_id', actualUserId)
             .single()
           setIsFollowing(!!followData)
         }
@@ -91,8 +112,8 @@ const PublicProfile = () => {
       }
     }
 
-    if (userId) fetchPublicData()
-  }, [userId, session])
+    if (identifier) fetchPublicData()
+  }, [identifier, session])
 
   const handleFollowToggle = async () => {
     if (!session?.user?.id) {
@@ -107,26 +128,23 @@ const PublicProfile = () => {
     setFollowLoading(true)
     try {
       if (isFollowing) {
-        // Dejar de seguir
         await supabase
           .from('follows')
           .delete()
           .eq('follower_id', session.user.id)
-          .eq('following_id', userId)
+          .eq('following_id', profile.id)
         setFollowersCount((prev) => prev - 1)
         setIsFollowing(false)
       } else {
-        // Seguir
         await supabase
           .from('follows')
-          .insert({ follower_id: session.user.id, following_id: userId })
+          .insert({ follower_id: session.user.id, following_id: profile.id })
         setFollowersCount((prev) => prev + 1)
         setIsFollowing(true)
 
-        // Disparar Notificación a la campana
         await supabase.from('notifications').insert({
-          user_id: userId, // El que recibe el aviso
-          actor_id: session.user.id, // Tú, que le has seguido
+          user_id: profile.id,
+          actor_id: session.user.id,
           tipo: 'nuevo_seguidor',
         })
       }
@@ -138,7 +156,8 @@ const PublicProfile = () => {
   }
 
   const handleShare = () => {
-    const url = window.location.href
+    // Forzamos a que comparta el enlace con su nombre de usuario amigable
+    const url = `${window.location.origin}/usuario/${profile.username}`
     if (navigator.share) {
       navigator
         .share({ title: `Garaje de ${profile?.username}`, url })
@@ -167,33 +186,49 @@ const PublicProfile = () => {
       </div>
     )
 
-  const isMyOwnProfile = session?.user?.id === userId
+  const isMyOwnProfile = session?.user?.id === profile.id
 
-  // Plantilla para tarjetas de evento
-  const eventTemplate = (event) => (
-    <div key={event.id} className='col-12 md:col-6 p-2'>
-      <Card
-        title={<h4 className='m-0 text-lg line-clamp-1'>{event.titulo}</h4>}
-        className='shadow-1 hover:shadow-3 transition-all cursor-pointer h-full border-1 border-100'
+  // Plantilla Modernizada de Eventos
+  const renderEventCard = (event) => (
+    <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
+      <div
+        className='event-card-modern'
         onClick={() => navigate(`/evento/${event.id}`)}
       >
-        <div className='flex flex-column gap-2'>
-          <div className='flex align-items-center gap-2 text-sm text-500'>
-            <i className='pi pi-calendar text-blue-500'></i>
-            <span>{new Date(event.fecha).toLocaleDateString()}</span>
-          </div>
-          <div className='flex align-items-center gap-2 text-sm text-500'>
-            <i className='pi pi-map-marker text-red-500'></i>
-            <span className='line-clamp-1'>{event.ubicacion || 'En mapa'}</span>
+        <div className='event-card-body'>
+          <Tag
+            value={event.tipo}
+            className='w-min mb-3 bg-blue-50 text-blue-700 font-bold'
+          />
+          <h4 className='m-0 mb-3 text-xl font-black text-900 line-clamp-1'>
+            {event.titulo}
+          </h4>
+          <div className='mt-auto flex flex-column gap-2'>
+            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+              <Calendar size={16} className='text-blue-500' />
+              <span>
+                {new Date(event.fecha).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+              <MapPin size={16} className='text-red-500' />
+              <span className='line-clamp-1'>
+                {event.ubicacion || 'En mapa'}
+              </span>
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 
   return (
     <PageTransition>
-      <div className='max-w-6xl mx-auto p-4 md:p-6 min-h-screen'>
+      <div className='max-w-6xl mx-auto p-3 md:p-5 min-h-screen'>
         <Toast ref={toast} />
 
         <div className='flex justify-content-between align-items-center mb-4'>
@@ -214,7 +249,7 @@ const PublicProfile = () => {
         </div>
 
         {/* CABECERA PÚBLICA */}
-        <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5'>
+        <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5 border-1 border-100'>
           <Avatar
             icon='pi pi-user'
             size='xlarge'
@@ -240,7 +275,7 @@ const PublicProfile = () => {
                       <UserPlus size={18} className='mr-2' />
                     )
                   }
-                  className={`border-round-xl font-bold px-4 ${isFollowing ? 'p-button-outlined p-button-secondary' : ''}`}
+                  className={`border-round-xl font-bold px-4 ${isFollowing ? 'p-button-outlined p-button-secondary' : 'btn-fichar-primary'}`}
                   onClick={handleFollowToggle}
                   loading={followLoading}
                 />
@@ -277,71 +312,77 @@ const PublicProfile = () => {
           </div>
         </div>
 
-        {/* TABS DE CONTENIDO PÚBLICO */}
-        <div className='bg-white shadow-2 border-round-3xl overflow-hidden'>
-          <TabView className='custom-tabview p-3'>
-            <TabPanel header='Garaje' leftIcon='pi pi-car mr-2'>
-              {vehicles.length === 0 ? (
-                <div className='text-center p-6 bg-gray-50 border-round-2xl mt-3 text-500 font-medium'>
-                  Este usuario aún no ha subido vehículos.
-                </div>
-              ) : (
-                <div className='grid pt-3'>
-                  {vehicles.map((v) => (
-                    <div key={v.id} className='col-12 sm:col-6 md:col-4 p-2'>
-                      <Card
-                        header={
-                          <div className='h-12rem w-full bg-gray-100 overflow-hidden relative'>
-                            {v.image_url ? (
-                              <img
-                                src={v.image_url}
-                                className='w-full h-full object-cover'
-                                alt='coche'
-                              />
-                            ) : (
-                              <div className='flex h-full align-items-center justify-content-center'>
-                                <i className='pi pi-car text-3xl text-300'></i>
-                              </div>
-                            )}
-                            <Tag
-                              value={v.combustible}
-                              className='absolute top-0 right-0 m-2 bg-black-alpha-60 backdrop-blur-sm'
-                            />
-                          </div>
-                        }
-                        className='shadow-1 border-round-2xl overflow-hidden border-1 border-100 h-full'
-                      >
-                        <div className='font-black text-xl mb-1 text-900 line-clamp-1'>
-                          {v.marca} {v.modelo}
+        {/* --- SECCIÓN 1: GARAJE --- */}
+        <section className='profile-section'>
+          <h2 className='profile-section-title'>
+            <Car className='text-purple-600' size={28} /> Garaje de{' '}
+            {profile.username}
+          </h2>
+          {vehicles.length === 0 ? (
+            <div className='empty-state-box'>
+              <Car size={48} className='text-300 mb-3 mx-auto' />
+              <span className='block font-bold text-lg'>
+                Aún no ha subido vehículos.
+              </span>
+            </div>
+          ) : (
+            <div className='grid m-0'>
+              {vehicles.map((v) => (
+                <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
+                  <div className='vehicle-card cursor-default hover:-translate-y-1 hover:shadow-2'>
+                    {/* Aumentamos la altura de la imagen a 240px para que se vea más espectacular */}
+                    <div
+                      className='vehicle-img-wrapper'
+                      style={{ height: '240px' }}
+                    >
+                      {v.image_url ? (
+                        <img src={v.image_url} alt={v.modelo} />
+                      ) : (
+                        <div className='flex h-full align-items-center justify-content-center text-300'>
+                          <ImageIcon size={40} />
                         </div>
-                        <div className='text-500 text-sm font-bold mb-2'>
-                          {v.anio} • {v.cv} CV
-                        </div>
-                        {v.descripcion && (
-                          <p className='text-600 text-sm line-clamp-2 mt-2 m-0'>
-                            {v.descripcion}
-                          </p>
-                        )}
-                      </Card>
+                      )}
+                      <Tag
+                        value={v.combustible}
+                        className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
+                      />
                     </div>
-                  ))}
+                    <div className='p-4 text-center bg-white'>
+                      <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
+                        {v.marca} {v.modelo}
+                      </h3>
+                      <div className='text-md text-500 font-bold mb-3'>
+                        {v.anio} • {v.cv} CV
+                      </div>
+                      {v.descripcion && (
+                        <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
+                          {v.descripcion}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </TabPanel>
+              ))}
+            </div>
+          )}
+        </section>
 
-            <TabPanel header='Eventos Organizados' leftIcon='pi pi-flag mr-2'>
-              {createdEvents.length === 0 ? (
-                <div className='text-center p-6 bg-gray-50 border-round-2xl mt-3 text-500 font-medium'>
-                  Este usuario no ha organizado eventos.
-                </div>
-              ) : (
-                <div className='grid pt-3'>
-                  {createdEvents.map(eventTemplate)}
-                </div>
-              )}
-            </TabPanel>
-          </TabView>
-        </div>
+        {/* --- SECCIÓN 2: EVENTOS CREADOS --- */}
+        <section className='profile-section mb-0'>
+          <h2 className='profile-section-title'>
+            <Flag className='text-blue-600' size={28} /> Eventos Organizados
+          </h2>
+          {createdEvents.length === 0 ? (
+            <div className='empty-state-box'>
+              <Flag size={48} className='text-300 mb-3 mx-auto' />
+              <span className='block font-bold text-lg'>
+                No ha organizado eventos.
+              </span>
+            </div>
+          ) : (
+            <div className='grid m-0'>{createdEvents.map(renderEventCard)}</div>
+          )}
+        </section>
       </div>
     </PageTransition>
   )
