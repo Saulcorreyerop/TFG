@@ -216,7 +216,9 @@ const EventDetailPage = ({ session }) => {
         summary: 'Atención',
         detail: 'Inicia sesión para apuntarte.',
       })
+
     setAttendingLoading(true)
+
     try {
       if (isAttending) {
         await supabase
@@ -229,18 +231,44 @@ const EventDetailPage = ({ session }) => {
           .from('event_attendees')
           .insert({ event_id: parseInt(id), user_id: session.user.id })
 
-        // DISPARAMOS LA NOTIFICACIÓN DE ASISTENCIA
+        // --- LÓGICA INTELIGENTE DE NOTIFICACIONES (Asistencia) ---
+        // 1. Buscamos a todos los que ya están apuntados al evento
+        const { data: attendeesData } = await supabase
+          .from('event_attendees')
+          .select('user_id')
+          .eq('event_id', parseInt(id))
+
+        let usersToNotify = new Set()
+
+        // 2. Añadimos al creador del evento a la lista (si no eres tú mismo)
         if (event.user_id !== session.user.id) {
-          await supabase.from('notifications').insert([
-            {
-              user_id: event.user_id,
-              actor_id: session.user.id,
-              tipo: 'asistencia',
-              evento_id: parseInt(id),
-            },
-          ])
+          usersToNotify.add(event.user_id)
         }
+
+        // 3. Añadimos al resto de asistentes a la lista (excluyéndote a ti mismo)
+        if (attendeesData) {
+          attendeesData.forEach((a) => {
+            if (a.user_id !== session.user.id) usersToNotify.add(a.user_id)
+          })
+        }
+
+        // 4. Preparamos el paquete de notificaciones
+        const notificationsToInsert = Array.from(usersToNotify).map(
+          (userId) => ({
+            user_id: userId, // Usuario que recibe el aviso
+            actor_id: session.user.id, // Tú, que te acabas de apuntar
+            tipo: 'asistencia',
+            evento_id: parseInt(id),
+          }),
+        )
+
+        // 5. Enviamos todas las notificaciones de golpe
+        if (notificationsToInsert.length > 0) {
+          await supabase.from('notifications').insert(notificationsToInsert)
+        }
+        // ---------------------------------------------------------
       }
+
       await fetchAttendees()
       toast.current.show({
         severity: 'success',
@@ -255,6 +283,7 @@ const EventDetailPage = ({ session }) => {
       setAttendingLoading(false)
     }
   }
+
   const handlePostComment = async () => {
     if (!newComment.trim() || !session?.user?.id)
       return toast.current.show({
