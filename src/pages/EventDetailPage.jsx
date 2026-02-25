@@ -218,16 +218,29 @@ const EventDetailPage = ({ session }) => {
       })
     setAttendingLoading(true)
     try {
-      if (isAttending)
+      if (isAttending) {
         await supabase
           .from('event_attendees')
           .delete()
           .eq('event_id', parseInt(id))
           .eq('user_id', session.user.id)
-      else
+      } else {
         await supabase
           .from('event_attendees')
           .insert({ event_id: parseInt(id), user_id: session.user.id })
+
+        // DISPARAMOS LA NOTIFICACIÓN DE ASISTENCIA
+        if (event.user_id !== session.user.id) {
+          await supabase.from('notifications').insert([
+            {
+              user_id: event.user_id,
+              actor_id: session.user.id,
+              tipo: 'asistencia',
+              evento_id: parseInt(id),
+            },
+          ])
+        }
+      }
       await fetchAttendees()
       toast.current.show({
         severity: 'success',
@@ -242,7 +255,6 @@ const EventDetailPage = ({ session }) => {
       setAttendingLoading(false)
     }
   }
-
   const handlePostComment = async () => {
     if (!newComment.trim() || !session?.user?.id)
       return toast.current.show({
@@ -252,14 +264,48 @@ const EventDetailPage = ({ session }) => {
       })
     setPostingComment(true)
     try {
-      const { error } = await supabase
-        .from('event_comments')
-        .insert({
-          event_id: parseInt(id),
-          user_id: session.user.id,
-          content: newComment.trim(),
-        })
+      // 1. Insertamos el comentario
+      const { error } = await supabase.from('event_comments').insert({
+        event_id: parseInt(id),
+        user_id: session.user.id,
+        content: newComment.trim(),
+      })
       if (error) throw error
+
+      // 2. LÓGICA INTELIGENTE DE NOTIFICACIONES (Dueño + Asistentes)
+      const { data: attendeesData } = await supabase
+        .from('event_attendees')
+        .select('user_id')
+        .eq('event_id', parseInt(id))
+
+      // Usamos un Set para no enviar notificaciones duplicadas
+      let usersToNotify = new Set()
+
+      // Añadimos al creador del evento (si no es el que comenta)
+      if (event.user_id !== session.user.id) {
+        usersToNotify.add(event.user_id)
+      }
+
+      // Añadimos a todos los asistentes (si no son los que comentan)
+      if (attendeesData) {
+        attendeesData.forEach((a) => {
+          if (a.user_id !== session.user.id) usersToNotify.add(a.user_id)
+        })
+      }
+
+      // Preparamos el paquete de notificaciones
+      const notificationsToInsert = Array.from(usersToNotify).map((userId) => ({
+        user_id: userId,
+        actor_id: session.user.id,
+        tipo: 'comentario',
+        evento_id: parseInt(id),
+      }))
+
+      // Las enviamos todas de golpe a la base de datos
+      if (notificationsToInsert.length > 0) {
+        await supabase.from('notifications').insert(notificationsToInsert)
+      }
+
       setNewComment('')
       await fetchComments()
       toast.current.show({
@@ -268,7 +314,7 @@ const EventDetailPage = ({ session }) => {
         life: 2000,
       })
     } catch (err) {
-      console.error('Error posting comment:', err) // 3. Uso de la variable err
+      console.error('Error posting comment:', err)
       toast.current.show({
         severity: 'error',
         summary: 'Error',

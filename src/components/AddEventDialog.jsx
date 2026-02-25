@@ -234,52 +234,76 @@ const AddEventDialog = ({
         ? nuevoEvento.tipo.value
         : nuevoEvento.tipo
 
-    // ENVIAMOS EL DATO DE UBICACIÓN A SUPABASE
-    const { error } = await supabase.from('events').insert([
-      {
-        titulo: nuevoEvento.titulo,
-        tipo: finalTipo,
-        fecha: nuevoEvento.fecha,
-        description: nuevoEvento.descripcion,
-        image_url: imageUrl,
-        lat: nuevoEvento.lat,
-        lng: nuevoEvento.lng,
-        ubicacion:
-          nuevoEvento.ubicacion ||
-          nuevoEvento.direccion ||
-          'Ubicación desconocida', // AÑADIDO AQUI
-        user_id: session.user.id,
-      },
-    ])
-
-    setLoading(false)
+    // MODIFICACIÓN: Añadimos .select() al final para que Supabase nos devuelva el ID del evento recién creado
+    const { data: newEventData, error } = await supabase
+      .from('events')
+      .insert([
+        {
+          titulo: nuevoEvento.titulo,
+          tipo: finalTipo,
+          fecha: nuevoEvento.fecha,
+          description: nuevoEvento.descripcion,
+          image_url: imageUrl,
+          lat: nuevoEvento.lat,
+          lng: nuevoEvento.lng,
+          user_id: session.user.id,
+        },
+      ])
+      .select()
 
     if (error) {
-      toast.current.show({
+      setLoading(false)
+      return toast.current.show({
         severity: 'error',
         summary: 'Error',
         detail: error.message,
       })
-    } else {
-      toast.current.show({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Evento publicado.',
-      })
-      setNuevoEvento({
-        titulo: '',
-        tipo: '',
-        fecha: null,
-        descripcion: '',
-        imagen: null,
-        lat: null,
-        lng: null,
-        direccion: '',
-        ubicacion: '',
-      })
-      if (onEventAdded) onEventAdded()
-      onHide()
     }
+
+    // --- LÓGICA DE AVISO GLOBAL (NUEVO EVENTO) ---
+    if (newEventData && newEventData.length > 0) {
+      const newEventId = newEventData[0].id
+
+      // Buscamos a todos los usuarios registrados (menos al creador)
+      const { data: allUsers } = await supabase
+        .from('profiles')
+        .select('id')
+        .neq('id', session.user.id)
+
+      if (allUsers && allUsers.length > 0) {
+        // Preparamos una notificación para cada usuario de la plataforma
+        const globalNotifications = allUsers.map((user) => ({
+          user_id: user.id, // El receptor
+          actor_id: session.user.id, // El creador del evento
+          tipo: 'nuevo_evento',
+          evento_id: newEventId,
+        }))
+
+        // Insertamos todas las notificaciones en bloque
+        await supabase.from('notifications').insert(globalNotifications)
+      }
+    }
+    // ---------------------------------------------
+
+    setLoading(false)
+    toast.current.show({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Evento publicado y comunidad notificada.',
+    })
+
+    setNuevoEvento({
+      titulo: '',
+      tipo: '',
+      fecha: null,
+      descripcion: '',
+      imagen: null,
+      lat: null,
+      lng: null,
+      direccion: '',
+    })
+    if (onEventAdded) onEventAdded()
+    onHide()
   }
 
   return (

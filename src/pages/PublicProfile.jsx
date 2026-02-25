@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom' // useParams para leer la URL
+import React, { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { Avatar } from 'primereact/avatar'
-import { TabView, TabPanel } from 'primereact/tabview'
 import { Button } from 'primereact/button'
 import { Card } from 'primereact/card'
 import { Tag } from 'primereact/tag'
 import { ProgressSpinner } from 'primereact/progressspinner'
+import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
+import { Share2 } from 'lucide-react'
 
 const PublicProfile = () => {
-  const { userId } = useParams() // Obtenemos el ID de la URL
+  const { userId } = useParams()
   const navigate = useNavigate()
+  const toast = useRef(null)
 
   const [profile, setProfile] = useState(null)
   const [vehicles, setVehicles] = useState([])
@@ -21,7 +23,6 @@ const PublicProfile = () => {
     const fetchPublicData = async () => {
       setLoading(true)
       try {
-        // 1. Obtener datos del usuario
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -31,7 +32,6 @@ const PublicProfile = () => {
         if (profileError) throw profileError
         setProfile(profileData)
 
-        // 2. Obtener sus vehículos
         const { data: vehicleData } = await supabase
           .from('vehicles')
           .select('*')
@@ -48,6 +48,30 @@ const PublicProfile = () => {
     if (userId) fetchPublicData()
   }, [userId])
 
+  const handleShare = async () => {
+    const shareData = {
+      title: `Garaje de ${profile.username} en CarMeet ESP`,
+      text: `¡Mira los vehículos de ${profile.username} en CarMeet ESP!`,
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (error) {
+        console.log('Error compartiendo:', error)
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+      toast.current.show({
+        severity: 'success',
+        summary: 'Enlace copiado',
+        detail: 'El enlace del perfil se ha copiado al portapapeles.',
+        life: 3000,
+      })
+    }
+  }
+
   if (loading)
     return (
       <div className='flex justify-content-center p-6'>
@@ -61,24 +85,35 @@ const PublicProfile = () => {
   return (
     <PageTransition>
       <div className='max-w-4xl mx-auto p-4 md:p-6 min-h-screen'>
-        <Button
-          label='Volver'
-          icon='pi pi-arrow-left'
-          text
-          onClick={() => navigate(-1)}
-          className='mb-3'
-        />
+        <Toast ref={toast} />
+
+        <div className='flex justify-content-between align-items-center mb-3'>
+          <Button
+            label='Volver'
+            icon='pi pi-arrow-left'
+            text
+            onClick={() => navigate(-1)}
+          />
+          <Button
+            label='Compartir'
+            icon={<Share2 size={18} className='mr-2' />}
+            severity='info'
+            outlined
+            rounded
+            onClick={handleShare}
+          />
+        </div>
 
         {/* Cabecera Pública */}
-        <div className='bg-white shadow-2 border-round-2xl p-6 mb-4 flex flex-column md:flex-row align-items-center gap-5'>
+        <div className='bg-white shadow-2 border-round-2xl p-6 mb-4 flex flex-column md:flex-row align-items-center gap-5 relative overflow-hidden'>
           <Avatar
             icon='pi pi-user'
             size='xlarge'
             shape='circle'
-            className='bg-blue-100 text-blue-600 w-8rem h-8rem text-5xl shadow-2'
+            className='bg-blue-100 text-blue-600 w-8rem h-8rem text-5xl shadow-2 relative z-1'
             image={profile.avatar_url}
           />
-          <div className='text-center md:text-left flex-1'>
+          <div className='text-center md:text-left flex-1 relative z-1'>
             <h1 className='text-3xl font-bold m-0 text-900'>
               {profile.username || 'Usuario'}
             </h1>
@@ -86,7 +121,7 @@ const PublicProfile = () => {
           </div>
 
           {/* Stats */}
-          <div className='text-center border-left-1 border-200 pl-5 hidden md:block'>
+          <div className='text-center border-left-1 border-200 pl-5 hidden md:block relative z-1'>
             <div className='text-2xl font-bold text-blue-600'>
               {vehicles.length}
             </div>

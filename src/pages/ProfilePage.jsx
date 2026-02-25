@@ -11,6 +11,7 @@ import { InputText } from 'primereact/inputtext'
 import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
+import { Share2 } from 'lucide-react'
 
 const ProfilePage = ({ session }) => {
   const navigate = useNavigate()
@@ -144,6 +145,31 @@ const ProfilePage = ({ session }) => {
     }
   }
 
+  const handleShareMyProfile = async () => {
+    const profileUrl = `${window.location.origin}/usuario/${session.user.id}`
+    const shareData = {
+      title: `Mi Garaje en CarMeet ESP`,
+      text: `¡Echa un vistazo a mi garaje en CarMeet ESP!`,
+      url: profileUrl,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (error) {
+        console.log('Error compartiendo:', error)
+      }
+    } else {
+      navigator.clipboard.writeText(profileUrl)
+      toast.current.show({
+        severity: 'success',
+        summary: 'Enlace copiado',
+        detail: 'El enlace de tu perfil público se ha copiado al portapapeles.',
+        life: 3000,
+      })
+    }
+  }
+
   if (!session)
     return (
       <div className='p-5 text-center'>Inicia sesión para ver tu perfil</div>
@@ -194,7 +220,7 @@ const ProfilePage = ({ session }) => {
               {profile?.username || 'Usuario'}
             </h1>
             <p className='text-500 mt-1'>{session.user.email}</p>
-            <div className='flex gap-2 justify-content-center md:justify-content-start mt-3'>
+            <div className='flex flex-wrap gap-2 justify-content-center md:justify-content-start mt-3'>
               <Button
                 label='Editar Perfil'
                 icon='pi pi-pencil'
@@ -202,6 +228,14 @@ const ProfilePage = ({ session }) => {
                 outlined
                 severity='secondary'
                 onClick={() => setShowEditDialog(true)}
+              />
+              <Button
+                label='Compartir Perfil'
+                icon={<Share2 size={16} className='mr-2' />}
+                size='small'
+                outlined
+                severity='info'
+                onClick={handleShareMyProfile}
               />
               <Button
                 label='Cerrar Sesión'

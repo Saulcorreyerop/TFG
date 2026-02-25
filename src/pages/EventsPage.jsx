@@ -28,6 +28,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import './EventsPage.css'
+import { Helmet } from 'react-helmet-async'
 
 const MotionDiv = motion.div
 
@@ -364,6 +365,17 @@ const EventsPage = ({ session }) => {
 
   return (
     <PageTransition>
+      <Helmet>
+        <title>
+          {activeLocation
+            ? `Eventos de coches en ${activeLocation} | CarMeet ESP`
+            : 'Agenda de Eventos | CarMeet ESP'}
+        </title>
+        <meta
+          name='description'
+          content={`Descubre las mejores KDDs y rutas de motor en ${activeLocation || 'España'}.`}
+        />
+      </Helmet>
       <div className='technical-page-wrapper'>
         <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 

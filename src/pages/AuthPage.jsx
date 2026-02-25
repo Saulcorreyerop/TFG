@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react'
+// AuthPage.jsx
+import React, { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { InputText } from 'primereact/inputtext'
 import { Password } from 'primereact/password'
@@ -10,6 +12,7 @@ import PageTransition from '../components/PageTransition'
 
 const AuthPage = () => {
   const toast = useRef(null)
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -22,6 +25,12 @@ const AuthPage = () => {
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
+
+  useEffect(() => {
+    if (location.state && location.state.activeIndex !== undefined) {
+      setActiveIndex(location.state.activeIndex)
+    }
+  }, [location.state])
 
   // --- LÓGICA DE LOGIN ---
   const handleLogin = async (e) => {
@@ -133,7 +142,6 @@ const AuthPage = () => {
           >
             {/* --- PANEL DE INICIO DE SESIÓN --- */}
             <TabPanel header='Iniciar Sesión'>
-              {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
               <form
                 onSubmit={handleLogin}
                 className='flex flex-column gap-4 pt-2 p-fluid'
@@ -180,7 +188,6 @@ const AuthPage = () => {
 
             {/* --- PANEL DE REGISTRO --- */}
             <TabPanel header='Registrarse'>
-              {/* AÑADIDO: p-fluid en el form para forzar ancho completo */}
               <form
                 onSubmit={handleRegister}
                 className='flex flex-column gap-4 pt-2 p-fluid'
