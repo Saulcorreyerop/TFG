@@ -120,7 +120,12 @@ const Header = ({ session }) => {
       .order('created_at', { ascending: false })
       .limit(10)
 
-    if (!error && data) {
+    if (error) {
+      console.error('Error cargando notificaciones de Supabase:', error.message)
+      return
+    }
+
+    if (data) {
       setNotifications(data)
       setUnreadCount(data.filter((n) => !n.leida).length)
     }
@@ -162,7 +167,6 @@ const Header = ({ session }) => {
 
   const handleNotificationClick = (notif) => {
     op.current.hide()
-    // Navegación inteligente basada en el tipo
     if (notif.tipo === 'nuevo_seguidor') {
       navigate(`/usuario/${notif.profiles?.username}`)
     } else if (

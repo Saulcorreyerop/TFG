@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -12,17 +12,15 @@ import { ProgressSpinner } from 'primereact/progressspinner'
 import L from 'leaflet'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
-import { Helmet } from 'react-helmet-async'
 import { AnimatePresence } from 'framer-motion'
 
 import Header from './components/Header'
-import Hero from './components/Hero'
 import Footer from './components/Footer'
 
-const HomeMap = lazy(() => import('./components/HomeMap'))
-const Features = lazy(() => import('./components/Features'))
-const EventCarousel = lazy(() => import('./components/EventCarousel'))
+// Importamos nuestra nueva Landing Page unificada
+import HomePage from './pages/HomePage'
 
+// Importamos el resto de páginas
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
 import EventsPage from './pages/EventsPage'
@@ -88,39 +86,6 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-const Home = ({ session }) => (
-  <>
-    <Helmet>
-      <title>CarMeet ESP | Eventos y Rutas de Coches en España</title>
-      <meta
-        name='description'
-        content='La mayor comunidad de coches en España. Encuentra eventos, rutas en tiempo real y concentraciones de coches cerca de ti.'
-      />
-      <link rel='canonical' href='https://carmeetesp.netlify.app/' />
-    </Helmet>
-
-    <Hero session={session} />
-
-    <Suspense
-      fallback={
-        <div className='w-full h-30rem bg-gray-100 flex align-items-center justify-content-center text-gray-500'>
-          <i className='pi pi-map mr-2'></i> Cargando mapa...
-        </div>
-      }
-    >
-      <HomeMap />
-    </Suspense>
-
-    <Suspense fallback={<div className='w-full h-20rem bg-white'></div>}>
-      <EventCarousel />
-    </Suspense>
-
-    <Suspense fallback={null}>
-      <Features />
-    </Suspense>
-  </>
-)
-
 const AnimatedRoutes = ({ session }) => {
   const location = useLocation()
 
@@ -131,56 +96,23 @@ const AnimatedRoutes = ({ session }) => {
   return (
     <AnimatePresence mode='wait'>
       <Routes location={location} key={location.pathname}>
-        <Route path='/' element={<Home session={session} />} />
-        <Route
-          path='/mapa'
-          element={
-            <>
-              <MapPage session={session} />
-            </>
-          }
-        />
+        {/* Aquí conectamos la ruta raíz (/) a tu nuevo HomePage */}
+        <Route path='/' element={<HomePage />} />
 
-        <Route
-          path='/eventos'
-          element={
-            <>
-              <EventsPage session={session} />
-            </>
-          }
-        />
+        <Route path='/mapa' element={<MapPage session={session} />} />
+        <Route path='/eventos' element={<EventsPage session={session} />} />
         <Route
           path='/eventos/:provincia'
-          element={
-            <>
-              <EventsPage session={session} />
-            </>
-          }
+          element={<EventsPage session={session} />}
         />
+        <Route path='/comunidad' element={<CommunityPage />} />
+        <Route path='/contacto' element={<ContactPage />} />
 
-        <Route
-          path='/comunidad'
-          element={
-            <>
-              <CommunityPage />
-            </>
-          }
-        />
-        <Route
-          path='/contacto'
-          element={
-            <>
-              <ContactPage />
-            </>
-          }
-        />
         <Route
           path='/garaje'
           element={
             session ? (
-              <>
-                <GaragePage session={session} />
-              </>
+              <GaragePage session={session} />
             ) : (
               <Navigate to='/login' />
             )
@@ -190,41 +122,22 @@ const AnimatedRoutes = ({ session }) => {
           path='/perfil'
           element={
             session ? (
-              <>
-                <ProfilePage session={session} />
-              </>
+              <ProfilePage session={session} />
             ) : (
               <Navigate to='/login' />
             )
           }
         />
-        <Route
-          path='/usuario/:username'
-          element={
-            <>
-              <PublicProfile />
-            </>
-          }
-        />
+        <Route path='/usuario/:username' element={<PublicProfile />} />
+
         <Route
           path='/login'
-          element={
-            !session ? (
-              <>
-                <AuthPage />
-              </>
-            ) : (
-              <Navigate to='/' />
-            )
-          }
+          element={!session ? <AuthPage /> : <Navigate to='/' />}
         />
+
         <Route
           path='/evento/:id'
-          element={
-            <>
-              <EventDetailPage session={session} />
-            </>
-          }
+          element={<EventDetailPage session={session} />}
         />
         <Route
           path='/crew/:crewName'

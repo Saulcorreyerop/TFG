@@ -274,3 +274,7 @@
   text-align: center;
   min-width: 65px;
 }
+.bento-purple {
+  background: linear-gradient(135deg, #7e22ce 0%, #a855f7 100%);
+  border: 1px solid #d8b4fe;
+}
