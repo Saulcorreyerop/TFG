@@ -8,6 +8,7 @@ import { Dropdown } from 'primereact/dropdown'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { SelectButton } from 'primereact/selectbutton'
 import { Toast } from 'primereact/toast'
+import { Galleria } from 'primereact/galleria'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 
@@ -35,7 +36,13 @@ const GaragePage = ({ session }) => {
     descripcion: '',
     image_url: null,
   })
+
   const [imageFile, setImageFile] = useState(null)
+
+  // --- ESTADOS PARA LA GALERÍA MÚLTIPLE ---
+  const [extraImageFiles, setExtraImageFiles] = useState([])
+  const [existingExtraImages, setExistingExtraImages] = useState([])
+  const [galleryImages, setGalleryImages] = useState(null)
 
   const fuelOptions = [
     { label: 'Gasolina', value: 'Gasolina' },
@@ -54,9 +61,7 @@ const GaragePage = ({ session }) => {
   }, [session])
 
   useEffect(() => {
-    if (showDialog) {
-      fetchMakes(vehicleType)
-    }
+    if (showDialog) fetchMakes(vehicleType)
   }, [vehicleType, showDialog])
 
   useEffect(() => {
@@ -78,7 +83,6 @@ const GaragePage = ({ session }) => {
         label: item.MakeName.trim(),
         value: item.MakeName.trim(),
       })).sort((a, b) => a.label.localeCompare(b.label))
-
       setMakes(formattedMakes)
     } catch (error) {
       console.error('Error fetching makes:', error)
@@ -89,7 +93,6 @@ const GaragePage = ({ session }) => {
 
   const fetchModels = async (make, type) => {
     if (!makes.find((m) => m.value.toLowerCase() === make.toLowerCase())) return
-
     setLoadingAPI(true)
     try {
       const response = await fetch(
@@ -102,7 +105,6 @@ const GaragePage = ({ session }) => {
       const formattedModels = uniqueModels
         .map((model) => ({ label: model, value: model }))
         .sort((a, b) => a.label.localeCompare(b.label))
-
       setModels(formattedModels)
     } catch (error) {
       console.error('Error fetching models:', error)
@@ -112,9 +114,10 @@ const GaragePage = ({ session }) => {
   }
 
   const fetchVehicles = async () => {
+    // AHORA TAMBIÉN PEDIMOS vehicle_images
     const { data } = await supabase
       .from('vehicles')
-      .select('*')
+      .select('*, vehicle_images(*)')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
     if (data) setVehicles(data)
@@ -133,6 +136,8 @@ const GaragePage = ({ session }) => {
     setVehicleType('passenger car')
     setEditingId(null)
     setImageFile(null)
+    setExtraImageFiles([])
+    setExistingExtraImages([])
     setShowDialog(true)
   }
 
@@ -149,10 +154,13 @@ const GaragePage = ({ session }) => {
     setVehicleType('passenger car')
     setEditingId(car.id)
     setImageFile(null)
+    setExtraImageFiles([])
+    setExistingExtraImages(car.vehicle_images || [])
     setShowDialog(true)
   }
 
-  const handleUpload = async (file) => {
+  // --- LÓGICA DE SUBIDA DE IMÁGENES ---
+  const handleUploadSingleFile = async (file, isMain = true, index = 0) => {
     const options = {
       maxSizeMB: 0.8,
       maxWidthOrHeight: 1920,
@@ -160,76 +168,103 @@ const GaragePage = ({ session }) => {
       fileType: 'image/webp',
       initialQuality: 0.8,
     }
-
     const compressedFile = await imageCompression(file, options)
-    const fileName = `${session.user.id}/${Date.now()}.webp`
-    const filePath = `${fileName}`
+    const fileName = isMain
+      ? `${session.user.id}/main-${Date.now()}.webp`
+      : `${session.user.id}/gallery-${Date.now()}-${index}.webp`
 
     const { error: uploadError } = await supabase.storage
       .from('vehicles')
-      .upload(filePath, compressedFile, {
-        contentType: 'image/webp',
-      })
-
+      .upload(fileName, compressedFile, { contentType: 'image/webp' })
     if (uploadError) throw uploadError
 
-    const { data } = supabase.storage.from('vehicles').getPublicUrl(filePath)
+    const { data } = supabase.storage.from('vehicles').getPublicUrl(fileName)
     return data.publicUrl
   }
 
   const handleSubmit = async () => {
-    if (!form.marca || !form.modelo) return
+    if (!form.marca || !form.modelo) {
+      toast.current.show({
+        severity: 'warn',
+        summary: 'Aviso',
+        detail: 'La marca y el modelo son obligatorios.',
+      })
+      return
+    }
+
     setLoading(true)
     try {
       let finalImageUrl = form.image_url
 
+      // 1. Subir imagen principal
       if (imageFile) {
         toast.current.show({
           severity: 'info',
           summary: 'Optimizando',
-          detail: 'Comprimiendo imagen...',
+          detail: 'Subiendo imagen principal...',
           life: 2000,
         })
-        finalImageUrl = await handleUpload(imageFile)
+        finalImageUrl = await handleUploadSingleFile(imageFile, true)
       }
 
-      const vehicleData = {
-        ...form,
-        image_url: finalImageUrl,
-      }
+      const vehicleData = { ...form, image_url: finalImageUrl }
+      let currentVehicleId = editingId
 
+      // 2. Guardar datos del vehículo (Insert o Update blindado)
       if (editingId) {
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('vehicles')
           .update(vehicleData)
           .eq('id', editingId)
-        if (error) throw error
-        toast.current.show({
-          severity: 'info',
-          summary: 'Actualizado',
-          detail: 'Vehículo modificado correctamente',
-        })
+        if (updateError) throw updateError
       } else {
-        const { error } = await supabase.from('vehicles').insert({
-          user_id: session.user.id,
-          ...vehicleData,
-        })
-        if (error) throw error
-        toast.current.show({
-          severity: 'success',
-          summary: 'Guardado',
-          detail: 'Vehículo añadido al garaje',
-        })
+        // Le quitamos el .single() que a veces da fallos de RLS y sacamos el ID del array
+        const { data: newVehicle, error: insertError } = await supabase
+          .from('vehicles')
+          .insert({ user_id: session.user.id, ...vehicleData })
+          .select()
+        if (insertError) throw insertError
+        if (newVehicle && newVehicle.length > 0) {
+          currentVehicleId = newVehicle[0].id
+        } else {
+          throw new Error(
+            'El vehículo se guardó pero no se pudo obtener su ID para la galería.',
+          )
+        }
       }
 
+      // 3. Subir las imágenes extra de la galería
+      if (extraImageFiles.length > 0 && currentVehicleId) {
+        toast.current.show({
+          severity: 'info',
+          summary: 'Galería',
+          detail: 'Subiendo fotos adicionales...',
+          life: 2000,
+        })
+        for (let i = 0; i < extraImageFiles.length; i++) {
+          const url = await handleUploadSingleFile(extraImageFiles[i], false, i)
+          const { error: extraImgError } = await supabase
+            .from('vehicle_images')
+            .insert({ vehicle_id: currentVehicleId, image_url: url })
+          if (extraImgError)
+            console.error('Fallo subiendo extra:', extraImgError)
+        }
+      }
+
+      toast.current.show({
+        severity: 'success',
+        summary: 'Guardado',
+        detail: 'Vehículo guardado correctamente',
+      })
       setShowDialog(false)
       fetchVehicles()
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error detallado:', error)
+      // Si falla, ahora mostrará el error exacto de Supabase en rojo
       toast.current.show({
         severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo guardar',
+        summary: 'Error al guardar',
+        detail: error.message || 'Error desconocido',
       })
     } finally {
       setLoading(false)
@@ -240,7 +275,7 @@ const GaragePage = ({ session }) => {
     const { error } = await supabase.from('vehicles').delete().eq('id', id)
     if (!error) {
       toast.current.show({
-        severity: 'error',
+        severity: 'success',
         summary: 'Eliminado',
         detail: 'Vehículo eliminado',
       })
@@ -248,9 +283,95 @@ const GaragePage = ({ session }) => {
     }
   }
 
+  // --- LÓGICA DE MANEJO DE PREVISUALIZACIONES DE GALERÍA ---
+  const handleExtraImagesChange = (e) => {
+    const files = Array.from(e.target.files)
+    setExtraImageFiles((prev) => [...prev, ...files])
+  }
+
+  const removeExtraFile = (index) => {
+    setExtraImageFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const removeExistingImage = async (imgId) => {
+    try {
+      await supabase.from('vehicle_images').delete().eq('id', imgId)
+      setExistingExtraImages((prev) => prev.filter((img) => img.id !== imgId))
+      toast.current.show({
+        severity: 'success',
+        summary: 'Borrada',
+        detail: 'Foto eliminada',
+        life: 1500,
+      })
+      fetchVehicles()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  // --- VISOR DE GALERÍA (GALLERIA) ---
+  const openGalleryViewer = (car) => {
+    const images = []
+    if (car.image_url)
+      images.push({
+        itemImageSrc: car.image_url,
+        thumbnailImageSrc: car.image_url,
+        alt: 'Principal',
+      })
+    if (car.vehicle_images && car.vehicle_images.length > 0) {
+      car.vehicle_images.forEach((img) => {
+        images.push({
+          itemImageSrc: img.image_url,
+          thumbnailImageSrc: img.image_url,
+          alt: 'Detalle',
+        })
+      })
+    }
+    if (images.length > 0) setGalleryImages(images)
+  }
+
+  const galleryItemTemplate = (item) => {
+    return (
+      <img
+        src={item.itemImageSrc}
+        alt={item.alt}
+        style={{
+          width: '100%',
+          maxHeight: '70vh',
+          objectFit: 'contain',
+          display: 'block',
+        }}
+      />
+    )
+  }
+
+  const galleryThumbnailTemplate = (item) => {
+    return (
+      <img
+        src={item.thumbnailImageSrc}
+        alt={item.alt}
+        style={{
+          width: '100%',
+          height: '80px',
+          objectFit: 'cover',
+          display: 'block',
+          borderRadius: '4px',
+        }}
+      />
+    )
+  }
+
+  // --- PLANTILLA DE LA TARJETA DEL COCHE ---
   const carTemplate = (car) => {
+    const totalImages =
+      (car.image_url ? 1 : 0) +
+      (car.vehicle_images ? car.vehicle_images.length : 0)
+
     const header = (
-      <div className='garage-image-container'>
+      <div
+        className='garage-image-container cursor-pointer'
+        onClick={() => openGalleryViewer(car)}
+      >
         {car.image_url ? (
           <img alt={car.marca} src={car.image_url} className='garage-image' />
         ) : (
@@ -259,6 +380,13 @@ const GaragePage = ({ session }) => {
           </div>
         )}
         <div className='garage-badge'>{car.combustible}</div>
+
+        {/* INDICADOR DE FOTOS */}
+        {totalImages > 1 && (
+          <div className='gallery-indicator-badge'>
+            <i className='pi pi-images'></i> 1/{totalImages}
+          </div>
+        )}
       </div>
     )
 
@@ -305,6 +433,28 @@ const GaragePage = ({ session }) => {
       <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
         <Toast ref={toast} />
 
+        {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
+        <Dialog
+          visible={!!galleryImages}
+          onHide={() => setGalleryImages(null)}
+          header='Galería del Vehículo'
+          style={{ width: '90vw', maxWidth: '800px' }}
+          dismissableMask
+        >
+          {galleryImages && (
+            <Galleria
+              value={galleryImages}
+              numVisible={5}
+              circular
+              autoPlay
+              transitionInterval={3000}
+              item={galleryItemTemplate}
+              thumbnail={galleryThumbnailTemplate}
+              style={{ maxWidth: '100%' }}
+            />
+          )}
+        </Dialog>
+
         <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
           <div>
             <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
@@ -334,10 +484,11 @@ const GaragePage = ({ session }) => {
           </div>
         )}
 
+        {/* DIALOG DE CREAR / EDITAR */}
         <Dialog
           header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
           visible={showDialog}
-          style={{ width: '90vw', maxWidth: '500px' }}
+          style={{ width: '90vw', maxWidth: '600px' }}
           onHide={() => setShowDialog(false)}
           className='p-fluid'
         >
@@ -379,7 +530,6 @@ const GaragePage = ({ session }) => {
                   <label htmlFor='marca'>Marca</label>
                 </span>
               </div>
-
               <div className='flex-1'>
                 <span className='p-float-label'>
                   <Dropdown
@@ -445,22 +595,89 @@ const GaragePage = ({ session }) => {
               <label htmlFor='desc'>Modificaciones / Descripción</label>
             </span>
 
-            <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative'>
-              <input
-                type='file'
-                accept='image/*'
-                onChange={(e) => setImageFile(e.target.files[0])}
-                className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer'
-              />
-              <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
-                <i className='pi pi-image text-2xl text-600'></i>
-                <span className='text-sm text-700 font-semibold'>
-                  {imageFile
-                    ? imageFile.name
-                    : form.image_url
-                      ? 'Cambiar foto actual'
-                      : 'Subir foto del vehículo'}
-                </span>
+            {/* --- SECCIÓN DE FOTOS --- */}
+            <div className='border-top-1 border-300 pt-4 mt-2'>
+              <h3 className='text-xl font-bold text-800 m-0 mb-3'>
+                Imágenes del Vehículo
+              </h3>
+
+              {/* Foto Principal */}
+              <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative mb-4'>
+                <input
+                  type='file'
+                  accept='image/*'
+                  onChange={(e) => setImageFile(e.target.files[0])}
+                  className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
+                />
+                <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
+                  <i className='pi pi-camera text-2xl text-600'></i>
+                  <span className='text-sm text-700 font-semibold'>
+                    {imageFile
+                      ? imageFile.name
+                      : form.image_url
+                        ? 'Cambiar foto principal'
+                        : 'Subir Foto principal (Portada)'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Galería Adicional */}
+              <div className='bg-gray-50 border-round-xl p-3 border-1 border-200'>
+                <div className='gallery-upload-zone'>
+                  <input
+                    type='file'
+                    accept='image/*'
+                    multiple
+                    onChange={handleExtraImagesChange}
+                    className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
+                  />
+                  <div className='flex flex-column align-items-center gap-1 pointer-events-none'>
+                    <i className='pi pi-images text-xl text-blue-500'></i>
+                    <span className='text-sm font-bold text-700'>
+                      Añadir fotos a la galería
+                    </span>
+                    <span className='text-xs text-500'>
+                      Selecciona varias imágenes a la vez
+                    </span>
+                  </div>
+                </div>
+
+                {/* Previsualización de imágenes (Existentes y Nuevas) */}
+                {(existingExtraImages.length > 0 ||
+                  extraImageFiles.length > 0) && (
+                  <div className='gallery-preview-grid'>
+                    {/* Fotos ya guardadas en DB */}
+                    {existingExtraImages.map((img) => (
+                      <div key={img.id} className='gallery-preview-item'>
+                        <img src={img.image_url} alt='Extra guardada' />
+                        <button
+                          type='button'
+                          className='remove-preview-btn'
+                          onClick={() => removeExistingImage(img.id)}
+                        >
+                          <i className='pi pi-times'></i>
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Fotos nuevas pendientes de subir */}
+                    {extraImageFiles.map((file, idx) => (
+                      <div key={idx} className='gallery-preview-item'>
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt='Nueva preview'
+                        />
+                        <button
+                          type='button'
+                          className='remove-preview-btn'
+                          onClick={() => removeExtraFile(idx)}
+                        >
+                          <i className='pi pi-times'></i>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -470,7 +687,7 @@ const GaragePage = ({ session }) => {
               severity='help'
               onClick={handleSubmit}
               loading={loading}
-              className='mt-2'
+              className='mt-4 py-3 font-bold text-lg border-round-xl shadow-2'
             />
           </div>
         </Dialog>

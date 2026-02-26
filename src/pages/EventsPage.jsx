@@ -1,679 +1,570 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
-import { Card } from 'primereact/card'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from 'primereact/button'
-import { Dialog } from 'primereact/dialog'
-import { InputNumber } from 'primereact/inputnumber'
+import { Tag } from 'primereact/tag'
 import { Dropdown } from 'primereact/dropdown'
-import { InputTextarea } from 'primereact/inputtextarea'
-import { SelectButton } from 'primereact/selectbutton'
 import { Toast } from 'primereact/toast'
-import { Galleria } from 'primereact/galleria'
+import { Avatar } from 'primereact/avatar'
+import { addLocale } from 'primereact/api'
+import AddEventDialog from '../components/AddEventDialog'
+import { useFavorites } from '../hooks/useFavorites'
 import PageTransition from '../components/PageTransition'
-import imageCompression from 'browser-image-compression'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Calendar,
+  MapPin,
+  Search,
+  Filter,
+  Plus,
+  Heart,
+  ArrowUpRight,
+  User,
+  Clock,
+  Layers,
+  Grid,
+  List,
+  Star,
+  ArrowRight,
+} from 'lucide-react'
+import './EventsPage.css'
+import { Helmet } from 'react-helmet-async'
 
-import './GaragePage.css'
+const MotionDiv = motion.div
 
-const GaragePage = ({ session }) => {
+addLocale('es', {
+  firstDayOfWeek: 1,
+  dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
+  monthNames: [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ],
+  today: 'Hoy',
+  clear: 'Limpiar',
+})
+
+const EVENT_TYPES = [
+  { label: 'Todos los tipos', value: null, theme: 'blue' },
+  {
+    label: 'Stance / Expo',
+    value: 'Stance,Exposición,Expo',
+    icon: '🚘',
+    theme: 'purple',
+  },
+  { label: 'Ruta / Tramo', value: 'Tramo,Ruta', icon: '🛣️', theme: 'emerald' },
+  {
+    label: 'Circuito / Trackday',
+    value: 'Circuito,Trackday,Racing',
+    icon: '🏁',
+    theme: 'red',
+  },
+  { label: 'Clásicos', value: 'Clasicos,Clásicos', icon: '🕰️', theme: 'amber' },
+  {
+    label: 'Off-road / 4x4',
+    value: 'Offroad,Off-road,4x4',
+    icon: '⛰️',
+    theme: 'orange',
+  },
+]
+
+const normalizeText = (text) => {
+  if (!text) return ''
+  return String(text)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+const formatEventData = (ev) => {
+  const date = new Date(ev.fecha)
+  return {
+    ...ev,
+    dateObj: date,
+    monthShort: date
+      .toLocaleDateString('es-ES', { month: 'short' })
+      .toUpperCase(),
+    dayNumber: date.toLocaleDateString('es-ES', { day: '2-digit' }),
+    time: date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+    formattedDate: date.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }),
+    image:
+      ev.image_url ||
+      `https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80&random=${ev.id}`,
+  }
+}
+
+const TechnicalCoverCard = ({ event }) => {
+  const navigate = useNavigate()
+  return (
+    <div
+      className='technical-cover group cursor-pointer'
+      onClick={() => navigate(`/evento/${event.id}`)}
+    >
+      <div className='cover-image-wrapper'>
+        <img
+          src={event.image}
+          alt={event.titulo}
+          className='cover-image group-hover:scale-105 transition-transform duration-700'
+        />
+        <div className='cover-overlay'></div>
+      </div>
+
+      <div className='cover-content'>
+        <div className='flex align-items-center gap-2 mb-4'>
+          <span className='tech-badge bg-white text-black'>
+            <Star size={14} className='mr-1' /> DESTACADO
+          </span>
+          <span className='tech-badge bg-black text-white border-1 border-white-alpha-30'>
+            {event.tipo}
+          </span>
+        </div>
+        <h1 className='text-4xl md:text-6xl font-black text-white m-0 line-height-1 tracking-tight mb-4'>
+          {event.titulo}
+        </h1>
+
+        <div className='flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between w-full border-top-1 border-white-alpha-20 pt-4 mt-auto gap-4'>
+          <div className='flex gap-4'>
+            <div className='text-white pr-4 border-right-1 border-white-alpha-20'>
+              <div className='text-xs text-white-alpha-60 font-bold uppercase tracking-widest mb-1'>
+                Fecha
+              </div>
+              <div className='font-bold text-lg flex align-items-center gap-2'>
+                <Calendar size={18} /> {event.formattedDate}
+              </div>
+            </div>
+            <div className='text-white'>
+              <div className='text-xs text-white-alpha-60 font-bold uppercase tracking-widest mb-1'>
+                Ubicación
+              </div>
+              <div className='font-bold text-lg flex align-items-center gap-2 overflow-hidden text-overflow-ellipsis white-space-nowrap'>
+                <MapPin size={18} />{' '}
+                {event.ubicacion
+                  ? event.ubicacion.split(',')[0]
+                  : 'Ver detalles'}
+              </div>
+            </div>
+          </div>
+
+          <div className='flex align-items-center gap-2 text-white font-bold tracking-widest uppercase text-sm group-hover:text-blue-300 transition-colors'>
+            Ir al evento{' '}
+            <ArrowRight
+              size={20}
+              className='group-hover:translate-x-2 transition-transform'
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const TimelineEventCard = React.memo(({ event, isPast = false, session }) => {
+  const { isFavorite, toggleFavorite, loading } = useFavorites(
+    event.id,
+    session,
+  )
+  const navigate = useNavigate()
+
+  return (
+    <div
+      className={`timeline-card ${isPast ? 'is-past' : ''}`}
+      onClick={() => navigate(`/evento/${event.id}`)}
+    >
+      <div className='timeline-date'>
+        <span className='day'>{event.dayNumber}</span>
+        <span className='month'>{event.monthShort}</span>
+      </div>
+
+      <div className='timeline-image-wrapper'>
+        <img src={event.image} alt={event.titulo} loading='lazy' />
+        {isPast && <div className='past-label'>FINALIZADO</div>}
+      </div>
+
+      <div className='timeline-info'>
+        <div className='flex align-items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-500'>
+          <span className='text-blue-600'>{event.tipo}</span>
+          <span>•</span>
+          <span className='flex align-items-center gap-1'>
+            <Clock size={12} /> {event.time}h
+          </span>
+        </div>
+        <h3 className='text-xl font-black text-900 m-0 mb-3'>{event.titulo}</h3>
+
+        <div className='flex align-items-center justify-content-between mt-auto'>
+          <div className='flex align-items-center gap-2 text-sm font-semibold text-700'>
+            <User size={16} className='text-500' />{' '}
+            {event.profiles?.username || 'Anónimo'}
+          </div>
+          <div className='flex gap-2 align-items-center'>
+            <Button
+              icon={
+                <Heart
+                  size={18}
+                  className={
+                    isFavorite ? 'fill-current text-red-500' : 'text-700'
+                  }
+                />
+              }
+              rounded
+              text
+              className='hover:bg-gray-100 p-2'
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleFavorite()
+              }}
+              loading={loading}
+              disabled={isPast}
+            />
+            <Button
+              label='Ver'
+              icon={<ArrowUpRight size={18} />}
+              iconPos='right'
+              className='btn-timeline-ver px-3 py-2'
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+const EventsPage = ({ session }) => {
+  const navigate = useNavigate()
+  const { provincia } = useParams()
+
+  let activeLocation = null
+  if (provincia) {
+    try {
+      activeLocation = decodeURIComponent(provincia).replace(/-/g, ' ').trim()
+    } catch (error) {
+      console.error(error)
+      activeLocation = provincia.replace(/-/g, ' ').trim()
+    }
+  }
+
+  const [events, setEvents] = useState({ upcoming: [], past: [], featured: [] })
+  const [favorites, setFavorites] = useState([])
+  const [filters, setFilters] = useState({ text: '', type: null })
+  const [activeTab, setActiveTab] = useState('upcoming')
+  const [showModal, setShowModal] = useState(false)
   const toast = useRef(null)
-  const [vehicles, setVehicles] = useState([])
-  const [showDialog, setShowDialog] = useState(false)
-  const [loading, setLoading] = useState(false)
 
-  const [vehicleType, setVehicleType] = useState('car')
-  const [makes, setMakes] = useState([])
-  const [models, setModels] = useState([])
-  const [loadingAPI, setLoadingAPI] = useState(false)
-
-  const [editingId, setEditingId] = useState(null)
-
-  const [form, setForm] = useState({
-    marca: '',
-    modelo: '',
-    cv: null,
-    anio: null,
-    combustible: '',
-    descripcion: '',
-    image_url: null,
-  })
-
-  const [imageFile, setImageFile] = useState(null)
-
-  // --- NUEVOS ESTADOS PARA LA GALERÍA MÚLTIPLE ---
-  const [extraImageFiles, setExtraImageFiles] = useState([]) // Archivos nuevos a subir
-  const [existingExtraImages, setExistingExtraImages] = useState([]) // Imágenes ya guardadas en DB
-  const [galleryImages, setGalleryImages] = useState(null) // Para el visor a pantalla completa
-
-  const fuelOptions = [
-    { label: 'Gasolina', value: 'Gasolina' },
-    { label: 'Diésel', value: 'Diésel' },
-    { label: 'Híbrido', value: 'Híbrido' },
-    { label: 'Eléctrico', value: 'Eléctrico' },
-  ]
-
-  const typeOptions = [
-    { label: 'Coche', value: 'passenger car' },
-    { label: 'Moto', value: 'motorcycle' },
-  ]
-
-  useEffect(() => {
-    if (session) fetchVehicles()
+  const fetchAllEvents = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*, profiles(username)')
+      .order('fecha', { ascending: false })
+    const now = new Date()
+    if (!error && data) {
+      const processed = data.map((ev) => formatEventData(ev))
+      const future = processed
+        .filter((ev) => ev.dateObj >= now)
+        .sort((a, b) => a.dateObj - b.dateObj)
+      setEvents({
+        upcoming: future,
+        past: processed
+          .filter((ev) => ev.dateObj < now)
+          .sort((a, b) => b.dateObj - a.dateObj),
+        featured: future.slice(0, 1),
+      })
+    }
+    if (session) {
+      const { data: favData, error: favError } = await supabase
+        .from('favorites')
+        .select('event_id, events(*, profiles(username))')
+        .eq('user_id', session.user.id)
+      if (!favError && favData) {
+        const validFavs = favData
+          .map((item) => item.events)
+          .filter((ev) => ev !== null)
+          .map((ev) => formatEventData(ev))
+          .filter((ev) => ev.dateObj >= now)
+        setFavorites(validFavs)
+      }
+    } else setFavorites([])
   }, [session])
 
   useEffect(() => {
-    if (showDialog) fetchMakes(vehicleType)
-  }, [vehicleType, showDialog])
+    //eslint-disable-next-line
+    fetchAllEvents()
+  }, [fetchAllEvents])
 
-  useEffect(() => {
-    if (form.marca && showDialog) {
-      fetchModels(form.marca, vehicleType)
-    } else {
-      setModels([])
-    }
-  }, [form.marca, vehicleType, showDialog])
+  const filterList = useCallback(
+    (list) => {
+      const locToSearch = normalizeText(activeLocation)
+      const textToSearch = normalizeText(filters.text)
 
-  const fetchMakes = async (type) => {
-    setLoadingAPI(true)
-    try {
-      const response = await fetch(
-        `https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/${type}?format=json`,
-      )
-      const data = await response.json()
-      const formattedMakes = data.Results.map((item) => ({
-        label: item.MakeName.trim(),
-        value: item.MakeName.trim(),
-      })).sort((a, b) => a.label.localeCompare(b.label))
-      setMakes(formattedMakes)
-    } catch (error) {
-      console.error('Error fetching makes:', error)
-    } finally {
-      setLoadingAPI(false)
-    }
-  }
+      return list.filter((e) => {
+        // Extraemos ABSOLUTAMENTE TODO el evento a texto bruto (incluyendo objetos anidados de Leaflet/Supabase)
+        const textoCompleto = normalizeText(JSON.stringify(e))
 
-  const fetchModels = async (make, type) => {
-    if (!makes.find((m) => m.value.toLowerCase() === make.toLowerCase())) return
-    setLoadingAPI(true)
-    try {
-      const response = await fetch(
-        `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${make}/vehicleType/${type}?format=json`,
-      )
-      const data = await response.json()
-      const uniqueModels = [
-        ...new Set(data.Results.map((item) => item.Model_Name.trim())),
-      ]
-      const formattedModels = uniqueModels
-        .map((model) => ({ label: model, value: model }))
-        .sort((a, b) => a.label.localeCompare(b.label))
-      setModels(formattedModels)
-    } catch (error) {
-      console.error('Error fetching models:', error)
-    } finally {
-      setLoadingAPI(false)
-    }
-  }
+        const matchText =
+          textToSearch === '' || textoCompleto.includes(textToSearch)
 
-  const fetchVehicles = async () => {
-    // AHORA TAMBIÉN PEDIMOS vehicle_images
-    const { data } = await supabase
-      .from('vehicles')
-      .select('*, vehicle_images(*)')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-    if (data) setVehicles(data)
-  }
+        const matchType = filters.type
+          ? filters.type
+              .split(',')
+              .some((val) => normalizeText(e.tipo).includes(normalizeText(val)))
+          : true
 
-  const openNew = () => {
-    setForm({
-      marca: '',
-      modelo: '',
-      cv: null,
-      anio: null,
-      combustible: '',
-      descripcion: '',
-      image_url: null,
-    })
-    setVehicleType('passenger car')
-    setEditingId(null)
-    setImageFile(null)
-    setExtraImageFiles([])
-    setExistingExtraImages([])
-    setShowDialog(true)
-  }
+        const matchLocation =
+          locToSearch === '' || textoCompleto.includes(locToSearch)
 
-  const openEdit = (car) => {
-    setForm({
-      marca: car.marca,
-      modelo: car.modelo,
-      cv: car.cv,
-      anio: car.anio,
-      combustible: car.combustible,
-      descripcion: car.descripcion,
-      image_url: car.image_url,
-    })
-    setVehicleType('passenger car')
-    setEditingId(car.id)
-    setImageFile(null)
-    setExtraImageFiles([])
-    setExistingExtraImages(car.vehicle_images || [])
-    setShowDialog(true)
-  }
-
-  // --- LÓGICA DE SUBIDA DE IMÁGENES ---
-  const handleUploadSingleFile = async (file, isMain = true, index = 0) => {
-    const options = {
-      maxSizeMB: 0.8,
-      maxWidthOrHeight: 1920,
-      useWebWorker: true,
-      fileType: 'image/webp',
-      initialQuality: 0.8,
-    }
-    const compressedFile = await imageCompression(file, options)
-    const fileName = isMain
-      ? `${session.user.id}/main-${Date.now()}.webp`
-      : `${session.user.id}/gallery-${Date.now()}-${index}.webp`
-
-    const { error: uploadError } = await supabase.storage
-      .from('vehicles')
-      .upload(fileName, compressedFile, { contentType: 'image/webp' })
-    if (uploadError) throw uploadError
-
-    const { data } = supabase.storage.from('vehicles').getPublicUrl(fileName)
-    return data.publicUrl
-  }
-
-  const handleSubmit = async () => {
-    if (!form.marca || !form.modelo) return
-    setLoading(true)
-    try {
-      let finalImageUrl = form.image_url
-
-      // 1. Subir imagen principal (si ha cambiado)
-      if (imageFile) {
-        toast.current.show({
-          severity: 'info',
-          summary: 'Optimizando',
-          detail: 'Subiendo imagen principal...',
-          life: 2000,
-        })
-        finalImageUrl = await handleUploadSingleFile(imageFile, true)
-      }
-
-      const vehicleData = { ...form, image_url: finalImageUrl }
-      let currentVehicleId = editingId
-
-      // 2. Guardar datos del vehículo
-      if (editingId) {
-        await supabase.from('vehicles').update(vehicleData).eq('id', editingId)
-      } else {
-        const { data: newVehicle, error } = await supabase
-          .from('vehicles')
-          .insert({ user_id: session.user.id, ...vehicleData })
-          .select()
-          .single()
-        if (error) throw error
-        currentVehicleId = newVehicle.id
-      }
-
-      // 3. Subir y guardar las imágenes extra de la galería
-      if (extraImageFiles.length > 0) {
-        toast.current.show({
-          severity: 'info',
-          summary: 'Galería',
-          detail: 'Subiendo fotos adicionales...',
-          life: 2000,
-        })
-        for (let i = 0; i < extraImageFiles.length; i++) {
-          const url = await handleUploadSingleFile(extraImageFiles[i], false, i)
-          await supabase
-            .from('vehicle_images')
-            .insert({ vehicle_id: currentVehicleId, image_url: url })
+        // 🔴 CHIVATO DE DEPURACIÓN PARA LA CONSOLA (F12)
+        if (locToSearch !== '') {
+          console.log(`--- EVALUANDO EVENTO: ${e.titulo} ---`)
+          console.log(
+            `¿Encuentra la palabra "${locToSearch}"?: ${matchLocation}`,
+          )
+          console.log(`Textos que está leyendo el filtro:`, textoCompleto)
         }
-      }
 
-      toast.current.show({
-        severity: 'success',
-        summary: 'Guardado',
-        detail: 'Vehículo y galería actualizados',
+        return matchText && matchType && matchLocation
       })
-      setShowDialog(false)
-      fetchVehicles()
-    } catch (error) {
-      console.error('Error:', error)
-      toast.current.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo guardar todo correctamente',
+    },
+    [filters, activeLocation],
+  )
+
+  const filteredUpcoming = useMemo(
+    () => filterList(events.upcoming),
+    [events.upcoming, filterList],
+  )
+  const filteredPast = useMemo(
+    () => filterList(events.past),
+    [events.past, filterList],
+  )
+
+  const handleOpenModal = () => {
+    if (!session)
+      return toast.current.show({
+        severity: 'warn',
+        summary: 'Acceso',
+        detail: 'Inicia sesión para crear eventos.',
       })
-    } finally {
-      setLoading(false)
-    }
+    setShowModal(true)
   }
 
-  const handleDelete = async (id) => {
-    // Al borrar el vehículo, Supabase borrará las fotos extra automáticamente por el "on delete cascade"
-    const { error } = await supabase.from('vehicles').delete().eq('id', id)
-    if (!error) {
-      toast.current.show({
-        severity: 'error',
-        summary: 'Eliminado',
-        detail: 'Vehículo eliminado',
-      })
-      fetchVehicles()
-    }
-  }
-
-  // --- LÓGICA DE MANEJO DE PREVISUALIZACIONES DE GALERÍA ---
-  const handleExtraImagesChange = (e) => {
-    const files = Array.from(e.target.files)
-    setExtraImageFiles((prev) => [...prev, ...files])
-  }
-
-  const removeExtraFile = (index) => {
-    setExtraImageFiles((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const removeExistingImage = async (imgId) => {
-    try {
-      await supabase.from('vehicle_images').delete().eq('id', imgId)
-      setExistingExtraImages((prev) => prev.filter((img) => img.id !== imgId))
-      toast.current.show({
-        severity: 'success',
-        summary: 'Borrada',
-        detail: 'Foto eliminada',
-        life: 1500,
-      })
-      fetchVehicles() // Sincronizamos por detrás
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-  // --- VISOR DE GALERÍA (GALLERIA) ---
-  const openGalleryViewer = (car) => {
-    const images = []
-    if (car.image_url)
-      images.push({
-        itemImageSrc: car.image_url,
-        thumbnailImageSrc: car.image_url,
-        alt: 'Principal',
-      })
-    if (car.vehicle_images && car.vehicle_images.length > 0) {
-      car.vehicle_images.forEach((img) => {
-        images.push({
-          itemImageSrc: img.image_url,
-          thumbnailImageSrc: img.image_url,
-          alt: 'Detalle',
-        })
-      })
-    }
-    if (images.length > 0) setGalleryImages(images)
-  }
-
-  const galleryItemTemplate = (item) => {
-    return (
-      <img
-        src={item.itemImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          maxHeight: '70vh',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
-    )
-  }
-
-  const galleryThumbnailTemplate = (item) => {
-    return (
-      <img
-        src={item.thumbnailImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          height: '80px',
-          objectFit: 'cover',
-          display: 'block',
-          borderRadius: '4px',
-        }}
-      />
-    )
-  }
-
-  // --- PLANTILLA DE LA TARJETA DEL COCHE ---
-  const carTemplate = (car) => {
-    const totalImages =
-      (car.image_url ? 1 : 0) +
-      (car.vehicle_images ? car.vehicle_images.length : 0)
-
-    const header = (
-      <div
-        className='garage-image-container cursor-pointer'
-        onClick={() => openGalleryViewer(car)}
-      >
-        {car.image_url ? (
-          <img alt={car.marca} src={car.image_url} className='garage-image' />
-        ) : (
-          <div className='garage-no-image'>
-            <i className='pi pi-car text-6xl'></i>
-          </div>
-        )}
-        <div className='garage-badge'>{car.combustible}</div>
-
-        {/* INDICADOR DE FOTOS (Si tiene más de 1) */}
-        {totalImages > 1 && (
-          <div className='gallery-indicator-badge'>
-            <i className='pi pi-images'></i> 1/{totalImages}
-          </div>
-        )}
-      </div>
-    )
-
-    return (
-      <Card header={header} className='garage-card'>
-        <div className='garage-info'>
-          <div>
-            <h3 className='garage-title'>
-              {car.marca} {car.modelo}
-            </h3>
-            <div className='garage-specs'>
-              <i className='pi pi-calendar text-primary'></i>{' '}
-              <span>{car.anio}</span>
-              <span className='text-300'>|</span>
-              <i className='pi pi-bolt text-primary'></i>{' '}
-              <span>{car.cv} CV</span>
-            </div>
-            <div className='garage-divider'></div>
-            <p className='garage-desc'>
-              {car.descripcion || (
-                <span className='font-italic text-400'>Sin descripción.</span>
-              )}
-            </p>
-          </div>
-          <div className='garage-actions'>
-            <Button
-              icon='pi pi-pencil'
-              className='garage-btn edit'
-              onClick={() => openEdit(car)}
-            />
-            <Button
-              icon='pi pi-trash'
-              className='garage-btn delete'
-              onClick={() => handleDelete(car.id)}
-            />
-          </div>
-        </div>
-      </Card>
-    )
-  }
+  const currentList = activeTab === 'upcoming' ? filteredUpcoming : filteredPast
 
   return (
     <PageTransition>
-      <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
-        <Toast ref={toast} />
+      <Helmet>
+        <title>
+          {activeLocation
+            ? `Eventos de coches en ${activeLocation} | CarMeet ESP`
+            : 'Agenda de Eventos | CarMeet ESP'}
+        </title>
+        <meta
+          name='description'
+          content={`Descubre las mejores KDDs y rutas de motor en ${activeLocation || 'España'}.`}
+        />
+      </Helmet>
+      <div className='technical-page-wrapper'>
+        <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-        {/* VISOR DE GALERÍA */}
-        <Dialog
-          visible={!!galleryImages}
-          onHide={() => setGalleryImages(null)}
-          header='Galería del Vehículo'
-          style={{ width: '90vw', maxWidth: '800px' }}
-          dismissableMask
-        >
-          {galleryImages && (
-            <Galleria
-              value={galleryImages}
-              numVisible={5}
-              circular
-              autoPlay
-              transitionInterval={3000}
-              item={galleryItemTemplate}
-              thumbnail={galleryThumbnailTemplate}
-              style={{ maxWidth: '100%' }}
-            />
-          )}
-        </Dialog>
+        <div className='max-w-8xl mx-auto'>
+          <div className='grid grid-nogutter'>
+            <div className='col-12 lg:col-3 lg:pr-5 relative'>
+              <div className='sticky-sidebar py-6 px-4 lg:px-0'>
+                <div className='mb-6'>
+                  <h1 className='text-4xl font-black m-0 tracking-tight text-900 capitalize'>
+                    {activeLocation
+                      ? `Eventos en ${activeLocation}`
+                      : 'Agenda de Eventos'}
+                  </h1>
+                  <p className='text-500 font-medium mt-2'>
+                    {activeLocation
+                      ? `Descubre las mejores KDDs y rutas en ${activeLocation}.`
+                      : 'Explora las KDDs y rutas de la comunidad.'}
+                  </p>
 
-        <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
-          <div>
-            <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
-              Mi Garaje
-            </h1>
-            <p className='text-500 mt-2 text-lg'>Tu colección personal</p>
-          </div>
-          <Button
-            label='Añadir Vehículo'
-            icon='pi pi-plus'
-            severity='help'
-            raised
-            className='px-4 py-3 border-round-3xl shadow-2'
-            onClick={openNew}
-          />
-        </div>
-
-        {vehicles.length === 0 ? (
-          <div className='garage-empty'>
-            <p className='text-center text-500'>No hay vehículos.</p>
-          </div>
-        ) : (
-          <div className='garage-grid'>
-            {vehicles.map((car) => (
-              <div key={car.id}>{carTemplate(car)}</div>
-            ))}
-          </div>
-        )}
-
-        {/* DIALOG DE CREAR / EDITAR */}
-        <Dialog
-          header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
-          visible={showDialog}
-          style={{ width: '90vw', maxWidth: '600px' }}
-          onHide={() => setShowDialog(false)}
-          className='p-fluid'
-        >
-          <div className='flex flex-column gap-4 pt-2'>
-            <div className='flex justify-content-center'>
-              <SelectButton
-                value={vehicleType}
-                onChange={(e) => {
-                  if (e.value) {
-                    setVehicleType(e.value)
-                    setForm({ ...form, marca: '', modelo: '' })
-                  }
-                }}
-                options={typeOptions}
-                className='w-full'
-                itemTemplate={(option) => (
-                  <div className='font-bold w-full text-center'>
-                    {option.label}
-                  </div>
-                )}
-              />
-            </div>
-
-            <div className='flex gap-3 flex-column md:flex-row'>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <Dropdown
-                    id='marca'
-                    value={form.marca}
-                    onChange={(e) => {
-                      setForm({ ...form, marca: e.value, modelo: '' })
-                    }}
-                    options={makes}
-                    filter
-                    editable
-                    placeholder='Selecciona o escribe'
-                    disabled={loadingAPI}
+                  <Button
+                    label='Crear Nuevo Evento'
+                    icon={<Plus size={20} className='mr-2' />}
+                    className='w-full mt-4 btn-create-modern'
+                    onClick={handleOpenModal}
                   />
-                  <label htmlFor='marca'>Marca</label>
-                </span>
-              </div>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <Dropdown
-                    id='modelo'
-                    value={form.modelo}
-                    onChange={(e) => setForm({ ...form, modelo: e.value })}
-                    options={models}
-                    filter
-                    editable
-                    placeholder='Selecciona o escribe'
-                    disabled={!form.marca || loadingAPI}
-                  />
-                  <label htmlFor='modelo'>Modelo</label>
-                </span>
-              </div>
-            </div>
 
-            <div className='flex gap-3'>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <InputNumber
-                    id='cv'
-                    value={form.cv}
-                    onValueChange={(e) => setForm({ ...form, cv: e.value })}
-                    suffix=' CV'
-                  />
-                  <label htmlFor='cv'>Potencia</label>
-                </span>
-              </div>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <InputNumber
-                    id='anio'
-                    value={form.anio}
-                    onValueChange={(e) => setForm({ ...form, anio: e.value })}
-                    useGrouping={false}
-                  />
-                  <label htmlFor='anio'>Año</label>
-                </span>
-              </div>
-            </div>
-
-            <span className='p-float-label'>
-              <Dropdown
-                id='fuel'
-                value={form.combustible}
-                options={fuelOptions}
-                onChange={(e) => setForm({ ...form, combustible: e.value })}
-              />
-              <label htmlFor='fuel'>Combustible</label>
-            </span>
-
-            <span className='p-float-label'>
-              <InputTextarea
-                id='desc'
-                value={form.descripcion}
-                onChange={(e) =>
-                  setForm({ ...form, descripcion: e.target.value })
-                }
-                rows={3}
-                autoResize
-              />
-              <label htmlFor='desc'>Modificaciones / Descripción</label>
-            </span>
-
-            {/* --- SECCIÓN DE FOTOS --- */}
-            <div className='border-top-1 border-300 pt-4 mt-2'>
-              <h3 className='text-xl font-bold text-800 m-0 mb-3'>
-                Imágenes del Vehículo
-              </h3>
-
-              {/* Foto Principal */}
-              <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative mb-4'>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={(e) => setImageFile(e.target.files[0])}
-                  className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
-                />
-                <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
-                  <i className='pi pi-camera text-2xl text-600'></i>
-                  <span className='text-sm text-700 font-semibold'>
-                    {imageFile
-                      ? imageFile.name
-                      : form.image_url
-                        ? 'Cambiar foto principal'
-                        : 'Foto principal (Portada)'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Galería Adicional */}
-              <div className='bg-gray-50 border-round-xl p-3 border-1 border-200'>
-                <div className='gallery-upload-zone'>
-                  <input
-                    type='file'
-                    accept='image/*'
-                    multiple
-                    onChange={handleExtraImagesChange}
-                    className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
-                  />
-                  <div className='flex flex-column align-items-center gap-1 pointer-events-none'>
-                    <i className='pi pi-images text-xl text-blue-500'></i>
-                    <span className='text-sm font-bold text-700'>
-                      Añadir fotos a la galería
-                    </span>
-                    <span className='text-xs text-500'>
-                      Selecciona varias imágenes a la vez
-                    </span>
-                  </div>
+                  {activeLocation && (
+                    <Button
+                      label='Ver toda España'
+                      icon='pi pi-map'
+                      className='p-button-outlined p-button-secondary w-full mt-3 font-bold'
+                      onClick={() => navigate('/eventos')}
+                    />
+                  )}
                 </div>
 
-                {/* Previsualización de imágenes (Existentes y Nuevas) */}
-                {(existingExtraImages.length > 0 ||
-                  extraImageFiles.length > 0) && (
-                  <div className='gallery-preview-grid'>
-                    {/* Fotos ya guardadas en DB */}
-                    {existingExtraImages.map((img) => (
-                      <div key={img.id} className='gallery-preview-item'>
-                        <img src={img.image_url} alt='Extra guardada' />
-                        <button
-                          type='button'
-                          className='remove-preview-btn'
-                          onClick={() => removeExistingImage(img.id)}
-                        >
-                          <i className='pi pi-times'></i>
-                        </button>
+                <div className='mb-6'>
+                  <div className='text-xs font-bold text-400 uppercase tracking-widest mb-3 flex align-items-center gap-2'>
+                    <Filter size={14} /> Filtros
+                  </div>
+                  <div className='technical-search mb-4'>
+                    <Search size={16} className='search-icon' />
+                    <input
+                      type='text'
+                      placeholder='Busca por nombre...'
+                      value={filters.text}
+                      onChange={(e) =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          text: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className='flex flex-column gap-2'>
+                    {EVENT_TYPES.map((type, i) => (
+                      <div
+                        key={i}
+                        className={`category-item ${filters.type === type.value ? `active theme-${type.theme}` : ''}`}
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            type: prev.type === type.value ? null : type.value,
+                          }))
+                        }
+                      >
+                        <span className='text-xl mr-2'>
+                          {type.icon || <Grid size={16} />}
+                        </span>
+                        <span className='font-bold text-sm'>{type.label}</span>
+                        {filters.type === type.value && (
+                          <div className='ml-auto w-2 h-2 border-circle indicator'></div>
+                        )}
                       </div>
                     ))}
+                  </div>
+                </div>
 
-                    {/* Fotos nuevas pendientes de subir */}
-                    {extraImageFiles.map((file, idx) => (
-                      <div key={idx} className='gallery-preview-item'>
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt='Nueva preview'
+                {favorites.length > 0 && (
+                  <div>
+                    <div className='text-xs font-bold text-400 uppercase tracking-widest mb-3 flex align-items-center gap-2'>
+                      <Heart size={14} /> Favoritos ({favorites.length})
+                    </div>
+                    <div className='flex flex-column gap-2'>
+                      {favorites.slice(0, 3).map((fav) => (
+                        <div
+                          key={fav.id}
+                          className='flex align-items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 border-round-md transition-colors'
+                          onClick={() => navigate(`/evento/${fav.id}`)}
+                        >
+                          <img
+                            src={fav.image}
+                            alt=''
+                            className='w-2rem h-2rem border-round-md object-cover'
+                          />
+                          <span className='text-sm font-bold text-700 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
+                            {fav.titulo}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className='col-12 lg:col-9 py-6 px-4 lg:pl-5 border-left-1 border-gray-200 content-area'>
+              {events.featured.length > 0 &&
+                !filters.text &&
+                !filters.type &&
+                !activeLocation && (
+                  <div className='mb-8'>
+                    <TechnicalCoverCard event={events.featured[0]} />
+                  </div>
+                )}
+
+              <div className='flex align-items-center justify-content-between mb-5 border-bottom-2 border-gray-100 pb-2'>
+                <div className='flex gap-5'>
+                  <button
+                    className={`tech-tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('upcoming')}
+                  >
+                    PRÓXIMOS{' '}
+                    <span className='bg-gray-100 text-gray-900 px-2 py-0 border-round-sm text-xs ml-1'>
+                      {filteredUpcoming.length}
+                    </span>
+                  </button>
+                  <button
+                    className={`tech-tab-btn ${activeTab === 'past' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('past')}
+                  >
+                    HISTORIAL{' '}
+                    <span className='bg-gray-100 text-gray-600 px-2 py-0 border-round-sm text-xs ml-1'>
+                      {filteredPast.length}
+                    </span>
+                  </button>
+                </div>
+                <div className='hidden md:flex text-400 gap-2'>
+                  <List size={20} className='text-900' />
+                  <Grid size={20} />
+                </div>
+              </div>
+
+              <div className='flex flex-column gap-4'>
+                <AnimatePresence mode='popLayout'>
+                  {currentList.length > 0 ? (
+                    currentList.map((ev) => (
+                      <MotionDiv
+                        key={ev.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <TimelineEventCard
+                          event={ev}
+                          isPast={activeTab === 'past'}
+                          session={session}
                         />
-                        <button
-                          type='button'
-                          className='remove-preview-btn'
-                          onClick={() => removeExtraFile(idx)}
-                        >
-                          <i className='pi pi-times'></i>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      </MotionDiv>
+                    ))
+                  ) : (
+                    <div className='text-center py-8 border-2 border-dashed border-gray-200 border-round-lg'>
+                      <Layers
+                        size={48}
+                        className='text-gray-300 mb-3 mx-auto'
+                      />
+                      <h3 className='text-xl font-black text-gray-900 m-0'>
+                        Sin resultados
+                      </h3>
+                      <p className='text-500 font-medium'>
+                        Ajusta los filtros para encontrar eventos.
+                      </p>
+                    </div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
-
-            <Button
-              label={editingId ? 'Guardar Cambios' : 'Guardar Vehículo'}
-              icon='pi pi-check'
-              severity='help'
-              onClick={handleSubmit}
-              loading={loading}
-              className='mt-3 py-3 font-bold text-lg border-round-xl shadow-2'
-            />
           </div>
-        </Dialog>
+        </div>
+        <AddEventDialog
+          visible={showModal}
+          onHide={() => setShowModal(false)}
+          onEventAdded={fetchAllEvents}
+          session={session}
+        />
       </div>
     </PageTransition>
   )
 }
 
-export default GaragePage
+export default EventsPage
