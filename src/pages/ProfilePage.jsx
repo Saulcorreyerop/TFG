@@ -8,6 +8,7 @@ import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Toast } from 'primereact/toast'
+import { Galleria } from 'primereact/galleria'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 import {
@@ -51,6 +52,9 @@ const ProfilePage = ({ session }) => {
   })
   const [avatarFile, setAvatarFile] = useState(null)
 
+  // ESTADO PARA LA GALERÍA
+  const [galleryImages, setGalleryImages] = useState(null)
+
   useEffect(() => {
     if (session) {
       fetchAllData()
@@ -75,14 +79,14 @@ const ProfilePage = ({ session }) => {
       })
     }
 
-    // 2. Vehículos
+    // 2. Vehículos (Ahora traemos TODAS las fotos)
     const { data: vehData } = await supabase
       .from('vehicles')
-      .select('id, marca, modelo, image_url')
+      .select('*, vehicle_images(*)')
       .eq('user_id', session.user.id)
     if (vehData) setMyVehicles(vehData)
 
-    // 3. Mi Crew (La primera en la que esté aprobado)
+    // 3. Mi Crew
     const { data: crewMemberData } = await supabase
       .from('crew_members')
       .select('crews(*)')
@@ -138,6 +142,59 @@ const ProfilePage = ({ session }) => {
     } catch (err) {
       console.warn('Tabla follows no lista aún o error:', err)
     }
+  }
+
+  // --- LÓGICA DE GALERÍA ---
+  const openGalleryViewer = (car) => {
+    const images = []
+    if (car.image_url)
+      images.push({
+        itemImageSrc: car.image_url,
+        thumbnailImageSrc: car.image_url,
+        alt: 'Principal',
+      })
+    if (car.vehicle_images && car.vehicle_images.length > 0) {
+      car.vehicle_images.forEach((img) => {
+        images.push({
+          itemImageSrc: img.image_url,
+          thumbnailImageSrc: img.image_url,
+          alt: 'Detalle',
+        })
+      })
+    }
+    if (images.length > 0) setGalleryImages(images)
+    else navigate('/garaje') // Si no hay fotos ni siquiera principal, le mandamos a su garaje a añadir
+  }
+
+  const galleryItemTemplate = (item) => {
+    return (
+      <img
+        src={item.itemImageSrc}
+        alt={item.alt}
+        style={{
+          width: '100%',
+          maxHeight: '70vh',
+          objectFit: 'contain',
+          display: 'block',
+        }}
+      />
+    )
+  }
+
+  const galleryThumbnailTemplate = (item) => {
+    return (
+      <img
+        src={item.thumbnailImageSrc}
+        alt={item.alt}
+        style={{
+          width: '100%',
+          height: '80px',
+          objectFit: 'cover',
+          display: 'block',
+          borderRadius: '4px',
+        }}
+      />
+    )
   }
 
   const handleAvatarUpload = async (file) => {
@@ -267,6 +324,28 @@ const ProfilePage = ({ session }) => {
       <div className='max-w-6xl mx-auto p-3 md:p-5'>
         <Toast ref={toast} />
 
+        {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
+        <Dialog
+          visible={!!galleryImages}
+          onHide={() => setGalleryImages(null)}
+          header='Galería del Vehículo'
+          style={{ width: '90vw', maxWidth: '800px' }}
+          dismissableMask
+        >
+          {galleryImages && (
+            <Galleria
+              value={galleryImages}
+              numVisible={5}
+              circular
+              autoPlay
+              transitionInterval={3000}
+              item={galleryItemTemplate}
+              thumbnail={galleryThumbnailTemplate}
+              style={{ maxWidth: '100%' }}
+            />
+          )}
+        </Dialog>
+
         {/* HEADER DEL PERFIL */}
         <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 border-100'>
           <div className='relative'>
@@ -392,32 +471,45 @@ const ProfilePage = ({ session }) => {
             <Car className='text-purple-600' size={28} /> Mi Garaje
           </h2>
           <div className='grid m-0'>
-            {myVehicles.map((v) => (
-              <div key={v.id} className='col-12 sm:col-6 lg:col-3 p-2'>
-                <div
-                  className='vehicle-card'
-                  onClick={() => navigate('/garaje')}
-                >
-                  <div className='vehicle-img-wrapper'>
-                    {v.image_url ? (
-                      <img src={v.image_url} alt={`${v.marca} ${v.modelo}`} />
-                    ) : (
-                      <div className='flex h-full align-items-center justify-content-center text-300'>
-                        <ImageIcon size={40} />
-                      </div>
-                    )}
-                  </div>
-                  <div className='p-3 text-center'>
-                    <div className='font-black text-lg text-900 mb-1 line-clamp-1'>
-                      {v.marca}
+            {myVehicles.map((v) => {
+              const totalImages =
+                (v.image_url ? 1 : 0) +
+                (v.vehicle_images ? v.vehicle_images.length : 0)
+
+              return (
+                <div key={v.id} className='col-12 sm:col-6 lg:col-3 p-2'>
+                  <div
+                    className='vehicle-card cursor-pointer'
+                    onClick={() => openGalleryViewer(v)}
+                  >
+                    <div className='vehicle-img-wrapper'>
+                      {v.image_url ? (
+                        <img src={v.image_url} alt={`${v.marca} ${v.modelo}`} />
+                      ) : (
+                        <div className='flex h-full align-items-center justify-content-center text-300'>
+                          <ImageIcon size={40} />
+                        </div>
+                      )}
+
+                      {/* INDICADOR DE FOTOS */}
+                      {totalImages > 1 && (
+                        <div className='gallery-indicator-badge'>
+                          <i className='pi pi-images'></i> 1/{totalImages}
+                        </div>
+                      )}
                     </div>
-                    <div className='text-sm text-600 line-clamp-1 font-medium'>
-                      {v.modelo}
+                    <div className='p-3 text-center'>
+                      <div className='font-black text-lg text-900 mb-1 line-clamp-1'>
+                        {v.marca}
+                      </div>
+                      <div className='text-sm text-600 line-clamp-1 font-medium'>
+                        {v.modelo}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             <div className='col-12 sm:col-6 lg:col-3 p-2'>
               <div
                 className='add-vehicle-card'

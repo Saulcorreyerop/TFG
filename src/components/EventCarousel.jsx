@@ -8,7 +8,15 @@ import { Avatar } from 'primereact/avatar'
 import AddEventDialog from './AddEventDialog'
 import { useFavorites } from '../hooks/useFavorites'
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, MapPin, Plus, Heart, Sparkles, User } from 'lucide-react'
+import {
+  CalendarDays,
+  MapPin,
+  Plus,
+  Heart,
+  Sparkles,
+  User,
+  Shield,
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 import './Home.css'
 
@@ -70,12 +78,17 @@ const CarouselItem = ({ event, session }) => {
             }}
           ></div>
 
-          {/* Etiqueta de Categoría */}
-          <div className='absolute top-0 left-0 m-3 z-2'>
+          {/* Etiquetas (Categoría y Privacidad) */}
+          <div className='absolute top-0 left-0 m-3 z-2 flex flex-column gap-2 items-start'>
             <Tag
               value={event.tipo}
               className='bg-blue-600 text-white font-black border-round-xl px-3 py-2 uppercase tracking-widest text-xs shadow-2'
             />
+            {event.is_private && (
+              <Tag className='bg-yellow-500 text-black font-black border-round-xl px-3 py-2 uppercase tracking-widest text-xs shadow-2 border-none flex align-items-center'>
+                <Shield size={14} className='mr-1' /> SECRETO
+              </Tag>
+            )}
           </div>
 
           {/* Badge de Fecha Premium */}
@@ -189,12 +202,34 @@ const EventCarousel = () => {
 
   const fetchEvents = async () => {
     setLoadingState(true)
-    const { data, error } = await supabase
+
+    // 1. Averiguamos las Crews
+    let userCrews = []
+    if (currentUserSession) {
+      const { data: crewData } = await supabase
+        .from('crew_members')
+        .select('crew_id')
+        .eq('user_id', currentUserSession.user.id)
+        .eq('status', 'approved')
+      if (crewData) userCrews = crewData.map((c) => c.crew_id)
+    }
+
+    // 2. Consulta y Filtro
+    let query = supabase
       .from('events')
       .select('*, profiles(username, avatar_url)')
       .gte('fecha', new Date().toISOString())
       .order('fecha', { ascending: true })
-      .limit(9)
+
+    if (userCrews.length > 0) {
+      query = query.or(
+        `is_private.is.null,is_private.eq.false,crew_id.in.(${userCrews.join(',')})`,
+      )
+    } else {
+      query = query.or('is_private.is.null,is_private.eq.false')
+    }
+
+    const { data, error } = await query.limit(9)
 
     if (!error && data) {
       const processedEvents = data.map((ev) => {
@@ -223,7 +258,7 @@ const EventCarousel = () => {
   useEffect(() => {
     fetchEvents()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [currentUserSession])
 
   const handleOpenModal = () => {
     if (!currentUserSession) {

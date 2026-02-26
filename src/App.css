@@ -21,13 +21,34 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Fix Mapa --- */
+/* --- Fix Mapa (Versión Definitiva) --- */
 .leaflet-container {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
   min-height: 400px;
   background-color: #e9ecef;
   z-index: 1;
+  display: block;
+}
+
+/* 🚨 REGLA MAESTRA: Esto arregla los cuadros grises y solapados 🚨 */
+.leaflet-container img.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Arreglo para que los controles no queden ocultos tras el header */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 400 !important;
+}
+
+/* Asegura que el contenedor de los cuadros esté bien posicionado */
+.leaflet-tile-container {
+  pointer-events: none;
 }
 
 @media screen and (max-width: 960px) {
@@ -66,12 +87,12 @@ body {
 @font-face {
   font-family: 'MiFuente';
   src: url('./fuente.woff2') format('woff2');
-  font-display: swap; /* <--- AÑADE ESTO OBLIGATORIAMENTE */
+  font-display: swap;
 }
 
 /* --- FOOTER PREMIUM REDESIGN --- */
 .footer-premium {
-  background-color: #0f172a !important; /* Fondo negro azulado obligatorio */
+  background-color: #0f172a !important;
   color: #ffffff !important;
   margin-top: auto;
   border-top-left-radius: 40px;

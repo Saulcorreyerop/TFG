@@ -8,6 +8,7 @@ import { Dropdown } from 'primereact/dropdown'
 import { Button } from 'primereact/button'
 import { Toast } from 'primereact/toast'
 import { AutoComplete } from 'primereact/autocomplete'
+import { InputSwitch } from 'primereact/inputswitch'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import {
   MapPin,
@@ -18,6 +19,7 @@ import {
   Send,
   Map as MapIcon,
   Tag as TagIcon,
+  Shield,
 } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -32,7 +34,6 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-// COMPONENTE ACTUALIZADO PARA DEVOLVER LAS COORDENADAS AL PADRE
 function LocationSelector({ onLocationSelect }) {
   useMapEvents({
     click(e) {
@@ -56,6 +57,8 @@ const AddEventDialog = ({
   const [suggestions, setSuggestions] = useState([])
   const fileInputRef = useRef(null)
 
+  const [adminCrews, setAdminCrews] = useState([])
+
   const [nuevoEvento, setNuevoEvento] = useState({
     titulo: '',
     tipo: '',
@@ -65,8 +68,30 @@ const AddEventDialog = ({
     lat: null,
     lng: null,
     direccion: '',
-    ubicacion: '', // AÑADIDO: Para guardar el texto en la BD
+    ubicacion: '',
+    is_private: false,
+    crew_id: null,
   })
+
+  useEffect(() => {
+    if (visible && session) {
+      const fetchUserCrews = async () => {
+        const { data } = await supabase
+          .from('crew_members')
+          .select('crew_id, crews(id, name)')
+          .eq('user_id', session.user.id)
+          .eq('status', 'approved')
+
+        if (data && data.length > 0) {
+          const formattedCrews = data.map((d) => d.crews)
+          setAdminCrews(formattedCrews)
+        } else {
+          setAdminCrews([])
+        }
+      }
+      fetchUserCrews()
+    }
+  }, [visible, session])
 
   useEffect(() => {
     if (initialLat && initialLng) {
@@ -106,16 +131,14 @@ const AddEventDialog = ({
     }
   }
 
-  // CUANDO EL USUARIO ELIGE UNA DIRECCIÓN DEL BUSCADOR
   const onAddressSelect = (e) => {
     const selected = e.value
-    // Recortamos el texto largo a algo más limpio (Ej: "Madrid, España")
     const shortUbicacion = selected.label.split(',').slice(0, 2).join(',')
 
     setNuevoEvento({
       ...nuevoEvento,
       direccion: selected.label,
-      ubicacion: shortUbicacion, // Guardamos la ciudad
+      ubicacion: shortUbicacion,
       lat: selected.lat,
       lng: selected.lng,
     })
@@ -127,7 +150,6 @@ const AddEventDialog = ({
     })
   }
 
-  // NUEVO: REVERSE GEOCODING CUANDO EL USUARIO PINCHA EN EL MAPA
   const handleLocationSelect = async (latlng) => {
     setShowMapModal(false)
     setNuevoEvento((prev) => ({ ...prev, lat: latlng.lat, lng: latlng.lng }))
@@ -145,7 +167,6 @@ const AddEventDialog = ({
       )
       const data = await response.json()
 
-      // Intentamos sacar la ciudad o pueblo, y la provincia
       const address = data.address || {}
       const city =
         address.city || address.town || address.village || address.county || ''
@@ -167,7 +188,6 @@ const AddEventDialog = ({
       })
     } catch (error) {
       console.error(error)
-      // Si falla, guardamos al menos un genérico para que no crashee
       setNuevoEvento((prev) => ({
         ...prev,
         ubicacion: 'Ubicación seleccionada en mapa',
@@ -234,7 +254,6 @@ const AddEventDialog = ({
         ? nuevoEvento.tipo.value
         : nuevoEvento.tipo
 
-    // MODIFICACIÓN: Añadimos .select() al final para que Supabase nos devuelva el ID del evento recién creado
     const { data: newEventData, error } = await supabase
       .from('events')
       .insert([
@@ -247,6 +266,8 @@ const AddEventDialog = ({
           lat: nuevoEvento.lat,
           lng: nuevoEvento.lng,
           user_id: session.user.id,
+          crew_id: nuevoEvento.is_private ? nuevoEvento.crew_id : null,
+          is_private: nuevoEvento.is_private,
         },
       ])
       .select()
@@ -260,36 +281,51 @@ const AddEventDialog = ({
       })
     }
 
-    // --- LÓGICA DE AVISO GLOBAL (NUEVO EVENTO) ---
     if (newEventData && newEventData.length > 0) {
       const newEventId = newEventData[0].id
 
-      // Buscamos a todos los usuarios registrados (menos al creador)
-      const { data: allUsers } = await supabase
-        .from('profiles')
-        .select('id')
-        .neq('id', session.user.id)
+      if (nuevoEvento.is_private) {
+        const { data: crewMembers } = await supabase
+          .from('crew_members')
+          .select('user_id')
+          .eq('crew_id', nuevoEvento.crew_id)
+          .eq('status', 'approved')
+          .neq('user_id', session.user.id)
 
-      if (allUsers && allUsers.length > 0) {
-        // Preparamos una notificación para cada usuario de la plataforma
-        const globalNotifications = allUsers.map((user) => ({
-          user_id: user.id, // El receptor
-          actor_id: session.user.id, // El creador del evento
-          tipo: 'nuevo_evento',
-          evento_id: newEventId,
-        }))
+        if (crewMembers && crewMembers.length > 0) {
+          const privateNotifications = crewMembers.map((m) => ({
+            user_id: m.user_id,
+            actor_id: session.user.id,
+            tipo: 'nuevo_evento',
+            evento_id: newEventId,
+          }))
+          await supabase.from('notifications').insert(privateNotifications)
+        }
+      } else {
+        const { data: allUsers } = await supabase
+          .from('profiles')
+          .select('id')
+          .neq('id', session.user.id)
 
-        // Insertamos todas las notificaciones en bloque
-        await supabase.from('notifications').insert(globalNotifications)
+        if (allUsers && allUsers.length > 0) {
+          const globalNotifications = allUsers.map((user) => ({
+            user_id: user.id,
+            actor_id: session.user.id,
+            tipo: 'nuevo_evento',
+            evento_id: newEventId,
+          }))
+          await supabase.from('notifications').insert(globalNotifications)
+        }
       }
     }
-    // ---------------------------------------------
 
     setLoading(false)
     toast.current.show({
       severity: 'success',
       summary: 'Éxito',
-      detail: 'Evento publicado y comunidad notificada.',
+      detail: nuevoEvento.is_private
+        ? 'Evento privado de Crew creado.'
+        : 'Evento publicado para todos.',
     })
 
     setNuevoEvento({
@@ -301,7 +337,10 @@ const AddEventDialog = ({
       lat: null,
       lng: null,
       direccion: '',
+      is_private: false,
+      crew_id: null,
     })
+
     if (onEventAdded) onEventAdded()
     onHide()
   }
@@ -437,6 +476,61 @@ const AddEventDialog = ({
             />
           </div>
 
+          {adminCrews.length > 0 && (
+            <div
+              className='field m-0 p-4 border-round-3xl border-1 border-blue-200 relative overflow-hidden'
+              style={{
+                background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+              }}
+            >
+              <div className='flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between gap-3 relative z-1'>
+                <div className='flex align-items-center gap-3'>
+                  <div className='bg-blue-600 text-white p-2 border-circle flex align-items-center justify-content-center shadow-2'>
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <h4 className='m-0 text-blue-900 font-black text-lg'>
+                      Evento Privado de Crew
+                    </h4>
+                    <p className='m-0 text-blue-700 text-sm font-medium mt-1'>
+                      Solo los miembros verán esta KDD
+                    </p>
+                  </div>
+                </div>
+                <InputSwitch
+                  checked={nuevoEvento.is_private}
+                  onChange={(e) => {
+                    setNuevoEvento((prev) => ({
+                      ...prev,
+                      is_private: e.value,
+                      crew_id: e.value
+                        ? prev.crew_id || adminCrews[0].id
+                        : null,
+                    }))
+                  }}
+                />
+              </div>
+
+              {nuevoEvento.is_private && adminCrews.length > 1 && (
+                <div className='mt-4 relative z-1 border-top-1 border-blue-200 pt-3'>
+                  <label className='text-blue-900 font-bold text-sm mb-2 block'>
+                    Selecciona el Club organizador
+                  </label>
+                  <Dropdown
+                    value={nuevoEvento.crew_id}
+                    options={adminCrews}
+                    optionLabel='name'
+                    optionValue='id'
+                    onChange={(e) =>
+                      setNuevoEvento({ ...nuevoEvento, crew_id: e.value })
+                    }
+                    className='w-full premium-input border-none shadow-1 bg-white'
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <div className='grid m-0 gap-4 md:gap-0'>
             <div className='col-12 md:col-6 md:pr-3 p-0 field m-0'>
               <label className='premium-label'>
@@ -541,7 +635,6 @@ const AddEventDialog = ({
               </div>
             </div>
 
-            {/* Opcional: mostrar la ubicación traducida debajo para confirmar */}
             {nuevoEvento.ubicacion && (
               <div className='mt-3 text-sm font-bold text-blue-600'>
                 <i className='pi pi-check-circle mr-2'></i>
@@ -655,9 +748,16 @@ const AddEventDialog = ({
                 : [40.4168, -3.7038]
             }
             zoom={nuevoEvento.lat ? 15 : 5}
-            style={{ height: '100%', width: '100%' }}
+            minZoom={5}
+            maxZoom={18}
+            style={{ height: '100%', width: '100%', background: '#e9ecef' }}
           >
-            <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
+            <TileLayer
+              url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              maxZoom={18}
+              keepBuffer={8}
+              updateWhenZooming={false}
+            />
             <LocationSelector onLocationSelect={handleLocationSelect} />
             {nuevoEvento.lat && (
               <Marker position={[nuevoEvento.lat, nuevoEvento.lng]} />

@@ -5,7 +5,6 @@ import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { Dropdown } from 'primereact/dropdown'
 import { Toast } from 'primereact/toast'
-import { Avatar } from 'primereact/avatar'
 import { addLocale } from 'primereact/api'
 import AddEventDialog from '../components/AddEventDialog'
 import { useFavorites } from '../hooks/useFavorites'
@@ -26,6 +25,7 @@ import {
   List,
   Star,
   ArrowRight,
+  Shield,
 } from 'lucide-react'
 import './EventsPage.css'
 import { Helmet } from 'react-helmet-async'
@@ -125,7 +125,6 @@ const TechnicalCoverCard = ({ event }) => {
         />
         <div className='cover-overlay'></div>
       </div>
-
       <div className='cover-content'>
         <div className='flex align-items-center gap-2 mb-4'>
           <span className='tech-badge bg-white text-black'>
@@ -134,11 +133,15 @@ const TechnicalCoverCard = ({ event }) => {
           <span className='tech-badge bg-black text-white border-1 border-white-alpha-30'>
             {event.tipo}
           </span>
+          {event.is_private && (
+            <span className='tech-badge bg-yellow-500 text-black border-1 border-yellow-600'>
+              <Shield size={14} className='mr-1' /> SECRETO
+            </span>
+          )}
         </div>
         <h1 className='text-4xl md:text-6xl font-black text-white m-0 line-height-1 tracking-tight mb-4'>
           {event.titulo}
         </h1>
-
         <div className='flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between w-full border-top-1 border-white-alpha-20 pt-4 mt-auto gap-4'>
           <div className='flex gap-4'>
             <div className='text-white pr-4 border-right-1 border-white-alpha-20'>
@@ -161,7 +164,6 @@ const TechnicalCoverCard = ({ event }) => {
               </div>
             </div>
           </div>
-
           <div className='flex align-items-center gap-2 text-white font-bold tracking-widest uppercase text-sm group-hover:text-blue-300 transition-colors'>
             Ir al evento{' '}
             <ArrowRight
@@ -191,22 +193,29 @@ const TimelineEventCard = React.memo(({ event, isPast = false, session }) => {
         <span className='day'>{event.dayNumber}</span>
         <span className='month'>{event.monthShort}</span>
       </div>
-
       <div className='timeline-image-wrapper'>
         <img src={event.image} alt={event.titulo} loading='lazy' />
         {isPast && <div className='past-label'>FINALIZADO</div>}
       </div>
-
       <div className='timeline-info'>
         <div className='flex align-items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-500'>
           <span className='text-blue-600'>{event.tipo}</span>
+
+          {event.is_private && (
+            <>
+              <span>•</span>
+              <span className='text-yellow-600 flex align-items-center gap-1'>
+                <Shield size={12} /> CREW
+              </span>
+            </>
+          )}
+
           <span>•</span>
           <span className='flex align-items-center gap-1'>
             <Clock size={12} /> {event.time}h
           </span>
         </div>
         <h3 className='text-xl font-black text-900 m-0 mb-3'>{event.titulo}</h3>
-
         <div className='flex align-items-center justify-content-between mt-auto'>
           <div className='flex align-items-center gap-2 text-sm font-semibold text-700'>
             <User size={16} className='text-500' />{' '}
@@ -253,8 +262,8 @@ const EventsPage = ({ session }) => {
   if (provincia) {
     try {
       activeLocation = decodeURIComponent(provincia).replace(/-/g, ' ').trim()
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error('Error decoding location:', err)
       activeLocation = provincia.replace(/-/g, ' ').trim()
     }
   }
@@ -267,11 +276,34 @@ const EventsPage = ({ session }) => {
   const toast = useRef(null)
 
   const fetchAllEvents = useCallback(async () => {
-    const { data, error } = await supabase
+    // 1. Averiguamos las Crews
+    let userCrews = []
+    if (session) {
+      const { data: crewData } = await supabase
+        .from('crew_members')
+        .select('crew_id')
+        .eq('user_id', session.user.id)
+        .eq('status', 'approved')
+      if (crewData) userCrews = crewData.map((c) => c.crew_id)
+    }
+
+    // 2. Consulta y Filtro
+    let query = supabase
       .from('events')
       .select('*, profiles(username)')
       .order('fecha', { ascending: false })
+
+    if (userCrews.length > 0) {
+      query = query.or(
+        `is_private.is.null,is_private.eq.false,crew_id.in.(${userCrews.join(',')})`,
+      )
+    } else {
+      query = query.or('is_private.is.null,is_private.eq.false')
+    }
+
+    const { data, error } = await query
     const now = new Date()
+
     if (!error && data) {
       const processed = data.map((ev) => formatEventData(ev))
       const future = processed
@@ -285,18 +317,21 @@ const EventsPage = ({ session }) => {
         featured: future.slice(0, 1),
       })
     }
+
+    // 3. Favoritos
     if (session) {
-      const { data: favData, error: favError } = await supabase
+      const { data: favData } = await supabase
         .from('favorites')
         .select('event_id, events(*, profiles(username))')
         .eq('user_id', session.user.id)
-      if (!favError && favData) {
-        const validFavs = favData
-          .map((item) => item.events)
-          .filter((ev) => ev !== null)
-          .map((ev) => formatEventData(ev))
-          .filter((ev) => ev.dateObj >= now)
-        setFavorites(validFavs)
+      if (favData) {
+        setFavorites(
+          favData
+            .map((item) => item.events)
+            .filter((ev) => ev !== null)
+            .map((ev) => formatEventData(ev))
+            .filter((ev) => ev.dateObj >= now),
+        )
       }
     } else setFavorites([])
   }, [session])
@@ -312,30 +347,16 @@ const EventsPage = ({ session }) => {
       const textToSearch = normalizeText(filters.text)
 
       return list.filter((e) => {
-        // Extraemos ABSOLUTAMENTE TODO el evento a texto bruto (incluyendo objetos anidados de Leaflet/Supabase)
         const textoCompleto = normalizeText(JSON.stringify(e))
-
         const matchText =
           textToSearch === '' || textoCompleto.includes(textToSearch)
-
         const matchType = filters.type
           ? filters.type
               .split(',')
               .some((val) => normalizeText(e.tipo).includes(normalizeText(val)))
           : true
-
         const matchLocation =
           locToSearch === '' || textoCompleto.includes(locToSearch)
-
-        // 🔴 CHIVATO DE DEPURACIÓN PARA LA CONSOLA (F12)
-        if (locToSearch !== '') {
-          console.log(`--- EVALUANDO EVENTO: ${e.titulo} ---`)
-          console.log(
-            `¿Encuentra la palabra "${locToSearch}"?: ${matchLocation}`,
-          )
-          console.log(`Textos que está leyendo el filtro:`, textoCompleto)
-        }
-
         return matchText && matchType && matchLocation
       })
     },
@@ -366,19 +387,10 @@ const EventsPage = ({ session }) => {
   return (
     <PageTransition>
       <Helmet>
-        <title>
-          {activeLocation
-            ? `Eventos de coches en ${activeLocation} | CarMeet ESP`
-            : 'Agenda de Eventos | CarMeet ESP'}
-        </title>
-        <meta
-          name='description'
-          content={`Descubre las mejores KDDs y rutas de motor en ${activeLocation || 'España'}.`}
-        />
+        <title>Agenda de Eventos | CarMeet ESP</title>
       </Helmet>
       <div className='technical-page-wrapper'>
         <Toast ref={toast} position='top-center' className='mt-6 z-5' />
-
         <div className='max-w-8xl mx-auto'>
           <div className='grid grid-nogutter'>
             <div className='col-12 lg:col-3 lg:pr-5 relative'>
@@ -390,9 +402,7 @@ const EventsPage = ({ session }) => {
                       : 'Agenda de Eventos'}
                   </h1>
                   <p className='text-500 font-medium mt-2'>
-                    {activeLocation
-                      ? `Descubre las mejores KDDs y rutas en ${activeLocation}.`
-                      : 'Explora las KDDs y rutas de la comunidad.'}
+                    Explora las KDDs y rutas de la comunidad.
                   </p>
 
                   <Button
@@ -402,6 +412,7 @@ const EventsPage = ({ session }) => {
                     onClick={handleOpenModal}
                   />
 
+                  {/* Botón Restaurado que usa navigate */}
                   {activeLocation && (
                     <Button
                       label='Ver toda España'
@@ -413,9 +424,6 @@ const EventsPage = ({ session }) => {
                 </div>
 
                 <div className='mb-6'>
-                  <div className='text-xs font-bold text-400 uppercase tracking-widest mb-3 flex align-items-center gap-2'>
-                    <Filter size={14} /> Filtros
-                  </div>
                   <div className='technical-search mb-4'>
                     <Search size={16} className='search-icon' />
                     <input
@@ -446,14 +454,12 @@ const EventsPage = ({ session }) => {
                           {type.icon || <Grid size={16} />}
                         </span>
                         <span className='font-bold text-sm'>{type.label}</span>
-                        {filters.type === type.value && (
-                          <div className='ml-auto w-2 h-2 border-circle indicator'></div>
-                        )}
                       </div>
                     ))}
                   </div>
                 </div>
 
+                {/* Favoritos Restaurados que usa favorites */}
                 {favorites.length > 0 && (
                   <div>
                     <div className='text-xs font-bold text-400 uppercase tracking-widest mb-3 flex align-items-center gap-2'>
@@ -513,10 +519,6 @@ const EventsPage = ({ session }) => {
                     </span>
                   </button>
                 </div>
-                <div className='hidden md:flex text-400 gap-2'>
-                  <List size={20} className='text-900' />
-                  <Grid size={20} />
-                </div>
               </div>
 
               <div className='flex flex-column gap-4'>
@@ -546,9 +548,6 @@ const EventsPage = ({ session }) => {
                       <h3 className='text-xl font-black text-gray-900 m-0'>
                         Sin resultados
                       </h3>
-                      <p className='text-500 font-medium'>
-                        Ajusta los filtros para encontrar eventos.
-                      </p>
                     </div>
                   )}
                 </AnimatePresence>

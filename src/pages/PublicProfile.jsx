@@ -6,6 +6,7 @@ import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
+import { Galleria } from 'primereact/galleria'
 import PageTransition from '../components/PageTransition'
 import {
   Share2,
@@ -18,6 +19,7 @@ import {
   Image as ImageIcon,
   Shield,
 } from 'lucide-react'
+import { Dialog } from 'primereact/dialog'
 import './ProfilePage.css'
 
 const PublicProfile = () => {
@@ -38,6 +40,9 @@ const PublicProfile = () => {
   const [followingCount, setFollowingCount] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
+
+  // ESTADO PARA LA GALERÍA
+  const [galleryImages, setGalleryImages] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -79,10 +84,10 @@ const PublicProfile = () => {
           setUserCrew(crewMemberData.crews)
         }
 
-        // 3. Vehículos
+        // 3. Vehículos (Ahora traemos TODAS las fotos)
         const { data: vehicleData } = await supabase
           .from('vehicles')
-          .select('*')
+          .select('*, vehicle_images(*)')
           .eq('user_id', actualUserId)
         if (vehicleData) setVehicles(vehicleData)
 
@@ -125,6 +130,58 @@ const PublicProfile = () => {
 
     if (identifier) fetchPublicData()
   }, [identifier, session])
+
+  // --- LÓGICA DE GALERÍA ---
+  const openGalleryViewer = (car) => {
+    const images = []
+    if (car.image_url)
+      images.push({
+        itemImageSrc: car.image_url,
+        thumbnailImageSrc: car.image_url,
+        alt: 'Principal',
+      })
+    if (car.vehicle_images && car.vehicle_images.length > 0) {
+      car.vehicle_images.forEach((img) => {
+        images.push({
+          itemImageSrc: img.image_url,
+          thumbnailImageSrc: img.image_url,
+          alt: 'Detalle',
+        })
+      })
+    }
+    if (images.length > 0) setGalleryImages(images)
+  }
+
+  const galleryItemTemplate = (item) => {
+    return (
+      <img
+        src={item.itemImageSrc}
+        alt={item.alt}
+        style={{
+          width: '100%',
+          maxHeight: '70vh',
+          objectFit: 'contain',
+          display: 'block',
+        }}
+      />
+    )
+  }
+
+  const galleryThumbnailTemplate = (item) => {
+    return (
+      <img
+        src={item.thumbnailImageSrc}
+        alt={item.alt}
+        style={{
+          width: '100%',
+          height: '80px',
+          objectFit: 'cover',
+          display: 'block',
+          borderRadius: '4px',
+        }}
+      />
+    )
+  }
 
   const handleFollowToggle = async () => {
     if (!session?.user?.id) {
@@ -239,6 +296,28 @@ const PublicProfile = () => {
     <PageTransition>
       <div className='max-w-6xl mx-auto p-3 md:p-5 min-h-screen'>
         <Toast ref={toast} />
+
+        {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
+        <Dialog
+          visible={!!galleryImages}
+          onHide={() => setGalleryImages(null)}
+          header={`Galería de ${profile.username}`}
+          style={{ width: '90vw', maxWidth: '800px' }}
+          dismissableMask
+        >
+          {galleryImages && (
+            <Galleria
+              value={galleryImages}
+              numVisible={5}
+              circular
+              autoPlay
+              transitionInterval={3000}
+              item={galleryItemTemplate}
+              thumbnail={galleryThumbnailTemplate}
+              style={{ maxWidth: '100%' }}
+            />
+          )}
+        </Dialog>
 
         <div className='flex justify-content-between align-items-center mb-4'>
           <Button
@@ -375,41 +454,58 @@ const PublicProfile = () => {
             </div>
           ) : (
             <div className='grid m-0'>
-              {vehicles.map((v) => (
-                <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
-                  <div className='vehicle-card cursor-default hover:-translate-y-1 hover:shadow-2'>
+              {vehicles.map((v) => {
+                const totalImages =
+                  (v.image_url ? 1 : 0) +
+                  (v.vehicle_images ? v.vehicle_images.length : 0)
+
+                return (
+                  <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
+                    {/* Al hacer click en la tarjeta, abre la galería */}
                     <div
-                      className='vehicle-img-wrapper'
-                      style={{ height: '240px' }}
+                      className='vehicle-card cursor-pointer hover:-translate-y-1 hover:shadow-2'
+                      onClick={() => openGalleryViewer(v)}
                     >
-                      {v.image_url ? (
-                        <img src={v.image_url} alt={v.modelo} />
-                      ) : (
-                        <div className='flex h-full align-items-center justify-content-center text-300'>
-                          <ImageIcon size={40} />
-                        </div>
-                      )}
-                      <Tag
-                        value={v.combustible}
-                        className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
-                      />
-                    </div>
-                    <div className='p-4 text-center bg-white'>
-                      <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
-                        {v.marca} {v.modelo}
-                      </h3>
-                      <div className='text-md text-500 font-bold mb-3'>
-                        {v.anio} • {v.cv} CV
+                      <div
+                        className='vehicle-img-wrapper'
+                        style={{ height: '240px' }}
+                      >
+                        {v.image_url ? (
+                          <img src={v.image_url} alt={v.modelo} />
+                        ) : (
+                          <div className='flex h-full align-items-center justify-content-center text-300'>
+                            <ImageIcon size={40} />
+                          </div>
+                        )}
+                        <Tag
+                          value={v.combustible}
+                          className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
+                        />
+
+                        {/* INDICADOR DE FOTOS */}
+                        {totalImages > 1 && (
+                          <div className='gallery-indicator-badge'>
+                            <i className='pi pi-images'></i> 1/{totalImages}
+                          </div>
+                        )}
                       </div>
-                      {v.descripcion && (
-                        <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
-                          {v.descripcion}
-                        </p>
-                      )}
+                      <div className='p-4 text-center bg-white'>
+                        <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
+                          {v.marca} {v.modelo}
+                        </h3>
+                        <div className='text-md text-500 font-bold mb-3'>
+                          {v.anio} • {v.cv} CV
+                        </div>
+                        {v.descripcion && (
+                          <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
+                            {v.descripcion}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </section>

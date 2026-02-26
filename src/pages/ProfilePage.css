@@ -114,3 +114,22 @@
   border: 2px dashed #e2e8f0;
   color: #64748b;
 }
+
+/* Indicador de fotos en la tarjeta del vehículo */
+.gallery-indicator-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

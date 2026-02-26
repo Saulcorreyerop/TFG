@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import L from 'leaflet'
 import {
   MapContainer,
   TileLayer,
@@ -14,21 +15,69 @@ import { Button } from 'primereact/button'
 import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import AddEventDialog from '../components/AddEventDialog'
+import 'leaflet/dist/leaflet.css'
 import './MapPage.css'
 import PageTransition from '../components/PageTransition'
 
+// --- CREADOR DE PINES PERSONALIZADOS ---
+const getCustomIcon = (isPrivate) => {
+  const bgColor = isPrivate ? '#eab308' : '#3b82f6' // Dorado para Crew, Azul para públicos
+  const iconClass = isPrivate ? 'pi-lock' : 'pi-map-marker'
+
+  return L.divIcon({
+    className: 'custom-leaflet-pin',
+    html: `
+      <div style="display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
+        <div style="background-color: ${bgColor}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white;">
+          <i class="pi ${iconClass}" style="color: white; font-size: 15px;"></i>
+        </div>
+        <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid ${bgColor}; margin-top: -1px;"></div>
+      </div>
+    `,
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -40],
+  })
+}
+
 const MapController = ({ selectedEvent }) => {
   const map = useMap()
+
+  // 🚨 SOLUCIÓN DEFINITIVA A LOS CUADROS BLANCOS 🚨
+  useEffect(() => {
+    // 1. Observador de redimensionamiento: si el div cambia de tamaño, ajusta el mapa al instante
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize()
+    })
+
+    const container = map.getContainer()
+    if (container) {
+      resizeObserver.observe(container)
+    }
+
+    // 2. Apoyo secundario para la animación de entrada
+    const timer1 = setTimeout(() => map.invalidateSize(), 300)
+    const timer2 = setTimeout(() => map.invalidateSize(), 800)
+
+    return () => {
+      if (container) resizeObserver.unobserve(container)
+      resizeObserver.disconnect()
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+    }
+  }, [map])
+
+  // VUELO AL EVENTO SELECCIONADO
   useEffect(() => {
     if (selectedEvent?.lat && selectedEvent?.lng) {
       map.flyTo(
         [parseFloat(selectedEvent.lat), parseFloat(selectedEvent.lng)],
-        15,
+        16,
         { animate: true, duration: 1.5 },
       )
     }
-    setTimeout(() => map.invalidateSize(), 400)
   }, [selectedEvent, map])
+
   return null
 }
 
@@ -48,13 +97,11 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
     onClick={() => onClick(ev)}
     className={`surface-card p-3 shadow-1 border-round-xl cursor-pointer flex gap-3 align-items-center mb-2 mx-1 event-card ${isSelected ? 'selected' : ''}`}
   >
-    {/* CONTENEDOR DE IMAGEN BLINDADO: flex-shrink-0 impide que se aplaste */}
     <div className='w-4rem h-4rem border-round-lg overflow-hidden flex-shrink-0 shadow-1 bg-gray-100 relative'>
       <img
         src={ev.image_url || 'https://via.placeholder.com/150'}
         alt={ev.titulo}
         className='w-full h-full'
-        /* objectFit forzado nativamente para asegurar que nunca se deforme */
         style={{ objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
       />
     </div>
@@ -68,6 +115,14 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
           severity='info'
           style={{ fontSize: '0.6rem', padding: '2px 4px' }}
         />
+        {ev.is_private && (
+          <Tag
+            className='bg-yellow-100 text-yellow-700 border-1 border-yellow-300'
+            style={{ fontSize: '0.6rem', padding: '2px 4px' }}
+          >
+            <i className='pi pi-lock text-xs mr-1'></i>Crew
+          </Tag>
+        )}
         <span className='text-600 text-xs font-semibold white-space-nowrap'>
           <i className='pi pi-calendar mr-1 text-xs'></i> {ev.fechaCorta}
         </span>
@@ -106,11 +161,31 @@ const MapPage = ({ session }) => {
   ]
 
   const fetchEventos = useCallback(async () => {
-    const { data } = await supabase
+    let userCrews = []
+    if (session) {
+      const { data: crewData } = await supabase
+        .from('crew_members')
+        .select('crew_id')
+        .eq('user_id', session.user.id)
+        .eq('status', 'approved')
+      if (crewData) userCrews = crewData.map((c) => c.crew_id)
+    }
+
+    let query = supabase
       .from('events')
       .select('*, profiles(username)')
       .gte('fecha', new Date().toISOString())
       .order('fecha', { ascending: true })
+
+    if (userCrews.length > 0) {
+      query = query.or(
+        `is_private.is.null,is_private.eq.false,crew_id.in.(${userCrews.join(',')})`,
+      )
+    } else {
+      query = query.or('is_private.is.null,is_private.eq.false')
+    }
+
+    const { data } = await query
 
     if (data) {
       setEventos(
@@ -126,11 +201,11 @@ const MapPage = ({ session }) => {
         })),
       )
     }
-  }, [])
+  }, [session])
 
   useEffect(() => {
+    //eslint-disable-next-line
     fetchEventos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchEventos])
 
   const handleAddClick = () => {
@@ -168,30 +243,34 @@ const MapPage = ({ session }) => {
       <div className='map-page-container'>
         <Helmet>
           <title>Mapa de Eventos en Vivo | CarMeetESP</title>
-          <meta
-            name='description'
-            content='Descubre concentraciones de coches en tiempo real en toda España. Mapa interactivo de eventos de motor.'
-          />
-          <link rel='canonical' href='https://carmeetesp.netlify.app/mapa' />
         </Helmet>
 
         <div ref={mainContainerRef} className='map-page-container'>
           <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-          {/* 1. SECCIÓN DEL MAPA */}
           <div className='map-section'>
             <MapContainer
               center={centerSpain}
               zoom={5}
-              minZoom={4}
+              minZoom={5}
+              maxZoom={18}
               maxBounds={spainBounds}
+              maxBoundsViscosity={1.0}
               zoomControl={false}
               className='h-full w-full'
-              style={{ background: '#f0f0f0' }}
+              style={{ background: '#e9ecef' }}
+              zoomAnimation={true}
+              markerZoomAnimation={true}
+              trackResize={true}
+              fadeAnimation={true}
+              inertia={true}
             >
               <TileLayer
                 attribution='&copy; OpenStreetMap'
                 url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                maxZoom={18}
+                keepBuffer={8}
+                updateWhenZooming={false}
               />
               <MapController selectedEvent={selectedEvent} />
               <LocationMarker
@@ -204,7 +283,11 @@ const MapPage = ({ session }) => {
               />
 
               {eventos.map((ev) => (
-                <Marker key={ev.id} position={[ev.lat, ev.lng]}>
+                <Marker
+                  key={ev.id}
+                  position={[ev.lat, ev.lng]}
+                  icon={getCustomIcon(ev.is_private)}
+                >
                   <Popup>
                     <div
                       className='text-center p-1 cursor-pointer'
@@ -229,6 +312,15 @@ const MapPage = ({ session }) => {
                           />
                         </div>
                       )}
+
+                      {ev.is_private && (
+                        <div className='flex justify-content-center mb-1'>
+                          <span className='bg-yellow-100 text-yellow-700 font-bold px-2 py-1 border-round-md text-xs flex align-items-center gap-1 border-1 border-yellow-300'>
+                            <i className='pi pi-lock text-xs'></i> CREW
+                          </span>
+                        </div>
+                      )}
+
                       <h3 className='font-bold text-lg m-0 text-gray-900 hover:text-primary transition-colors'>
                         {ev.titulo}
                       </h3>
@@ -257,22 +349,8 @@ const MapPage = ({ session }) => {
                 </Marker>
               ))}
             </MapContainer>
-
-            {!session && (
-              <div className='absolute top-0 right-0 m-3 z-[400]'>
-                <Button
-                  icon='pi pi-user'
-                  rounded
-                  severity='warning'
-                  aria-label='Login'
-                  onClick={() => navigate('/login')}
-                  className='shadow-3'
-                />
-              </div>
-            )}
           </div>
 
-          {/* 2. SECCIÓN DE LA LISTA */}
           <aside className='sidebar-section'>
             <div
               className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
@@ -284,20 +362,7 @@ const MapPage = ({ session }) => {
                   style={{ backgroundColor: '#d1d5db' }}
                 ></div>
               </div>
-
               <div className='mt-2 md:mt-0 text-center flex justify-content-center align-items-center flex-column w-full'>
-                <div className='flex justify-content-center pt-3 pb-1 w-full cursor-pointer'>
-                  <div className='flex justify-content-center pt-1 pb-1 w-full cursor-pointer'>
-                    <div
-                      className='border-round-xl'
-                      style={{
-                        width: '40px',
-                        height: '6px',
-                        backgroundColor: '#cbd5e1',
-                      }}
-                    ></div>
-                  </div>
-                </div>
                 <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
                   Eventos
                 </h1>
@@ -305,7 +370,6 @@ const MapPage = ({ session }) => {
                   {eventos.length} disponibles
                 </p>
               </div>
-
               <Button
                 icon='pi pi-plus'
                 severity='help'
@@ -320,68 +384,11 @@ const MapPage = ({ session }) => {
             </div>
 
             <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
-              <div className='p-3 border-round-xl shadow-2 mb-4 instruction-card'>
-                <div
-                  className='flex align-items-center gap-2 font-bold text-lg mb-2'
-                  style={{ color: '#2c3e50' }}
-                >
-                  <i className='pi pi-map-marker text-xl text-purple' />
-                  <span>Añadir nuevo evento</span>
-                </div>
-
-                <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-                  Navega por el mapa, haz zoom en la zona exacta y
-                  <span className='font-bold text-900'>
-                    {' '}
-                    haz click sobre el lugar{' '}
-                  </span>
-                  donde comenzará el evento para crearlo.
-                </p>
-
-                <p className='m-0 line-height-3 text-700 text-sm mb-3'>
-                  - También puedes utilizar el
-                  <span className='font-bold text-900'>
-                    {' '}
-                    botón de abajo o la cruz de arriba{' '}
-                  </span>
-                  para añadirlo de una manera mas sencilla.
-                </p>
-
-                <div className='p-3 border-round-md flex align-items-start gap-2 text-xs note-box'>
-                  <i
-                    className='pi pi-info-circle text-purple'
-                    style={{ marginTop: '2px' }}
-                  />
-                  <span>
-                    <strong>Nota:</strong> Una vez que la fecha y hora del
-                    evento hayan pasado, este dejará de mostrarse
-                    automáticamente en el mapa.
-                  </span>
-                </div>
-
-                <div className='mt-3'>
-                  <Button
-                    label='Agregar Evento por Dirección'
-                    severity='help'
-                    outlined
-                    className='w-full text-purple-dark'
-                    onClick={handleAddClick}
-                  />
-                </div>
-
-                <div className='mt-3 text-center'>
-                  <Link to='/eventos'>
-                    <small>Ver todos los eventos</small>
-                  </Link>
-                </div>
-              </div>
-
               <div className='flex flex-column gap-2'>
-                <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
+                <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center mt-3'>
                   Eventos Próximos
                 </h2>
                 <hr className='event-separator' />
-
                 {eventos.length === 0 && (
                   <div className='text-center p-5 text-500'>
                     <i className='pi pi-map text-4xl mb-2 opacity-50' />
