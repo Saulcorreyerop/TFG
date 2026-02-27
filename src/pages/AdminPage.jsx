@@ -171,15 +171,15 @@ const AdminPage = ({ session }) => {
 
   const handleDeleteUser = (user) => {
     confirmDialog({
-      message: `¿Borrar el perfil de ${user.username} de la app? Sus coches y eventos desaparecerán.`,
-      header: 'Eliminar Usuario',
+      message: `¿Borrar DEFINITIVAMENTE a ${user.username}? Desaparecerá su cuenta de raíz, sus coches y eventos.`,
+      header: 'Eliminar Usuario Completo',
       icon: 'pi pi-user-minus',
       acceptClassName: 'p-button-danger',
       accept: async () => {
-        const { error } = await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', user.id)
+        const { error } = await supabase.rpc('delete_user_as_admin', {
+          target_user_id: user.id,
+        })
+
         if (error) {
           toast.current.show({
             severity: 'error',
@@ -190,7 +190,7 @@ const AdminPage = ({ session }) => {
           toast.current.show({
             severity: 'success',
             summary: 'Borrado',
-            detail: 'Perfil de usuario eliminado',
+            detail: 'Cuenta eliminada por completo',
           })
           setUsers((prev) => prev.filter((u) => u.id !== user.id))
         }
@@ -303,13 +303,25 @@ const AdminPage = ({ session }) => {
         {/* HEMOS ELIMINADO EL <ConfirmDialog /> de aquí para evitar que salga doble */}
 
         <div className='max-w-7xl mx-auto'>
-          <div className='flex align-items-center gap-3 mb-5 bg-black text-white p-4 border-round-2xl shadow-4'>
-            <div className='bg-red-500 p-3 border-circle text-white shadow-2'>
+          {/* BANNER DE ADMIN ARREGLADO */}
+          <div
+            className='flex align-items-center gap-3 mb-5 p-4 border-round-2xl shadow-4'
+            style={{ backgroundColor: '#0f172a' }}
+          >
+            <div
+              className='p-3 border-circle flex align-items-center justify-content-center shadow-2'
+              style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
+            >
               <ShieldAlert size={32} />
             </div>
             <div>
-              <h1 className='m-0 text-3xl font-black'>Panel de Moderación</h1>
-              <p className='m-0 text-gray-400 font-medium'>
+              <h1
+                className='m-0 text-3xl font-black'
+                style={{ color: '#ffffff' }}
+              >
+                Panel de Moderación
+              </h1>
+              <p className='m-0 font-medium mt-1' style={{ color: '#94a3b8' }}>
                 Modo Administrador activado. Ten cuidado con lo que borras.
               </p>
             </div>

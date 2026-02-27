@@ -152,6 +152,7 @@ const AuthPage = ({ session }) => {
 
   return (
     <PageTransition>
+      <Toast ref={toast} />
       <div className={`auth-wrapper ${!isLogin ? 'reverse' : ''}`}>
         {/* LADO DE LA IMAGEN */}
         <div className='auth-image-side'>
