@@ -288,18 +288,17 @@ const MapPage = ({ session }) => {
 
   return (
     <PageTransition>
-      <div className='map-page-container'>
+      <>
         <Helmet>
           <title>Mapa de Eventos en Vivo | CarMeetESP</title>
         </Helmet>
 
-        <div
-          ref={mainContainerRef}
-          className='map-page-container w-full relative'
-        >
+        {/* 🚨 CORRECCIÓN: Un solo contenedor principal sin clases que rompan el scroll 🚨 */}
+        <div ref={mainContainerRef} className='map-page-container'>
           <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-          <div className='map-section relative'>
+          {/* 🚨 CORRECCIÓN: Le hemos quitado el "relative" para que vuelva a funcionar el "sticky" de CSS en móvil 🚨 */}
+          <div className='map-section'>
             {/* 🔴 BARRA DE FILTROS ANIMADA ESTILO APPLE 🔴 */}
             <div className='map-filter-bar' ref={filterBarRef}>
               <div className='filter-indicator' style={indicatorStyle}></div>
@@ -487,7 +486,7 @@ const MapPage = ({ session }) => {
             initialLng={posicionTemp.lng}
           />
         </div>
-      </div>
+      </>
     </PageTransition>
   )
 }

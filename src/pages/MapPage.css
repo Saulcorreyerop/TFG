@@ -192,7 +192,6 @@
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.5);
   scroll-behavior: smooth;
-  position: relative; /* Clave para el indicador absoluto */
 }
 
 /* Ocultar barra de scroll pero mantener funcionalidad táctil */
