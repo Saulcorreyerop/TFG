@@ -31,6 +31,7 @@ import CommunityPage from './pages/CommunityPage'
 import EventDetailPage from './pages/EventDetailPage'
 import ContactPage from './pages/ContactPage'
 import CrewDetailPage from './pages/CrewDetailPage'
+import AdminPage from './pages/AdminPage'
 
 addLocale('es', {
   firstDayOfWeek: 1,
@@ -139,6 +140,16 @@ const AnimatedRoutes = ({ session }) => {
         <Route
           path='/crew/:crewName'
           element={<CrewDetailPage session={session} />}
+        />
+        <Route
+          path='/admin'
+          element={
+            session ? (
+              <AdminPage session={session} />
+            ) : (
+              <Navigate to='/login' state={{ returnUrl: '/admin' }} />
+            )
+          }
         />
       </Routes>
     </AnimatePresence>

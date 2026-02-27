@@ -16,6 +16,7 @@ import {
   Bell,
   LogOut,
   Menu,
+  ShieldAlert,
 } from 'lucide-react'
 
 const timeAgo = (dateString) => {
@@ -98,7 +99,7 @@ const Header = ({ session }) => {
       if (!session?.user?.id) return
       const { data } = await supabase
         .from('profiles')
-        .select('username, avatar_url')
+        .select('username, avatar_url, is_admin')
         .eq('id', session.user.id)
         .single()
       if (data) setUserProfile(data)
@@ -329,6 +330,18 @@ const Header = ({ session }) => {
                       tooltip='Salir'
                       tooltipOptions={{ position: 'bottom' }}
                     />
+                    {userProfile?.is_admin && (
+                      <Button
+                        icon={<ShieldAlert size={18} />}
+                        rounded
+                        text
+                        severity='warning'
+                        className='w-2rem h-2rem hover:bg-yellow-50 p-0 mr-1'
+                        onClick={() => navigate('/admin')}
+                        tooltip='Panel Admin'
+                        tooltipOptions={{ position: 'bottom' }}
+                      />
+                    )}
                   </div>
                 </>
               ) : (
