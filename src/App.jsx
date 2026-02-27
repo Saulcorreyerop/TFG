@@ -26,6 +26,7 @@ import AdminPage from './pages/AdminPage'
 
 import OneSignal from 'react-onesignal'
 
+// Configuración de Idioma PrimeReact
 addLocale('es', {
   firstDayOfWeek: 1,
   dayNames: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
@@ -37,6 +38,7 @@ addLocale('es', {
   clear: 'Limpiar',
 })
 
+// Configuración Iconos Leaflet
 let DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
@@ -80,52 +82,63 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let isInitialized = false
+    let isMounted = true
 
-    const setupApp = async () => {
+    // 1. CARGAMOS SUPABASE (Esto es rápido y no falla nunca)
+    const initAuth = async () => {
       try {
-        // 1. Cargamos sesión de Supabase
         const { data: { session: currentSession } } = await supabase.auth.getSession()
-        setSession(currentSession)
-
-        // 2. Inicializamos OneSignal SIN bloquear la carga de la app si falla
-        if (!isInitialized && !OneSignal.initialized) {
-          try {
-            await OneSignal.init({
-              appId: "47ff2ef2-cd67-40c7-9c3c-ba31d7c86f22",
-              allowLocalhostAsSecureOrigin: true,
-              notifyButton: { enable: false },
-            })
-            isInitialized = true
-            
-            if (currentSession?.user?.id) {
-              await OneSignal.login(currentSession.user.id)
-            }
-          } catch (osError) {
-            console.warn("OneSignal Warning:", osError.message)
-          }
-        }
-      } catch (err) {
-        console.error("Error cargando la aplicación:", err)
+        if (isMounted) setSession(currentSession)
+      } catch (error) {
+        console.error("Error de sesión:", error)
       } finally {
-        // MUY IMPORTANTE: Siempre quitamos la pantalla de carga, pase lo que pase
-        setLoading(false)
+        // 🚨 AQUÍ ESTÁ LA MAGIA: Quitamos el spinner INMEDIATAMENTE sin esperar a OneSignal
+        if (isMounted) setLoading(false)
       }
     }
 
-    setupApp()
+    initAuth()
 
-    // Escuchador de cambios de sesión
+    // 2. CARGAMOS ONESIGNAL EN SEGUNDO PLANO (Silenciosamente)
+    const initOneSignalInBackground = async () => {
+      if (!OneSignal.initialized) {
+        try {
+          await OneSignal.init({
+            appId: "47ff2ef2-cd67-40c7-9c3c-ba31d7c86f22",
+            allowLocalhostAsSecureOrigin: true,
+            notifyButton: { enable: false },
+          })
+          
+          // Si el usuario ya estaba logueado, lo vinculamos
+          const { data: { session: checkSession } } = await supabase.auth.getSession()
+          if (checkSession?.user?.id) {
+            OneSignal.login(checkSession.user.id)
+          }
+        } catch (err) {
+          console.warn("OneSignal ignorado en este móvil:", err.message)
+        }
+      }
+    }
+
+    initOneSignalInBackground()
+
+    // 3. ESCUCHADOR DE SESIONES
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session)
-      if (session?.user?.id && OneSignal.initialized) {
-        OneSignal.login(session.user.id)
-      } else if (!session && OneSignal.initialized) {
-        OneSignal.logout()
+      if (isMounted) setSession(session)
+      
+      if (OneSignal.initialized) {
+        if (session?.user?.id) {
+          OneSignal.login(session.user.id)
+        } else {
+          OneSignal.logout()
+        }
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   if (loading) {
