@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useLocation,
-} from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { addLocale } from 'primereact/api'
 import { ProgressSpinner } from 'primereact/progressspinner'
@@ -17,7 +11,6 @@ import { AnimatePresence } from 'framer-motion'
 import Header from './components/Header'
 import Footer from './components/Footer'
 
-// Importamos las páginas
 import HomePage from './pages/HomePage'
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
@@ -33,53 +26,17 @@ import AdminPage from './pages/AdminPage'
 
 import OneSignal from 'react-onesignal'
 
-// Configuración de Idioma PrimeReact
 addLocale('es', {
   firstDayOfWeek: 1,
-  dayNames: [
-    'domingo',
-    'lunes',
-    'martes',
-    'miércoles',
-    'jueves',
-    'viernes',
-    'sábado',
-  ],
+  dayNames: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
   dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
   dayNamesMin: ['D', 'L', 'M', 'X', 'J', 'V', 'S'],
-  monthNames: [
-    'enero',
-    'febrero',
-    'marzo',
-    'abril',
-    'mayo',
-    'junio',
-    'julio',
-    'agosto',
-    'septiembre',
-    'octubre',
-    'noviembre',
-    'diciembre',
-  ],
-  monthNamesShort: [
-    'ene',
-    'feb',
-    'mar',
-    'abr',
-    'may',
-    'jun',
-    'jul',
-    'ago',
-    'sep',
-    'oct',
-    'nov',
-    'dic',
-  ],
+  monthNames: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  monthNamesShort: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
   today: 'Hoy',
   clear: 'Limpiar',
 })
 
-// Configuración Iconos Leaflet
 let DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
@@ -89,7 +46,6 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
-// --- COMPONENTE DE RUTAS ANIMADAS ---
 const AnimatedRoutes = ({ session }) => {
   const location = useLocation()
 
@@ -103,109 +59,64 @@ const AnimatedRoutes = ({ session }) => {
         <Route path='/' element={<HomePage />} />
         <Route path='/mapa' element={<MapPage session={session} />} />
         <Route path='/eventos' element={<EventsPage session={session} />} />
-        <Route
-          path='/eventos/:provincia'
-          element={<EventsPage session={session} />}
-        />
+        <Route path='/eventos/:provincia' element={<EventsPage session={session} />} />
         <Route path='/comunidad' element={<CommunityPage />} />
         <Route path='/contacto' element={<ContactPage />} />
 
-        <Route
-          path='/garaje'
-          element={
-            session ? (
-              <GaragePage session={session} />
-            ) : (
-              <Navigate to='/login' state={{ returnUrl: '/garaje' }} />
-            )
-          }
-        />
-        <Route
-          path='/perfil'
-          element={
-            session ? (
-              <ProfilePage session={session} />
-            ) : (
-              <Navigate to='/login' state={{ returnUrl: '/perfil' }} />
-            )
-          }
-        />
-
+        <Route path='/garaje' element={session ? <GaragePage session={session} /> : <Navigate to='/login' state={{ returnUrl: '/garaje' }} />} />
+        <Route path='/perfil' element={session ? <ProfilePage session={session} /> : <Navigate to='/login' state={{ returnUrl: '/perfil' }} />} />
         <Route path='/usuario/:username' element={<PublicProfile />} />
         <Route path='/login' element={<AuthPage session={session} />} />
-        <Route
-          path='/evento/:id'
-          element={<EventDetailPage session={session} />}
-        />
-        <Route
-          path='/crew/:crewName'
-          element={<CrewDetailPage session={session} />}
-        />
-
-        <Route
-          path='/admin'
-          element={
-            session ? (
-              <AdminPage session={session} />
-            ) : (
-              <Navigate to='/login' state={{ returnUrl: '/admin' }} />
-            )
-          }
-        />
+        <Route path='/evento/:id' element={<EventDetailPage session={session} />} />
+        <Route path='/crew/:crewName' element={<CrewDetailPage session={session} />} />
+        <Route path='/admin' element={session ? <AdminPage session={session} /> : <Navigate to='/login' state={{ returnUrl: '/admin' }} />} />
       </Routes>
     </AnimatePresence>
   )
 }
 
-// --- COMPONENTE PRINCIPAL APP ---
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Variable para controlar que no se inicialice dos veces en modo desarrollo
     let isInitialized = false
 
-    const setupOneSignal = async () => {
-      if (isInitialized || OneSignal.initialized) return
-
+    const setupApp = async () => {
       try {
-        await OneSignal.init({
-          appId: '47ff2ef2-cd67-40c7-9c3c-ba31d7c86f22', // Tu ID
-          allowLocalhostAsSecureOrigin: true, // Permite pruebas en localhost
-          notifyButton: { enable: false },
-        })
+        // 1. Cargamos sesión de Supabase
+        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        setSession(currentSession)
 
-        isInitialized = true
-
-        // 🚨 IMPORTANTE: Solo intentamos el login si OneSignal se inicializó con éxito
-        const {
-          data: { session: currentSession },
-        } = await supabase.auth.getSession()
-        if (currentSession?.user?.id) {
-          console.log('Vinculando usuario con OneSignal...')
-          await OneSignal.login(currentSession.user.id)
+        // 2. Inicializamos OneSignal SIN bloquear la carga de la app si falla
+        if (!isInitialized && !OneSignal.initialized) {
+          try {
+            await OneSignal.init({
+              appId: "47ff2ef2-cd67-40c7-9c3c-ba31d7c86f22",
+              allowLocalhostAsSecureOrigin: true,
+              notifyButton: { enable: false },
+            })
+            isInitialized = true
+            
+            if (currentSession?.user?.id) {
+              await OneSignal.login(currentSession.user.id)
+            }
+          } catch (osError) {
+            console.warn("OneSignal Warning:", osError.message)
+          }
         }
       } catch (err) {
-        // Si el error es por el dominio (localhost), lo ignoramos para que no rompa la app
-        if (err.message?.includes('Can only be used on')) {
-          console.warn(
-            'OneSignal: Solo funciona en el dominio oficial o configurado.',
-          )
-        } else {
-          console.error('Fallo al inicializar OneSignal:', err)
-        }
+        console.error("Error cargando la aplicación:", err)
       } finally {
+        // MUY IMPORTANTE: Siempre quitamos la pantalla de carga, pase lo que pase
         setLoading(false)
       }
     }
 
-    setupOneSignal()
+    setupApp()
 
     // Escuchador de cambios de sesión
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       if (session?.user?.id && OneSignal.initialized) {
         OneSignal.login(session.user.id)
