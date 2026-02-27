@@ -1,38 +1,65 @@
-// AuthPage.jsx
 import React, { useState, useEffect, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { InputText } from 'primereact/inputtext'
 import { Password } from 'primereact/password'
 import { Button } from 'primereact/button'
-import { Card } from 'primereact/card'
-import { TabView, TabPanel } from 'primereact/tabview'
 import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
+import { Zap, ShieldCheck } from 'lucide-react'
+import './AuthPage.css'
 
-const AuthPage = () => {
+// Un Porsche 911 en tono oscuro y elegante para el Login
+const LOGIN_IMAGE =
+  'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&q=80&w=1200'
+
+// Un clásico JDM / Stance súper limpio para el Registro
+const REGISTER_IMAGE =
+  'https://images.unsplash.com/photo-1493238792000-8113da705763?auto=format&fit=crop&q=80&w=1200'
+
+const AuthPage = ({ session }) => {
   const toast = useRef(null)
   const location = useLocation()
-  const [loading, setLoading] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(0)
+  const navigate = useNavigate()
 
-  // Estados Login
+  const [loading, setLoading] = useState(false)
+  const [isLogin, setIsLogin] = useState(true)
+
   const [loginInput, setLoginInput] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
 
-  // Estados Registro
   const [regUsername, setRegUsername] = useState('')
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
 
+  // 🔴 LA MAGIA DE LA REDIRECCIÓN A PRUEBA DE FALLOS
   useEffect(() => {
-    if (location.state && location.state.activeIndex !== undefined) {
-      setActiveIndex(location.state.activeIndex)
+    if (session) {
+      setLoading(false) // Paramos el botón de cargar por si acaso
+
+      // 1. Si venimos de una ruta protegida (ej: /garaje nos mandó aquí)
+      if (location.state?.returnUrl) {
+        navigate(location.state.returnUrl, { replace: true })
+      }
+      // 2. Si el usuario pinchó en "Entrar" desde otra página (ej: /eventos)
+      else if (window.history.length > 2) {
+        navigate(-1)
+      }
+      // 3. Si entró escribiendo /login directamente
+      else {
+        navigate('/', { replace: true })
+      }
+    }
+  }, [session, navigate, location.state])
+
+  useEffect(() => {
+    if (location.state && location.state.activeIndex === 1) {
+      setIsLogin(false)
     }
   }, [location.state])
 
-  // --- LÓGICA DE LOGIN ---
+  // --- LOGIN ---
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -58,50 +85,52 @@ const AuthPage = () => {
         password: loginPassword,
       })
 
-      if (error) throw error
+      if (error) {
+        setLoading(false) // Solo paramos el loading si hay error
+        throw error
+      }
+
+      toast.current.show({
+        severity: 'success',
+        summary: 'Bienvenido',
+        detail: 'Autenticando...',
+        life: 2000,
+      })
+      // No tocamos nada más. El useEffect de arriba se encargará de redirigir en cuanto llegue la sesión.
     } catch (error) {
       toast.current.show({
         severity: 'error',
         summary: 'Error',
         detail: error.message,
       })
-    } finally {
       setLoading(false)
     }
   }
 
-  // --- LÓGICA DE REGISTRO ---
+  // --- REGISTRO ---
   const handleRegister = async (e) => {
     e.preventDefault()
 
     if (regPassword !== regConfirmPassword) {
-      toast.current.show({
+      return toast.current.show({
         severity: 'warn',
         summary: 'Cuidado',
         detail: 'Las contraseñas no coinciden',
       })
-      return
     }
-
     if (!regUsername) {
-      toast.current.show({
+      return toast.current.show({
         severity: 'warn',
-        summary: 'Falta datos',
+        summary: 'Faltan datos',
         detail: 'El nombre de usuario es obligatorio',
       })
-      return
     }
 
     setLoading(true)
-
     const { error } = await supabase.auth.signUp({
       email: regEmail,
       password: regPassword,
-      options: {
-        data: {
-          username: regUsername,
-        },
-      },
+      options: { data: { username: regUsername } },
     })
 
     if (error) {
@@ -113,148 +142,183 @@ const AuthPage = () => {
     } else {
       toast.current.show({
         severity: 'success',
-        summary: 'Éxito',
-        detail: 'Registro exitoso! Revisa tu correo.',
+        summary: '¡Cuenta Creada!',
+        detail: 'Revisa tu correo para verificar la cuenta.',
       })
-      setRegEmail('')
-      setRegPassword('')
-      setRegConfirmPassword('')
-      setRegUsername('')
+      setIsLogin(true)
     }
     setLoading(false)
   }
 
   return (
     <PageTransition>
-      <div className='flex justify-content-center align-items-center min-h-screen surface-ground p-4'>
-        <Toast ref={toast} />
-        <Card className='w-full md:w-30rem shadow-4 border-round-xl'>
-          <div className='text-center mb-5'>
-            <h2 className='text-900 font-bold mb-2'>
-              Bienvenido a CarMeet ESP
-            </h2>
-            <p className='text-600'>Tu comunidad de motor te espera</p>
-          </div>
+      <div className={`auth-wrapper ${!isLogin ? 'reverse' : ''}`}>
+        {/* LADO DE LA IMAGEN */}
+        <div className='auth-image-side'>
+          <img
+            src={LOGIN_IMAGE}
+            alt='Login Background'
+            className='auth-bg-img'
+            style={{ opacity: isLogin ? 0.8 : 0 }}
+          />
+          <img
+            src={REGISTER_IMAGE}
+            alt='Register Background'
+            className='auth-bg-img'
+            style={{ opacity: !isLogin ? 0.8 : 0 }}
+          />
 
-          <TabView
-            activeIndex={activeIndex}
-            onTabChange={(e) => setActiveIndex(e.index)}
-          >
-            {/* --- PANEL DE INICIO DE SESIÓN --- */}
-            <TabPanel header='Iniciar Sesión'>
+          <div className='auth-image-overlay'>
+            <h2 className='text-5xl font-black m-0 mb-3 text-white line-height-1'>
+              {isLogin ? 'Tu Garaje.' : 'La Comunidad.'}
+              <br />
+              <span className='text-blue-400'>
+                {isLogin ? 'Tus Reglas.' : 'Te Espera.'}
+              </span>
+            </h2>
+            <p className='text-gray-300 text-lg m-0 max-w-20rem'>
+              {isLogin
+                ? 'Conéctate para organizar rutas, gestionar tus vehículos y descubrir eventos cerca de ti.'
+                : 'Únete a miles de entusiastas del motor en toda España y lleva tu pasión al siguiente nivel.'}
+            </p>
+          </div>
+        </div>
+
+        {/* LADO DEL FORMULARIO */}
+        <div className='auth-form-side'>
+          <div className='auth-form-container'>
+            <div className='text-center mb-6'>
+              <div className='inline-flex align-items-center justify-content-center w-4rem h-4rem bg-blue-50 text-blue-600 border-circle mb-3'>
+                {isLogin ? <ShieldCheck size={32} /> : <Zap size={32} />}
+              </div>
+              <h1 className='text-4xl font-black m-0 text-900 tracking-tight'>
+                {isLogin ? 'Bienvenido' : 'Crear Cuenta'}
+              </h1>
+              <p className='text-500 text-lg font-medium mt-2 mb-0'>
+                {isLogin
+                  ? 'Introduce tus credenciales para acceder'
+                  : 'Regístrate en menos de 1 minuto'}
+              </p>
+            </div>
+
+            {isLogin ? (
+              // --- FORMULARIO DE LOGIN ---
               <form
                 onSubmit={handleLogin}
-                className='flex flex-column gap-4 pt-2 p-fluid'
+                className='flex flex-column gap-4 w-full'
               >
-                <span className='p-float-label'>
+                <span className='p-input-icon-left w-full'>
+                  <i className='pi pi-user' />
                   <InputText
-                    id='login-input'
                     value={loginInput}
                     onChange={(e) => setLoginInput(e.target.value)}
+                    placeholder='Correo o Nombre de Usuario'
+                    className='auth-input-modern w-full'
                   />
-                  <label htmlFor='login-input'>
-                    Correo o Nombre de Usuario
-                  </label>
                 </span>
 
-                <span className='p-float-label'>
+                <span className='p-input-icon-left w-full'>
+                  <i className='pi pi-lock' />
                   <Password
-                    id='login-pass'
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder='Contraseña'
                     toggleMask
                     feedback={false}
+                    inputClassName='auth-input-modern w-full'
+                    className='w-full'
                   />
-                  <label htmlFor='login-pass'>Contraseña</label>
                 </span>
 
-                <Button
-                  label={loading ? 'Verificando...' : 'Entrar'}
-                  icon='pi pi-sign-in'
-                  loading={loading}
-                />
-
-                <div className='text-center text-600 mt-2'>
-                  ¿No tienes cuenta aún?{' '}
-                  <span
-                    className='font-bold text-primary cursor-pointer hover:underline'
-                    onClick={() => setActiveIndex(1)}
-                  >
-                    Regístrate aquí
+                <div className='flex justify-content-end w-full mb-2'>
+                  <span className='text-sm font-bold text-blue-500 cursor-pointer hover:underline'>
+                    ¿Olvidaste tu contraseña?
                   </span>
                 </div>
-              </form>
-            </TabPanel>
 
-            {/* --- PANEL DE REGISTRO --- */}
-            <TabPanel header='Registrarse'>
+                <Button
+                  label={loading ? 'Verificando...' : 'Iniciar Sesión'}
+                  className='auth-btn-primary'
+                  loading={loading}
+                />
+              </form>
+            ) : (
+              // --- FORMULARIO DE REGISTRO ---
               <form
                 onSubmit={handleRegister}
-                className='flex flex-column gap-4 pt-2 p-fluid'
+                className='flex flex-column gap-4 w-full'
               >
-                <span className='p-float-label'>
+                <span className='p-input-icon-left w-full'>
+                  <i className='pi pi-at' />
                   <InputText
-                    id='reg-user'
                     value={regUsername}
                     onChange={(e) => setRegUsername(e.target.value)}
+                    placeholder='Nombre de Usuario (Nickname)'
+                    className='auth-input-modern w-full'
                   />
-                  <label htmlFor='reg-user'>Nombre de Usuario</label>
                 </span>
 
-                <span className='p-float-label'>
+                <span className='p-input-icon-left w-full'>
+                  <i className='pi pi-envelope' />
                   <InputText
-                    id='reg-email'
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
+                    placeholder='Correo Electrónico'
+                    type='email'
+                    className='auth-input-modern w-full'
                   />
-                  <label htmlFor='reg-email'>Correo Electrónico</label>
                 </span>
 
-                <span className='p-float-label'>
+                <span className='p-input-icon-left w-full'>
+                  <i className='pi pi-lock' />
                   <Password
-                    id='reg-pass'
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder='Contraseña'
                     toggleMask
-                    promptLabel='Introduce una contraseña'
+                    promptLabel='Introduce una contraseña segura'
                     weakLabel='Débil'
                     mediumLabel='Media'
                     strongLabel='Fuerte'
+                    inputClassName='auth-input-modern w-full'
+                    className='w-full'
                   />
-                  <label htmlFor='reg-pass'>Contraseña</label>
                 </span>
 
-                <span className='p-float-label'>
+                <span className='p-input-icon-left w-full'>
+                  <i className='pi pi-check-circle' />
                   <Password
-                    id='reg-confirm'
                     value={regConfirmPassword}
                     onChange={(e) => setRegConfirmPassword(e.target.value)}
+                    placeholder='Confirmar Contraseña'
                     toggleMask
                     feedback={false}
+                    inputClassName='auth-input-modern w-full'
+                    className='w-full'
                   />
-                  <label htmlFor='reg-confirm'>Confirmar Contraseña</label>
                 </span>
 
                 <Button
-                  label={loading ? 'Creando cuenta...' : 'Crear Cuenta'}
-                  icon='pi pi-user-plus'
-                  severity='success'
+                  label={
+                    loading ? 'Creando cuenta...' : 'Unirse a la Comunidad'
+                  }
+                  className='auth-btn-primary mt-2'
                   loading={loading}
                 />
-
-                <div className='text-center text-600 mt-2'>
-                  ¿Ya tienes cuenta?{' '}
-                  <span
-                    className='font-bold text-primary cursor-pointer hover:underline'
-                    onClick={() => setActiveIndex(0)}
-                  >
-                    Inicia sesión
-                  </span>
-                </div>
               </form>
-            </TabPanel>
-          </TabView>
-        </Card>
+            )}
+
+            <div className='auth-switch-text'>
+              {isLogin ? '¿Aún no tienes cuenta?' : '¿Ya eres miembro?'}
+              <span
+                className='auth-switch-link'
+                onClick={() => setIsLogin(!isLogin)}
+              >
+                {isLogin ? 'Regístrate gratis' : 'Inicia Sesión'}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </PageTransition>
   )

@@ -1,0 +1,208 @@
+/* src/pages/AuthPage.css */
+
+.auth-wrapper {
+  display: flex;
+  flex-direction: column; /* Móvil por defecto: en columna */
+  min-height: calc(100vh - 64px);
+  background-color: #f8fafc; /* Fondo suave para la zona que sobre abajo */
+  overflow: hidden;
+  position: relative;
+  transition: all 0.5s ease;
+}
+
+/* --- Panel de la Imagen (MÓVIL) --- */
+.auth-image-side {
+  position: relative;
+  width: 100%;
+  height: 280px; /* Altura de cabecera en móvil */
+  flex-shrink: 0;
+  background-color: #0f172a;
+  z-index: 1;
+}
+
+/* La magia del intercambio de lados solo aplica en escritorio */
+.auth-bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.6s ease-in-out;
+}
+
+.auth-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.2) 0%,
+    rgba(15, 23, 42, 0.9) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* En móvil, centramos el texto */
+  padding: 2rem;
+  padding-bottom: 3rem; /* Espacio para que el formulario solape */
+  color: white;
+  pointer-events: none;
+}
+
+/* Clases específicas para el texto de la imagen */
+.auth-overlay-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0;
+  margin-bottom: 0.5rem;
+}
+
+.auth-overlay-text {
+  font-size: 1rem;
+  color: #cbd5e1;
+  margin: 0;
+  display: none; /* Oculto en móvil para no saturar la pantalla pequeña */
+}
+
+/* --- Panel del Formulario (MÓVIL) --- */
+.auth-form-side {
+  flex: 1;
+  display: flex;
+  align-items: flex-start; /* Que empiece arriba en móvil */
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  background-color: #ffffff;
+  z-index: 10;
+
+  /* 🔴 EL EFECTO SOLAPAMIENTO DE APP NATIVA 🔴 */
+  border-radius: 32px 32px 0 0;
+  margin-top: -40px;
+  box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 440px;
+}
+
+/* Inputs Modernos */
+.auth-input-modern {
+  width: 100% !important;
+  padding: 1.2rem 1rem !important;
+  border-radius: 12px !important;
+  background-color: #f8fafc !important;
+  border: 2px solid transparent !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  transition: all 0.3s ease !important;
+  box-shadow: none !important;
+}
+
+.auth-input-modern:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.auth-input-modern:focus,
+.p-inputwrapper-focus > .auth-input-modern {
+  background-color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Fix para contraseñas */
+.p-password {
+  width: 100% !important;
+  display: block !important;
+}
+.p-password input {
+  width: 100% !important;
+  padding-left: 3rem !important;
+}
+
+/* Fix iconos izquierdos */
+.p-input-icon-left > i {
+  margin-top: -0.6rem;
+  font-size: 1.2rem;
+  color: #94a3b8;
+  z-index: 5;
+}
+.p-input-icon-left > .p-inputtext {
+  padding-left: 3rem !important;
+}
+
+/* Botones Premium */
+.auth-btn-primary {
+  width: 100%;
+  padding: 1.2rem !important;
+  border-radius: 12px !important;
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  border: none !important;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4) !important;
+  transition: all 0.3s ease !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.auth-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.5) !important;
+}
+
+/* Toggle Formulario */
+.auth-switch-text {
+  text-align: center;
+  margin-top: 2rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.auth-switch-link {
+  color: #3b82f6;
+  font-weight: 800;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-left: 0.5rem;
+}
+.auth-switch-link:hover {
+  color: #7c3aed;
+  text-decoration: underline;
+}
+
+/* =========================================
+   DISEÑO ESCRITORIO (A partir de 992px)
+   ========================================= */
+@media (min-width: 992px) {
+  .auth-wrapper {
+    flex-direction: row; /* Lado a lado */
+  }
+  .auth-wrapper.reverse {
+    flex-direction: row-reverse; /* Intercambio 50/50 real */
+  }
+
+  .auth-image-side {
+    flex: 1;
+    height: auto; /* Ocupa todo el alto disponible */
+  }
+
+  .auth-form-side {
+    flex: 1;
+    margin-top: 0; /* Quitamos el solapamiento */
+    border-radius: 0; /* Quitamos bordes redondeados */
+    align-items: center; /* Centramos el form verticalmente */
+    box-shadow: none;
+  }
+
+  .auth-image-overlay {
+    justify-content: flex-end; /* Abajo del todo */
+    padding: 4rem;
+  }
+
+  .auth-overlay-title {
+    font-size: 3.5rem; /* Texto gigante */
+  }
+
+  .auth-overlay-text {
+    display: block; /* Volvemos a mostrar la descripción */
+  }
+}

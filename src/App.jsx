@@ -96,7 +96,6 @@ const AnimatedRoutes = ({ session }) => {
   return (
     <AnimatePresence mode='wait'>
       <Routes location={location} key={location.pathname}>
-        {/* Aquí conectamos la ruta raíz (/) a tu nuevo HomePage */}
         <Route path='/' element={<HomePage />} />
 
         <Route path='/mapa' element={<MapPage session={session} />} />
@@ -108,13 +107,14 @@ const AnimatedRoutes = ({ session }) => {
         <Route path='/comunidad' element={<CommunityPage />} />
         <Route path='/contacto' element={<ContactPage />} />
 
+        {/* 🚨 RUTAS PROTEGIDAS CON REDIRECCIÓN INTELIGENTE 🚨 */}
         <Route
           path='/garaje'
           element={
             session ? (
               <GaragePage session={session} />
             ) : (
-              <Navigate to='/login' />
+              <Navigate to='/login' state={{ returnUrl: '/garaje' }} />
             )
           }
         />
@@ -124,16 +124,13 @@ const AnimatedRoutes = ({ session }) => {
             session ? (
               <ProfilePage session={session} />
             ) : (
-              <Navigate to='/login' />
+              <Navigate to='/login' state={{ returnUrl: '/perfil' }} />
             )
           }
         />
         <Route path='/usuario/:username' element={<PublicProfile />} />
 
-        <Route
-          path='/login'
-          element={!session ? <AuthPage /> : <Navigate to='/' />}
-        />
+        <Route path='/login' element={<AuthPage session={session} />} />
 
         <Route
           path='/evento/:id'

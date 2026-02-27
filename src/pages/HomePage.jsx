@@ -75,23 +75,24 @@ const HomePage = () => {
                 </p>
               </div>
 
-              {/* Botón */}
-              {!session && (
-                <div className='flex-shrink-0 mt-5 md:mt-0 relative z-1'>
-                  <button
-                    onClick={() =>
-                      navigate('/login', { state: { activeIndex: 1 } })
-                    }
-                    className='flex align-items-center justify-content-center gap-3 px-6 py-4 border-none font-black text-xl text-white border-round-2xl cursor-pointer shadow-6 transition-transform hover:scale-105 w-full md:w-auto'
-                    style={{
-                      background:
-                        'linear-gradient(135deg, #2563eb 0%, #9333ea 100%)',
-                    }}
-                  >
-                    Crear cuenta gratis <ArrowRight size={24} />
-                  </button>
-                </div>
-              )}
+              {/* Botón Dinámico: Cambia si el usuario está logueado o no */}
+              <div className='flex-shrink-0 mt-5 md:mt-0 relative z-1'>
+                <button
+                  onClick={() =>
+                    session
+                      ? navigate('/eventos')
+                      : navigate('/login', { state: { activeIndex: 1 } })
+                  }
+                  className='flex align-items-center justify-content-center gap-3 px-6 py-4 border-none font-black text-xl text-white border-round-2xl cursor-pointer shadow-6 transition-transform hover:scale-105 w-full md:w-auto'
+                  style={{
+                    background:
+                      'linear-gradient(135deg, #2563eb 0%, #9333ea 100%)',
+                  }}
+                >
+                  {session ? 'Explorar Eventos' : 'Crear cuenta gratis'}{' '}
+                  <ArrowRight size={24} />
+                </button>
+              </div>
             </div>
           </div>
         </section>
