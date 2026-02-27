@@ -17,10 +17,8 @@ import { AnimatePresence } from 'framer-motion'
 import Header from './components/Header'
 import Footer from './components/Footer'
 
-// Importamos nuestra nueva Landing Page unificada
+// Importamos las páginas
 import HomePage from './pages/HomePage'
-
-// Importamos el resto de páginas
 import MapPage from './pages/MapPage'
 import AuthPage from './pages/AuthPage'
 import EventsPage from './pages/EventsPage'
@@ -33,6 +31,9 @@ import ContactPage from './pages/ContactPage'
 import CrewDetailPage from './pages/CrewDetailPage'
 import AdminPage from './pages/AdminPage'
 
+import OneSignal from 'react-onesignal'
+
+// Configuración de Idioma PrimeReact
 addLocale('es', {
   firstDayOfWeek: 1,
   dayNames: [
@@ -78,6 +79,7 @@ addLocale('es', {
   clear: 'Limpiar',
 })
 
+// Configuración Iconos Leaflet
 let DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
@@ -87,6 +89,7 @@ let DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
+// --- COMPONENTE DE RUTAS ANIMADAS ---
 const AnimatedRoutes = ({ session }) => {
   const location = useLocation()
 
@@ -98,7 +101,6 @@ const AnimatedRoutes = ({ session }) => {
     <AnimatePresence mode='wait'>
       <Routes location={location} key={location.pathname}>
         <Route path='/' element={<HomePage />} />
-
         <Route path='/mapa' element={<MapPage session={session} />} />
         <Route path='/eventos' element={<EventsPage session={session} />} />
         <Route
@@ -108,7 +110,6 @@ const AnimatedRoutes = ({ session }) => {
         <Route path='/comunidad' element={<CommunityPage />} />
         <Route path='/contacto' element={<ContactPage />} />
 
-        {/* 🚨 RUTAS PROTEGIDAS CON REDIRECCIÓN INTELIGENTE 🚨 */}
         <Route
           path='/garaje'
           element={
@@ -129,10 +130,9 @@ const AnimatedRoutes = ({ session }) => {
             )
           }
         />
+
         <Route path='/usuario/:username' element={<PublicProfile />} />
-
         <Route path='/login' element={<AuthPage session={session} />} />
-
         <Route
           path='/evento/:id'
           element={<EventDetailPage session={session} />}
@@ -141,6 +141,7 @@ const AnimatedRoutes = ({ session }) => {
           path='/crew/:crewName'
           element={<CrewDetailPage session={session} />}
         />
+
         <Route
           path='/admin'
           element={
@@ -156,21 +157,63 @@ const AnimatedRoutes = ({ session }) => {
   )
 }
 
+// --- COMPONENTE PRINCIPAL APP ---
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
+    // Variable para controlar que no se inicialice dos veces en modo desarrollo
+    let isInitialized = false
+
+    const setupOneSignal = async () => {
+      if (isInitialized || OneSignal.initialized) return
+
+      try {
+        await OneSignal.init({
+          appId: '47ff2ef2-cd67-40c7-9c3c-ba31d7c86f22', // Tu ID
+          allowLocalhostAsSecureOrigin: true, // Permite pruebas en localhost
+          notifyButton: { enable: false },
+        })
+
+        isInitialized = true
+
+        // 🚨 IMPORTANTE: Solo intentamos el login si OneSignal se inicializó con éxito
+        const {
+          data: { session: currentSession },
+        } = await supabase.auth.getSession()
+        if (currentSession?.user?.id) {
+          console.log('Vinculando usuario con OneSignal...')
+          await OneSignal.login(currentSession.user.id)
+        }
+      } catch (err) {
+        // Si el error es por el dominio (localhost), lo ignoramos para que no rompa la app
+        if (err.message?.includes('Can only be used on')) {
+          console.warn(
+            'OneSignal: Solo funciona en el dominio oficial o configurado.',
+          )
+        } else {
+          console.error('Fallo al inicializar OneSignal:', err)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    setupOneSignal()
+
+    // Escuchador de cambios de sesión
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
-      setLoading(false)
+      if (session?.user?.id && OneSignal.initialized) {
+        OneSignal.login(session.user.id)
+      } else if (!session && OneSignal.initialized) {
+        OneSignal.logout()
+      }
     })
+
     return () => subscription.unsubscribe()
   }, [])
 

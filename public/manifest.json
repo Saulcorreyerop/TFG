@@ -1,20 +1,23 @@
 {
-  "short_name": "CarMeetESP",
+  "short_name": "CarMeet",
   "name": "CarMeet ESP - Comunidad de Motor",
+  "description": "La plataforma Nº1 en España para entusiastas del motor.",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/logo-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "icon-512.png",
+      "src": "/logo-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "background_color": "#ffffff",
   "display": "standalone",
-  "theme_color": "#1e40af",
-  "background_color": "#ffffff"
+  "scope": "/",
+  "theme_color": "#2563eb",
+  "orientation": "portrait"
 }
