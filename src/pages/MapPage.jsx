@@ -18,6 +18,7 @@ import AddEventDialog from '../components/AddEventDialog'
 import 'leaflet/dist/leaflet.css'
 import './MapPage.css'
 import PageTransition from '../components/PageTransition'
+import SEO from '../components/SEO'
 
 // --- CREADOR DE PINES PERSONALIZADOS ---
 const getCustomIcon = (isPrivate) => {
@@ -287,207 +288,214 @@ const MapPage = ({ session }) => {
     toast.current.show({ severity, summary, detail })
 
   return (
-    <PageTransition>
-      <>
-        <Helmet>
-          <title>Mapa de Eventos en Vivo | CarMeetESP</title>
-        </Helmet>
+    <>
+      <SEO
+        title='Mapa de Eventos en Vivo'
+        description='Explora el mapa interactivo de CarMeet ESP. Descubre KDDs, rutas y trackdays de coches cerca de ti en tiempo real.'
+        url={window.location.href}
+      />
+      <PageTransition>
+        <>
+          <Helmet>
+            <title>Mapa de Eventos en Vivo | CarMeetESP</title>
+          </Helmet>
 
-        {/* 🚨 CORRECCIÓN: Un solo contenedor principal sin clases que rompan el scroll 🚨 */}
-        <div ref={mainContainerRef} className='map-page-container'>
-          <Toast ref={toast} position='top-center' className='mt-6 z-5' />
+          {/* 🚨 CORRECCIÓN: Un solo contenedor principal sin clases que rompan el scroll 🚨 */}
+          <div ref={mainContainerRef} className='map-page-container'>
+            <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-          {/* 🚨 CORRECCIÓN: Le hemos quitado el "relative" para que vuelva a funcionar el "sticky" de CSS en móvil 🚨 */}
-          <div className='map-section'>
-            {/* 🔴 BARRA DE FILTROS ANIMADA ESTILO APPLE 🔴 */}
-            <div className='map-filter-bar' ref={filterBarRef}>
-              <div className='filter-indicator' style={indicatorStyle}></div>
-              {eventCategories.map((cat) => (
-                <button
-                  key={cat}
-                  className={`map-filter-btn ${activeFilter === cat ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveFilter(cat)
-                    setSelectedEvent(null)
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <MapContainer
-              center={centerSpain}
-              zoom={5}
-              minZoom={5}
-              maxZoom={18}
-              maxBounds={spainBounds}
-              maxBoundsViscosity={1.0}
-              zoomControl={false}
-              className='h-full w-full'
-              style={{ background: '#e9ecef' }}
-              zoomAnimation={true}
-              markerZoomAnimation={true}
-              trackResize={true}
-              fadeAnimation={true}
-              inertia={true}
-            >
-              <TileLayer
-                attribution='&copy; OpenStreetMap'
-                url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                maxZoom={18}
-                keepBuffer={8}
-                updateWhenZooming={false}
-              />
-              <MapController selectedEvent={selectedEvent} />
-              <LocationMarker
-                onLocationSelect={(coords) => {
-                  setPosicionTemp(coords)
-                  setDialogVisible(true)
-                }}
-                session={session}
-                showToast={showToast}
-              />
-
-              {filteredEventos.map((ev) => (
-                <Marker
-                  key={ev.id}
-                  position={[ev.lat, ev.lng]}
-                  icon={getCustomIcon(ev.is_private)}
-                >
-                  <Popup>
-                    <div
-                      className='text-center p-1 cursor-pointer'
-                      style={{ minWidth: '150px' }}
-                      onClick={() => navigate(`/evento/${ev.id}`)}
-                    >
-                      {ev.image_url && (
-                        <div
-                          className='w-full relative bg-gray-100 mb-2 border-round overflow-hidden shadow-2'
-                          style={{ height: '120px' }}
-                        >
-                          <img
-                            src={ev.image_url}
-                            alt='Evento'
-                            className='w-full h-full'
-                            style={{
-                              objectFit: 'cover',
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {ev.is_private && (
-                        <div className='flex justify-content-center mb-1'>
-                          <span className='bg-yellow-100 text-yellow-700 font-bold px-2 py-1 border-round-md text-xs flex align-items-center gap-1 border-1 border-yellow-300'>
-                            <i className='pi pi-lock text-xs'></i> CREW
-                          </span>
-                        </div>
-                      )}
-
-                      <h3 className='font-bold text-lg m-0 text-gray-900 hover:text-primary transition-colors'>
-                        {ev.titulo}
-                      </h3>
-                      <div className='flex justify-content-center my-2'>
-                        <Tag value={ev.tipo} severity='info' />
-                      </div>
-                      <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
-                        <div className='font-semibold'>
-                          {ev.fecha.toLocaleDateString('es-ES')}
-                        </div>
-                        <div className='text-primary font-bold mt-1'>
-                          <Button
-                            label='Ver más info >'
-                            severity='help'
-                            rounded
-                            className='shadow-1'
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              navigate(`/evento/${ev.id}`)
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
-          </div>
-
-          <aside className='sidebar-section'>
-            <div
-              className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
-              onClick={scrollToTopList}
-            >
-              <div className='mobile-drag-handle'>
-                <div
-                  className='w-3rem h-1 border-round opacity-50'
-                  style={{ backgroundColor: '#d1d5db' }}
-                ></div>
-              </div>
-              <div className='mt-2 md:mt-0 text-center flex justify-content-center align-items-center flex-column w-full'>
-                <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
-                  Eventos
-                </h1>
-                <p className='text-500 m-0 text-xs md:text-sm mt-1 text-center'>
-                  {filteredEventos.length} disponibles
-                </p>
-              </div>
-              <Button
-                icon='pi pi-plus'
-                severity='help'
-                rounded
-                className='shadow-1'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleAddClick()
-                }}
-                aria-label='Añadir'
-              />
-            </div>
-
-            <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
-              <div className='flex flex-column gap-2'>
-                <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center mt-3'>
-                  {activeFilter === 'Todos'
-                    ? 'Próximos Eventos'
-                    : `Eventos de ${activeFilter}`}
-                </h2>
-                <hr className='event-separator' />
-                {filteredEventos.length === 0 && (
-                  <div className='text-center p-5 text-500'>
-                    <i className='pi pi-filter-slash text-4xl mb-2 opacity-50' />
-                    <p>No hay eventos disponibles para esta categoría.</p>
-                  </div>
-                )}
-                {filteredEventos.map((ev) => (
-                  <EventCard
-                    key={ev.id}
-                    ev={ev}
-                    isSelected={selectedEvent?.id === ev.id}
-                    onClick={handleEventClick}
-                    onNavigate={() => navigate(`/evento/${ev.id}`)}
-                  />
+            {/* 🚨 CORRECCIÓN: Le hemos quitado el "relative" para que vuelva a funcionar el "sticky" de CSS en móvil 🚨 */}
+            <div className='map-section'>
+              {/* 🔴 BARRA DE FILTROS ANIMADA ESTILO APPLE 🔴 */}
+              <div className='map-filter-bar' ref={filterBarRef}>
+                <div className='filter-indicator' style={indicatorStyle}></div>
+                {eventCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    className={`map-filter-btn ${activeFilter === cat ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveFilter(cat)
+                      setSelectedEvent(null)
+                    }}
+                  >
+                    {cat}
+                  </button>
                 ))}
               </div>
-            </div>
-          </aside>
 
-          <AddEventDialog
-            visible={dialogVisible}
-            onHide={() => setDialogVisible(false)}
-            onEventAdded={fetchEventos}
-            session={session}
-            initialLat={posicionTemp.lat}
-            initialLng={posicionTemp.lng}
-          />
-        </div>
-      </>
-    </PageTransition>
+              <MapContainer
+                center={centerSpain}
+                zoom={5}
+                minZoom={5}
+                maxZoom={18}
+                maxBounds={spainBounds}
+                maxBoundsViscosity={1.0}
+                zoomControl={false}
+                className='h-full w-full'
+                style={{ background: '#e9ecef' }}
+                zoomAnimation={true}
+                markerZoomAnimation={true}
+                trackResize={true}
+                fadeAnimation={true}
+                inertia={true}
+              >
+                <TileLayer
+                  attribution='&copy; OpenStreetMap'
+                  url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                  maxZoom={18}
+                  keepBuffer={8}
+                  updateWhenZooming={false}
+                />
+                <MapController selectedEvent={selectedEvent} />
+                <LocationMarker
+                  onLocationSelect={(coords) => {
+                    setPosicionTemp(coords)
+                    setDialogVisible(true)
+                  }}
+                  session={session}
+                  showToast={showToast}
+                />
+
+                {filteredEventos.map((ev) => (
+                  <Marker
+                    key={ev.id}
+                    position={[ev.lat, ev.lng]}
+                    icon={getCustomIcon(ev.is_private)}
+                  >
+                    <Popup>
+                      <div
+                        className='text-center p-1 cursor-pointer'
+                        style={{ minWidth: '150px' }}
+                        onClick={() => navigate(`/evento/${ev.id}`)}
+                      >
+                        {ev.image_url && (
+                          <div
+                            className='w-full relative bg-gray-100 mb-2 border-round overflow-hidden shadow-2'
+                            style={{ height: '120px' }}
+                          >
+                            <img
+                              src={ev.image_url}
+                              alt='Evento'
+                              className='w-full h-full'
+                              style={{
+                                objectFit: 'cover',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {ev.is_private && (
+                          <div className='flex justify-content-center mb-1'>
+                            <span className='bg-yellow-100 text-yellow-700 font-bold px-2 py-1 border-round-md text-xs flex align-items-center gap-1 border-1 border-yellow-300'>
+                              <i className='pi pi-lock text-xs'></i> CREW
+                            </span>
+                          </div>
+                        )}
+
+                        <h3 className='font-bold text-lg m-0 text-gray-900 hover:text-primary transition-colors'>
+                          {ev.titulo}
+                        </h3>
+                        <div className='flex justify-content-center my-2'>
+                          <Tag value={ev.tipo} severity='info' />
+                        </div>
+                        <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
+                          <div className='font-semibold'>
+                            {ev.fecha.toLocaleDateString('es-ES')}
+                          </div>
+                          <div className='text-primary font-bold mt-1'>
+                            <Button
+                              label='Ver más info >'
+                              severity='help'
+                              rounded
+                              className='shadow-1'
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/evento/${ev.id}`)
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+
+            <aside className='sidebar-section'>
+              <div
+                className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
+                onClick={scrollToTopList}
+              >
+                <div className='mobile-drag-handle'>
+                  <div
+                    className='w-3rem h-1 border-round opacity-50'
+                    style={{ backgroundColor: '#d1d5db' }}
+                  ></div>
+                </div>
+                <div className='mt-2 md:mt-0 text-center flex justify-content-center align-items-center flex-column w-full'>
+                  <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
+                    Eventos
+                  </h1>
+                  <p className='text-500 m-0 text-xs md:text-sm mt-1 text-center'>
+                    {filteredEventos.length} disponibles
+                  </p>
+                </div>
+                <Button
+                  icon='pi pi-plus'
+                  severity='help'
+                  rounded
+                  className='shadow-1'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddClick()
+                  }}
+                  aria-label='Añadir'
+                />
+              </div>
+
+              <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
+                <div className='flex flex-column gap-2'>
+                  <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center mt-3'>
+                    {activeFilter === 'Todos'
+                      ? 'Próximos Eventos'
+                      : `Eventos de ${activeFilter}`}
+                  </h2>
+                  <hr className='event-separator' />
+                  {filteredEventos.length === 0 && (
+                    <div className='text-center p-5 text-500'>
+                      <i className='pi pi-filter-slash text-4xl mb-2 opacity-50' />
+                      <p>No hay eventos disponibles para esta categoría.</p>
+                    </div>
+                  )}
+                  {filteredEventos.map((ev) => (
+                    <EventCard
+                      key={ev.id}
+                      ev={ev}
+                      isSelected={selectedEvent?.id === ev.id}
+                      onClick={handleEventClick}
+                      onNavigate={() => navigate(`/evento/${ev.id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </aside>
+
+            <AddEventDialog
+              visible={dialogVisible}
+              onHide={() => setDialogVisible(false)}
+              onEventAdded={fetchEventos}
+              session={session}
+              initialLat={posicionTemp.lat}
+              initialLng={posicionTemp.lng}
+            />
+          </div>
+        </>
+      </PageTransition>
+    </>
   )
 }
 

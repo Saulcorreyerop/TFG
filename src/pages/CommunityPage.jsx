@@ -21,6 +21,7 @@ import {
   Image as ImageIcon,
   Heart,
 } from 'lucide-react'
+import SEO from '../components/SEO'
 
 const CommunityPage = () => {
   const navigate = useNavigate()
@@ -516,276 +517,289 @@ const CommunityPage = () => {
   }
 
   return (
-    <PageTransition>
-      <div className='min-h-screen bg-gray-50 p-4 md:p-6 pb-8'>
-        <Toast ref={toast} />
-        <div className='max-w-7xl mx-auto'>
-          <div className='text-center mb-5'>
-            <h1 className='text-4xl md:text-5xl font-black text-900 m-0 mb-2'>
-              Comunidad
-            </h1>
-            <p className='text-600 text-lg m-0 font-medium'>
-              Descubre usuarios, clubes y los mejores coches.
-            </p>
-          </div>
-
-          <div className='flex justify-content-center mb-6'>
-            <div
-              className='bg-white p-1 shadow-1 flex flex-wrap justify-content-center gap-1'
-              style={{ borderRadius: '2rem', border: '1px solid #e2e8f0' }}
-            >
-              <button
-                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
-                style={{ borderRadius: '1.75rem' }}
-                onClick={() => setActiveTab('explorar')}
-              >
-                <Users size={18} /> Explorar
-              </button>
-
-              <button
-                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
-                style={{ borderRadius: '1.75rem' }}
-                onClick={() => {
-                  if (!session)
-                    return toast.current.show({
-                      severity: 'warn',
-                      summary: 'Aviso',
-                      detail: 'Inicia sesión para ver a quién sigues',
-                    })
-                  setActiveTab('siguiendo')
-                }}
-              >
-                <UserCheck size={18} /> Siguiendo
-              </button>
-
-              <button
-                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
-                style={{ borderRadius: '1.75rem' }}
-                onClick={() => setActiveTab('crews')}
-              >
-                <Shield size={18} /> Crews
-              </button>
-
-              {/* PESTAÑA: TOP COCHES */}
-              <button
-                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
-                style={{ borderRadius: '1.75rem' }}
-                onClick={() => setActiveTab('vehiculos')}
-              >
-                <Car size={18} /> Top Coches
-              </button>
-            </div>
-          </div>
-
-          <div className='flex flex-column md:flex-row justify-content-center align-items-center gap-3 mb-6'>
-            <div className='relative w-full md:w-6 lg:w-5'>
-              <Search
-                className='absolute left-0 top-50 transform -translate-y-50 ml-4 text-400'
-                size={20}
-              />
-              <InputText
-                placeholder={
-                  activeTab === 'crews'
-                    ? 'Buscar club...'
-                    : activeTab === 'vehiculos'
-                      ? 'Buscar modelo o marca...'
-                      : 'Buscar usuario...'
-                }
-                className='w-full bg-white border-none shadow-1 font-medium text-lg text-900'
-                style={{ padding: '1rem 1rem 1rem 3rem', borderRadius: '2rem' }}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+    <>
+      <SEO
+        title='Comunidad y Top Coches'
+        description='Descubre los mejores proyectos del país, únete a Crews locales y dales tus respetos a los vehículos más top de la comunidad CarMeet ESP.'
+        url={window.location.href}
+      />
+      <PageTransition>
+        <div className='min-h-screen bg-gray-50 p-4 md:p-6 pb-8'>
+          <Toast ref={toast} />
+          <div className='max-w-7xl mx-auto'>
+            <div className='text-center mb-5'>
+              <h1 className='text-4xl md:text-5xl font-black text-900 m-0 mb-2'>
+                Comunidad
+              </h1>
+              <p className='text-600 text-lg m-0 font-medium'>
+                Descubre usuarios, clubes y los mejores coches.
+              </p>
             </div>
 
-            {activeTab === 'crews' && session && (
-              <Button
-                label='Crear Crew'
-                icon={<Plus size={20} className='mr-2' />}
-                className='bg-black border-none hover:bg-black shadow-2 font-bold w-full md:w-auto'
-                style={{ padding: '1rem 1.5rem', borderRadius: '2rem' }}
-                onClick={() => setShowCreateCrew(true)}
-              />
-            )}
-          </div>
-
-          {/* CONTENIDO PRINCIPAL */}
-          {loading ? (
-            <div className='flex justify-content-center py-8'>
-              <ProgressSpinner />
-            </div>
-          ) : (
-            <div className='grid m-0'>
-              {activeTab === 'crews' ? (
-                displayedCrews.length > 0 ? (
-                  displayedCrews.map(renderCrewCard)
-                ) : (
-                  <div className='col-12 text-center py-8'>
-                    <Shield size={64} className='text-300 mb-4 mx-auto' />
-                    <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
-                      No hay Crews disponibles
-                    </h3>
-                    <p className='text-600 text-lg'>
-                      Sé el primero en fundar un club en tu zona.
-                    </p>
-                  </div>
-                )
-              ) : activeTab === 'vehiculos' ? (
-                displayedVehicles.length > 0 ? (
-                  displayedVehicles.map(renderVehicleCard)
-                ) : (
-                  <div className='col-12 text-center py-8'>
-                    <Car size={64} className='text-300 mb-4 mx-auto' />
-                    <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
-                      No hay coches en el ranking
-                    </h3>
-                    <p className='text-600 text-lg'>
-                      Aún no hay vehículos subidos en la comunidad.
-                    </p>
-                  </div>
-                )
-              ) : displayedUsers.length > 0 ? (
-                displayedUsers.map(renderUserCard)
-              ) : (
-                <div className='col-12 text-center py-8'>
-                  <Users size={64} className='text-300 mb-4 mx-auto' />
-                  <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
-                    No hay resultados
-                  </h3>
-                  <p className='text-600 text-lg'>Prueba con otra búsqueda.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* MODAL CREAR CREW */}
-        <Dialog
-          header={
-            <span className='text-2xl font-black text-900'>
-              Fundar Nueva Crew
-            </span>
-          }
-          visible={showCreateCrew}
-          onHide={() => setShowCreateCrew(false)}
-          style={{ width: '90vw', maxWidth: '500px' }}
-          className='border-round-3xl shadow-8'
-          contentClassName='pb-4 pt-2 px-4 md:px-5'
-          headerClassName='px-4 md:px-5 pt-4 pb-2 border-none'
-        >
-          <div className='flex flex-column pt-3'>
-            <p className='text-600 mb-4 mt-0 text-sm'>
-              Sube las imágenes haciendo clic en los recuadros correspondientes.
-            </p>
-
-            <div
-              className='w-full bg-white border-1 border-gray-200 mb-5 relative'
-              style={{ borderRadius: '1rem', height: '180px' }}
-            >
+            <div className='flex justify-content-center mb-6'>
               <div
-                className='w-full bg-gray-100 relative cursor-pointer hover:opacity-80 transition-opacity flex align-items-center justify-content-center overflow-hidden'
-                style={{ height: '120px', borderRadius: '1rem 1rem 0 0' }}
+                className='bg-white p-1 shadow-1 flex flex-wrap justify-content-center gap-1'
+                style={{ borderRadius: '2rem', border: '1px solid #e2e8f0' }}
               >
-                {crewBannerImg ? (
-                  <img
-                    src={URL.createObjectURL(crewBannerImg)}
-                    className='w-full h-full'
-                    style={{ objectFit: 'cover' }}
-                    alt='Banner'
-                  />
-                ) : (
-                  <div className='flex flex-column align-items-center text-500 font-bold text-sm'>
-                    <ImageIcon size={24} className='mb-1' /> Banner Fondo
-                  </div>
-                )}
-                <input
-                  type='file'
-                  accept='image/*'
-                  className='absolute inset-0 opacity-0 cursor-pointer w-full h-full'
-                  onChange={(e) => setCrewBannerImg(e.target.files[0])}
+                <button
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  style={{ borderRadius: '1.75rem' }}
+                  onClick={() => setActiveTab('explorar')}
+                >
+                  <Users size={18} /> Explorar
+                </button>
+
+                <button
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  style={{ borderRadius: '1.75rem' }}
+                  onClick={() => {
+                    if (!session)
+                      return toast.current.show({
+                        severity: 'warn',
+                        summary: 'Aviso',
+                        detail: 'Inicia sesión para ver a quién sigues',
+                      })
+                    setActiveTab('siguiendo')
+                  }}
+                >
+                  <UserCheck size={18} /> Siguiendo
+                </button>
+
+                <button
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  style={{ borderRadius: '1.75rem' }}
+                  onClick={() => setActiveTab('crews')}
+                >
+                  <Shield size={18} /> Crews
+                </button>
+
+                {/* PESTAÑA: TOP COCHES */}
+                <button
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  style={{ borderRadius: '1.75rem' }}
+                  onClick={() => setActiveTab('vehiculos')}
+                >
+                  <Car size={18} /> Top Coches
+                </button>
+              </div>
+            </div>
+
+            <div className='flex flex-column md:flex-row justify-content-center align-items-center gap-3 mb-6'>
+              <div className='relative w-full md:w-6 lg:w-5'>
+                <Search
+                  className='absolute left-0 top-50 transform -translate-y-50 ml-4 text-400'
+                  size={20}
+                />
+                <InputText
+                  placeholder={
+                    activeTab === 'crews'
+                      ? 'Buscar club...'
+                      : activeTab === 'vehiculos'
+                        ? 'Buscar modelo o marca...'
+                        : 'Buscar usuario...'
+                  }
+                  className='w-full bg-white border-none shadow-1 font-medium text-lg text-900'
+                  style={{
+                    padding: '1rem 1rem 1rem 3rem',
+                    borderRadius: '2rem',
+                  }}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
+              {activeTab === 'crews' && session && (
+                <Button
+                  label='Crear Crew'
+                  icon={<Plus size={20} className='mr-2' />}
+                  className='bg-black border-none hover:bg-black shadow-2 font-bold w-full md:w-auto'
+                  style={{ padding: '1rem 1.5rem', borderRadius: '2rem' }}
+                  onClick={() => setShowCreateCrew(true)}
+                />
+              )}
+            </div>
+
+            {/* CONTENIDO PRINCIPAL */}
+            {loading ? (
+              <div className='flex justify-content-center py-8'>
+                <ProgressSpinner />
+              </div>
+            ) : (
+              <div className='grid m-0'>
+                {activeTab === 'crews' ? (
+                  displayedCrews.length > 0 ? (
+                    displayedCrews.map(renderCrewCard)
+                  ) : (
+                    <div className='col-12 text-center py-8'>
+                      <Shield size={64} className='text-300 mb-4 mx-auto' />
+                      <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
+                        No hay Crews disponibles
+                      </h3>
+                      <p className='text-600 text-lg'>
+                        Sé el primero en fundar un club en tu zona.
+                      </p>
+                    </div>
+                  )
+                ) : activeTab === 'vehiculos' ? (
+                  displayedVehicles.length > 0 ? (
+                    displayedVehicles.map(renderVehicleCard)
+                  ) : (
+                    <div className='col-12 text-center py-8'>
+                      <Car size={64} className='text-300 mb-4 mx-auto' />
+                      <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
+                        No hay coches en el ranking
+                      </h3>
+                      <p className='text-600 text-lg'>
+                        Aún no hay vehículos subidos en la comunidad.
+                      </p>
+                    </div>
+                  )
+                ) : displayedUsers.length > 0 ? (
+                  displayedUsers.map(renderUserCard)
+                ) : (
+                  <div className='col-12 text-center py-8'>
+                    <Users size={64} className='text-300 mb-4 mx-auto' />
+                    <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
+                      No hay resultados
+                    </h3>
+                    <p className='text-600 text-lg'>
+                      Prueba con otra búsqueda.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* MODAL CREAR CREW */}
+          <Dialog
+            header={
+              <span className='text-2xl font-black text-900'>
+                Fundar Nueva Crew
+              </span>
+            }
+            visible={showCreateCrew}
+            onHide={() => setShowCreateCrew(false)}
+            style={{ width: '90vw', maxWidth: '500px' }}
+            className='border-round-3xl shadow-8'
+            contentClassName='pb-4 pt-2 px-4 md:px-5'
+            headerClassName='px-4 md:px-5 pt-4 pb-2 border-none'
+          >
+            <div className='flex flex-column pt-3'>
+              <p className='text-600 mb-4 mt-0 text-sm'>
+                Sube las imágenes haciendo clic en los recuadros
+                correspondientes.
+              </p>
+
               <div
-                className='absolute bg-white shadow-2 flex align-items-center justify-content-center cursor-pointer hover:bg-gray-50 transition-colors z-2 overflow-hidden'
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  left: '24px',
-                  bottom: '20px',
-                  borderRadius: '0.75rem',
-                  padding: '4px',
-                }}
+                className='w-full bg-white border-1 border-gray-200 mb-5 relative'
+                style={{ borderRadius: '1rem', height: '180px' }}
               >
                 <div
-                  className='w-full h-full bg-gray-100 flex align-items-center justify-content-center text-500 relative'
-                  style={{ borderRadius: '0.5rem' }}
+                  className='w-full bg-gray-100 relative cursor-pointer hover:opacity-80 transition-opacity flex align-items-center justify-content-center overflow-hidden'
+                  style={{ height: '120px', borderRadius: '1rem 1rem 0 0' }}
                 >
-                  {crewProfileImg ? (
+                  {crewBannerImg ? (
                     <img
-                      src={URL.createObjectURL(crewProfileImg)}
-                      className='w-full h-full absolute top-0 left-0'
-                      style={{ objectFit: 'cover', borderRadius: '0.5rem' }}
-                      alt='Logo'
+                      src={URL.createObjectURL(crewBannerImg)}
+                      className='w-full h-full'
+                      style={{ objectFit: 'cover' }}
+                      alt='Banner'
                     />
                   ) : (
-                    <div className='flex flex-column align-items-center text-xs font-bold'>
-                      <Plus size={20} /> Logo
+                    <div className='flex flex-column align-items-center text-500 font-bold text-sm'>
+                      <ImageIcon size={24} className='mb-1' /> Banner Fondo
                     </div>
                   )}
                   <input
                     type='file'
                     accept='image/*'
-                    className='absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10'
-                    onChange={(e) => setCrewProfileImg(e.target.files[0])}
+                    className='absolute inset-0 opacity-0 cursor-pointer w-full h-full'
+                    onChange={(e) => setCrewBannerImg(e.target.files[0])}
                   />
                 </div>
+
+                <div
+                  className='absolute bg-white shadow-2 flex align-items-center justify-content-center cursor-pointer hover:bg-gray-50 transition-colors z-2 overflow-hidden'
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    left: '24px',
+                    bottom: '20px',
+                    borderRadius: '0.75rem',
+                    padding: '4px',
+                  }}
+                >
+                  <div
+                    className='w-full h-full bg-gray-100 flex align-items-center justify-content-center text-500 relative'
+                    style={{ borderRadius: '0.5rem' }}
+                  >
+                    {crewProfileImg ? (
+                      <img
+                        src={URL.createObjectURL(crewProfileImg)}
+                        className='w-full h-full absolute top-0 left-0'
+                        style={{ objectFit: 'cover', borderRadius: '0.5rem' }}
+                        alt='Logo'
+                      />
+                    ) : (
+                      <div className='flex flex-column align-items-center text-xs font-bold'>
+                        <Plus size={20} /> Logo
+                      </div>
+                    )}
+                    <input
+                      type='file'
+                      accept='image/*'
+                      className='absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10'
+                      onChange={(e) => setCrewProfileImg(e.target.files[0])}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className='flex flex-column gap-4'>
+                <span className='p-float-label'>
+                  <InputText
+                    id='crewName'
+                    value={newCrew.name}
+                    onChange={(e) =>
+                      setNewCrew({ ...newCrew, name: e.target.value })
+                    }
+                    className='w-full font-bold text-lg'
+                    style={{ borderRadius: '1rem', padding: '1rem' }}
+                  />
+                  <label htmlFor='crewName'>Nombre de la Crew *</label>
+                </span>
+
+                <span className='p-float-label'>
+                  <InputTextarea
+                    id='crewDesc'
+                    value={newCrew.description}
+                    onChange={(e) =>
+                      setNewCrew({ ...newCrew, description: e.target.value })
+                    }
+                    rows={3}
+                    className='w-full text-md'
+                    style={{ borderRadius: '1rem', padding: '1rem' }}
+                    autoResize
+                  />
+                  <label htmlFor='crewDesc'>
+                    Descripción de la crew (Opcional)
+                  </label>
+                </span>
+
+                <Button
+                  label='Crear Crew'
+                  className='w-full py-3 mt-2 font-bold text-lg bg-black border-none shadow-2 hover:bg-black'
+                  style={{ borderRadius: '1rem' }}
+                  onClick={handleCreateCrew}
+                  loading={creatingCrew}
+                />
               </div>
             </div>
-
-            <div className='flex flex-column gap-4'>
-              <span className='p-float-label'>
-                <InputText
-                  id='crewName'
-                  value={newCrew.name}
-                  onChange={(e) =>
-                    setNewCrew({ ...newCrew, name: e.target.value })
-                  }
-                  className='w-full font-bold text-lg'
-                  style={{ borderRadius: '1rem', padding: '1rem' }}
-                />
-                <label htmlFor='crewName'>Nombre de la Crew *</label>
-              </span>
-
-              <span className='p-float-label'>
-                <InputTextarea
-                  id='crewDesc'
-                  value={newCrew.description}
-                  onChange={(e) =>
-                    setNewCrew({ ...newCrew, description: e.target.value })
-                  }
-                  rows={3}
-                  className='w-full text-md'
-                  style={{ borderRadius: '1rem', padding: '1rem' }}
-                  autoResize
-                />
-                <label htmlFor='crewDesc'>
-                  Descripción de la crew (Opcional)
-                </label>
-              </span>
-
-              <Button
-                label='Crear Crew'
-                className='w-full py-3 mt-2 font-bold text-lg bg-black border-none shadow-2 hover:bg-black'
-                style={{ borderRadius: '1rem' }}
-                onClick={handleCreateCrew}
-                loading={creatingCrew}
-              />
-            </div>
-          </div>
-        </Dialog>
-      </div>
-    </PageTransition>
+          </Dialog>
+        </div>
+      </PageTransition>
+    </>
   )
 }
 

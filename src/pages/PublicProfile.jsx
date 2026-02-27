@@ -22,6 +22,7 @@ import {
   Heart,
 } from 'lucide-react'
 import './ProfilePage.css'
+import SEO from '../components/SEO'
 
 const PublicProfile = () => {
   const { userId, username } = useParams()
@@ -355,273 +356,291 @@ const PublicProfile = () => {
   )
 
   return (
-    <PageTransition>
-      <div className='max-w-6xl mx-auto p-3 md:p-5 min-h-screen'>
-        <Toast ref={toast} />
+    <>
+      <SEO
+        title={`Perfil de ${profile.username}`}
+        description={
+          profile.bio ||
+          `Descubre el garaje, los eventos y la crew de ${profile.username} en la comunidad de CarMeet ESP.`
+        }
+        image={
+          profile.avatar_url ||
+          'https://stryumcmeavlvjaamcaw.supabase.co/storage/v1/object/public/crews/default-share.jpg'
+        }
+        url={window.location.href}
+        type='profile'
+      />
 
-        <Dialog
-          visible={!!galleryImages}
-          onHide={() => setGalleryImages(null)}
-          header={`Galería de ${profile.username}`}
-          style={{ width: '90vw', maxWidth: '800px' }}
-          dismissableMask
-        >
-          {galleryImages && (
-            <Galleria
-              value={galleryImages}
-              numVisible={5}
-              circular
-              autoPlay
-              transitionInterval={3000}
-              item={galleryItemTemplate}
-              thumbnail={galleryThumbnailTemplate}
-              style={{ maxWidth: '100%' }}
-            />
-          )}
-        </Dialog>
+      <PageTransition>
+        <div className='max-w-6xl mx-auto p-3 md:p-5 min-h-screen'>
+          <Toast ref={toast} />
 
-        <div className='flex justify-content-between align-items-center mb-4'>
-          <Button
-            label='Volver'
-            icon='pi pi-arrow-left'
-            text
-            className='font-bold text-700'
-            onClick={() => navigate(-1)}
-          />
-          <Button
-            icon={<Share2 size={18} />}
-            rounded
-            text
-            className='bg-white shadow-1'
-            onClick={handleShare}
-          />
-        </div>
-
-        <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5 border-1 border-100'>
-          <Avatar
-            icon='pi pi-user'
-            size='xlarge'
-            shape='circle'
-            className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white flex-shrink-0'
-            image={profile.avatar_url}
-          />
-          <div className='text-center md:text-left flex-1'>
-            <h1 className='text-3xl font-black m-0 text-900'>
-              {profile.username || 'Usuario'}
-            </h1>
-            {profile.bio ? (
-              <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto md:mx-0'>
-                {profile.bio}
-              </p>
-            ) : (
-              <p className='text-500 mt-1 mb-0 font-medium'>
-                Miembro de CarMeet ESP
-              </p>
+          <Dialog
+            visible={!!galleryImages}
+            onHide={() => setGalleryImages(null)}
+            header={`Galería de ${profile.username}`}
+            style={{ width: '90vw', maxWidth: '800px' }}
+            dismissableMask
+          >
+            {galleryImages && (
+              <Galleria
+                value={galleryImages}
+                numVisible={5}
+                circular
+                autoPlay
+                transitionInterval={3000}
+                item={galleryItemTemplate}
+                thumbnail={galleryThumbnailTemplate}
+                style={{ maxWidth: '100%' }}
+              />
             )}
-            {userCrew && (
-              <div className='mt-3'>
-                <div
-                  className='inline-flex align-items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 border-300'
-                  onClick={() => navigate(`/crew/${userCrew.name}`)}
-                >
-                  <Avatar
-                    image={userCrew.profile_image_url}
-                    icon={!userCrew.profile_image_url && <Shield size={14} />}
-                    shape='circle'
-                    className='w-2rem h-2rem shadow-1'
+          </Dialog>
+
+          <div className='flex justify-content-between align-items-center mb-4'>
+            <Button
+              label='Volver'
+              icon='pi pi-arrow-left'
+              text
+              className='font-bold text-700'
+              onClick={() => navigate(-1)}
+            />
+            <Button
+              icon={<Share2 size={18} />}
+              rounded
+              text
+              className='bg-white shadow-1'
+              onClick={handleShare}
+            />
+          </div>
+
+          <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5 border-1 border-100'>
+            <Avatar
+              icon='pi pi-user'
+              size='xlarge'
+              shape='circle'
+              className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white flex-shrink-0'
+              image={profile.avatar_url}
+            />
+            <div className='text-center md:text-left flex-1'>
+              <h1 className='text-3xl font-black m-0 text-900'>
+                {profile.username || 'Usuario'}
+              </h1>
+              {profile.bio ? (
+                <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto md:mx-0'>
+                  {profile.bio}
+                </p>
+              ) : (
+                <p className='text-500 mt-1 mb-0 font-medium'>
+                  Miembro de CarMeet ESP
+                </p>
+              )}
+              {userCrew && (
+                <div className='mt-3'>
+                  <div
+                    className='inline-flex align-items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 border-300'
+                    onClick={() => navigate(`/crew/${userCrew.name}`)}
+                  >
+                    <Avatar
+                      image={userCrew.profile_image_url}
+                      icon={!userCrew.profile_image_url && <Shield size={14} />}
+                      shape='circle'
+                      className='w-2rem h-2rem shadow-1'
+                    />
+                    <span className='font-bold text-sm text-900'>
+                      {userCrew.name}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {!isMyOwnProfile && (
+                <div className='mt-4'>
+                  <Button
+                    label={isFollowing ? 'Siguiendo' : 'Seguir'}
+                    icon={
+                      isFollowing ? (
+                        <UserCheck size={18} className='mr-2' />
+                      ) : (
+                        <UserPlus size={18} className='mr-2' />
+                      )
+                    }
+                    className={`border-round-xl font-bold px-4 ${isFollowing ? 'p-button-outlined p-button-secondary' : ''}`}
+                    style={
+                      !isFollowing
+                        ? {
+                            backgroundColor: '#2563eb',
+                            color: '#ffffff',
+                            border: 'none',
+                          }
+                        : {}
+                    }
+                    onClick={handleFollowToggle}
+                    loading={followLoading}
                   />
-                  <span className='font-bold text-sm text-900'>
-                    {userCrew.name}
-                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className='flex gap-4 md:gap-5 text-center border-top-1 md:border-top-none md:border-left-1 border-200 pt-4 md:pt-0 md:pl-5 w-full md:w-auto justify-content-center'>
+              <div>
+                <div className='text-2xl font-black text-900'>
+                  {vehicles.length}
+                </div>
+                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                  Coches
                 </div>
               </div>
-            )}
-            {!isMyOwnProfile && (
-              <div className='mt-4'>
-                <Button
-                  label={isFollowing ? 'Siguiendo' : 'Seguir'}
-                  icon={
-                    isFollowing ? (
-                      <UserCheck size={18} className='mr-2' />
-                    ) : (
-                      <UserPlus size={18} className='mr-2' />
-                    )
-                  }
-                  className={`border-round-xl font-bold px-4 ${isFollowing ? 'p-button-outlined p-button-secondary' : ''}`}
-                  style={
-                    !isFollowing
-                      ? {
-                          backgroundColor: '#2563eb',
-                          color: '#ffffff',
-                          border: 'none',
-                        }
-                      : {}
-                  }
-                  onClick={handleFollowToggle}
-                  loading={followLoading}
-                />
+              <div>
+                <div className='text-2xl font-black text-900'>
+                  {followersCount}
+                </div>
+                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                  Seguidores
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className='flex gap-4 md:gap-5 text-center border-top-1 md:border-top-none md:border-left-1 border-200 pt-4 md:pt-0 md:pl-5 w-full md:w-auto justify-content-center'>
-            <div>
-              <div className='text-2xl font-black text-900'>
-                {vehicles.length}
-              </div>
-              <div className='text-xs font-bold text-500 uppercase tracking-widest'>
-                Coches
-              </div>
-            </div>
-            <div>
-              <div className='text-2xl font-black text-900'>
-                {followersCount}
-              </div>
-              <div className='text-xs font-bold text-500 uppercase tracking-widest'>
-                Seguidores
-              </div>
-            </div>
-            <div>
-              <div className='text-2xl font-black text-900'>
-                {followingCount}
-              </div>
-              <div className='text-xs font-bold text-500 uppercase tracking-widest'>
-                Seguidos
+              <div>
+                <div className='text-2xl font-black text-900'>
+                  {followingCount}
+                </div>
+                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                  Seguidos
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <section className='profile-section'>
-          <h2 className='profile-section-title'>
-            <Car className='text-purple-600' size={28} /> Garaje de{' '}
-            {profile.username}
-          </h2>
-          {vehicles.length === 0 ? (
-            <div className='empty-state-box'>
-              <Car size={48} className='text-300 mb-3 mx-auto' />
-              <span className='block font-bold text-lg'>
-                Aún no ha subido vehículos.
-              </span>
-            </div>
-          ) : (
-            <div className='grid m-0'>
-              {vehicles.map((v) => {
-                const totalImages =
-                  (v.image_url ? 1 : 0) +
-                  (v.vehicle_images ? v.vehicle_images.length : 0)
+          <section className='profile-section'>
+            <h2 className='profile-section-title'>
+              <Car className='text-purple-600' size={28} /> Garaje de{' '}
+              {profile.username}
+            </h2>
+            {vehicles.length === 0 ? (
+              <div className='empty-state-box'>
+                <Car size={48} className='text-300 mb-3 mx-auto' />
+                <span className='block font-bold text-lg'>
+                  Aún no ha subido vehículos.
+                </span>
+              </div>
+            ) : (
+              <div className='grid m-0'>
+                {vehicles.map((v) => {
+                  const totalImages =
+                    (v.image_url ? 1 : 0) +
+                    (v.vehicle_images ? v.vehicle_images.length : 0)
 
-                return (
-                  <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
-                    <div className='vehicle-card hover:-translate-y-1 hover:shadow-2 flex flex-column overflow-hidden bg-white'>
-                      {/* ZONA CLICABLE: ABRE GALERÍA */}
-                      <div
-                        className='cursor-pointer flex-grow-1'
-                        onClick={() => openGalleryViewer(v)}
-                      >
+                  return (
+                    <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
+                      <div className='vehicle-card hover:-translate-y-1 hover:shadow-2 flex flex-column overflow-hidden bg-white'>
+                        {/* ZONA CLICABLE: ABRE GALERÍA */}
                         <div
-                          className='vehicle-img-wrapper relative'
-                          style={{ height: '220px' }}
+                          className='cursor-pointer flex-grow-1'
+                          onClick={() => openGalleryViewer(v)}
                         >
-                          {v.image_url ? (
-                            <img
-                              src={v.image_url}
-                              alt={v.modelo}
-                              className='w-full h-full'
-                              style={{ objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div className='flex h-full align-items-center justify-content-center text-300 bg-gray-100'>
-                              <ImageIcon size={40} />
-                            </div>
-                          )}
+                          <div
+                            className='vehicle-img-wrapper relative'
+                            style={{ height: '220px' }}
+                          >
+                            {v.image_url ? (
+                              <img
+                                src={v.image_url}
+                                alt={v.modelo}
+                                className='w-full h-full'
+                                style={{ objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div className='flex h-full align-items-center justify-content-center text-300 bg-gray-100'>
+                                <ImageIcon size={40} />
+                              </div>
+                            )}
 
-                          <Tag
-                            value={v.combustible}
-                            className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
+                            <Tag
+                              value={v.combustible}
+                              className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
+                            />
+
+                            {/* CONTADOR DE LIKES (ESTÁTICO, SIN ONCLICK) */}
+                            <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
+                              <Heart
+                                size={16}
+                                fill={v.likesCount > 0 ? '#ec4899' : 'none'}
+                                className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
+                              />
+                              <span className='text-white font-bold text-sm'>
+                                {v.likesCount}
+                              </span>
+                            </div>
+
+                            {totalImages > 1 && (
+                              <div className='gallery-indicator-badge absolute bottom-0 right-0 m-2 bg-black-alpha-60 text-white text-xs px-2 py-1 border-round'>
+                                <i className='pi pi-images mr-1'></i> 1/
+                                {totalImages}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className='p-4 text-center'>
+                            <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
+                              {v.marca} {v.modelo}
+                            </h3>
+                            <div className='text-md text-500 font-bold mb-3'>
+                              {v.anio} • {v.cv} CV
+                            </div>
+                            {v.descripcion && (
+                              <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
+                                {v.descripcion}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* NUEVA BARRA DE ACCIÓN INFERIOR */}
+                        <div className='border-top-1 border-100 p-3 bg-gray-50 mt-auto'>
+                          <Button
+                            label={
+                              v.isLikedByMe
+                                ? 'Marcado como me gusta'
+                                : 'Me gusta'
+                            }
+                            icon={
+                              <Heart
+                                size={18}
+                                fill={v.isLikedByMe ? 'currentColor' : 'none'}
+                                className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
+                              />
+                            }
+                            className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary bg-white' : 'p-button-help shadow-2 hover:shadow-4'}`}
+                            onClick={(e) =>
+                              handleToggleLikeVehicle(e, v.id, v.isLikedByMe)
+                            }
                           />
-
-                          {/* CONTADOR DE LIKES (ESTÁTICO, SIN ONCLICK) */}
-                          <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
-                            <Heart
-                              size={16}
-                              fill={v.likesCount > 0 ? '#ec4899' : 'none'}
-                              className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
-                            />
-                            <span className='text-white font-bold text-sm'>
-                              {v.likesCount}
-                            </span>
-                          </div>
-
-                          {totalImages > 1 && (
-                            <div className='gallery-indicator-badge absolute bottom-0 right-0 m-2 bg-black-alpha-60 text-white text-xs px-2 py-1 border-round'>
-                              <i className='pi pi-images mr-1'></i> 1/
-                              {totalImages}
-                            </div>
-                          )}
                         </div>
-
-                        <div className='p-4 text-center'>
-                          <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
-                            {v.marca} {v.modelo}
-                          </h3>
-                          <div className='text-md text-500 font-bold mb-3'>
-                            {v.anio} • {v.cv} CV
-                          </div>
-                          {v.descripcion && (
-                            <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
-                              {v.descripcion}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* NUEVA BARRA DE ACCIÓN INFERIOR */}
-                      <div className='border-top-1 border-100 p-3 bg-gray-50 mt-auto'>
-                        <Button
-                          label={
-                            v.isLikedByMe
-                              ? 'Marcado como me gusta'
-                              : 'Me gusta'
-                          }
-                          icon={
-                            <Heart
-                              size={18}
-                              fill={v.isLikedByMe ? 'currentColor' : 'none'}
-                              className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
-                            />
-                          }
-                          className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary bg-white' : 'p-button-help shadow-2 hover:shadow-4'}`}
-                          onClick={(e) =>
-                            handleToggleLikeVehicle(e, v.id, v.isLikedByMe)
-                          }
-                        />
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
+                  )
+                })}
+              </div>
+            )}
+          </section>
 
-        <section className='profile-section mb-0'>
-          <h2 className='profile-section-title'>
-            <Flag className='text-blue-600' size={28} /> Eventos Organizados
-          </h2>
-          {createdEvents.length === 0 ? (
-            <div className='empty-state-box'>
-              <Flag size={48} className='text-300 mb-3 mx-auto' />
-              <span className='block font-bold text-lg'>
-                No ha organizado eventos.
-              </span>
-            </div>
-          ) : (
-            <div className='grid m-0'>{createdEvents.map(renderEventCard)}</div>
-          )}
-        </section>
-      </div>
-    </PageTransition>
+          <section className='profile-section mb-0'>
+            <h2 className='profile-section-title'>
+              <Flag className='text-blue-600' size={28} /> Eventos Organizados
+            </h2>
+            {createdEvents.length === 0 ? (
+              <div className='empty-state-box'>
+                <Flag size={48} className='text-300 mb-3 mx-auto' />
+                <span className='block font-bold text-lg'>
+                  No ha organizado eventos.
+                </span>
+              </div>
+            ) : (
+              <div className='grid m-0'>
+                {createdEvents.map(renderEventCard)}
+              </div>
+            )}
+          </section>
+        </div>
+      </PageTransition>
+    </>
   )
 }
 

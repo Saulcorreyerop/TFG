@@ -14,6 +14,8 @@ import imageCompression from 'browser-image-compression'
 
 import './GaragePage.css'
 
+import SEO from '../components/SEO'
+
 const GaragePage = ({ session }) => {
   const toast = useRef(null)
   const [vehicles, setVehicles] = useState([])
@@ -429,270 +431,277 @@ const GaragePage = ({ session }) => {
   }
 
   return (
-    <PageTransition>
-      <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
-        <Toast ref={toast} />
+    <>
+      <SEO
+        title='Mi Garaje'
+        description='Gestiona tus vehículos, añade especificaciones y guarda el historial de modificaciones de tus coches en CarMeet ESP.'
+        url={window.location.href}
+      />
+      <PageTransition>
+        <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
+          <Toast ref={toast} />
 
-        {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
-        <Dialog
-          visible={!!galleryImages}
-          onHide={() => setGalleryImages(null)}
-          header='Galería del Vehículo'
-          style={{ width: '90vw', maxWidth: '800px' }}
-          dismissableMask
-        >
-          {galleryImages && (
-            <Galleria
-              value={galleryImages}
-              numVisible={5}
-              circular
-              autoPlay
-              transitionInterval={3000}
-              item={galleryItemTemplate}
-              thumbnail={galleryThumbnailTemplate}
-              style={{ maxWidth: '100%' }}
+          {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
+          <Dialog
+            visible={!!galleryImages}
+            onHide={() => setGalleryImages(null)}
+            header='Galería del Vehículo'
+            style={{ width: '90vw', maxWidth: '800px' }}
+            dismissableMask
+          >
+            {galleryImages && (
+              <Galleria
+                value={galleryImages}
+                numVisible={5}
+                circular
+                autoPlay
+                transitionInterval={3000}
+                item={galleryItemTemplate}
+                thumbnail={galleryThumbnailTemplate}
+                style={{ maxWidth: '100%' }}
+              />
+            )}
+          </Dialog>
+
+          <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
+            <div>
+              <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
+                Mi Garaje
+              </h1>
+              <p className='text-500 mt-2 text-lg'>Tu colección personal</p>
+            </div>
+            <Button
+              label='Añadir Vehículo'
+              icon='pi pi-plus'
+              severity='help'
+              raised
+              className='px-4 py-3 border-round-3xl shadow-2'
+              onClick={openNew}
             />
+          </div>
+
+          {vehicles.length === 0 ? (
+            <div className='garage-empty'>
+              <p className='text-center text-500'>No hay vehículos.</p>
+            </div>
+          ) : (
+            <div className='garage-grid'>
+              {vehicles.map((car) => (
+                <div key={car.id}>{carTemplate(car)}</div>
+              ))}
+            </div>
           )}
-        </Dialog>
 
-        <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
-          <div>
-            <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
-              Mi Garaje
-            </h1>
-            <p className='text-500 mt-2 text-lg'>Tu colección personal</p>
-          </div>
-          <Button
-            label='Añadir Vehículo'
-            icon='pi pi-plus'
-            severity='help'
-            raised
-            className='px-4 py-3 border-round-3xl shadow-2'
-            onClick={openNew}
-          />
-        </div>
-
-        {vehicles.length === 0 ? (
-          <div className='garage-empty'>
-            <p className='text-center text-500'>No hay vehículos.</p>
-          </div>
-        ) : (
-          <div className='garage-grid'>
-            {vehicles.map((car) => (
-              <div key={car.id}>{carTemplate(car)}</div>
-            ))}
-          </div>
-        )}
-
-        {/* DIALOG DE CREAR / EDITAR */}
-        <Dialog
-          header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
-          visible={showDialog}
-          style={{ width: '90vw', maxWidth: '600px' }}
-          onHide={() => setShowDialog(false)}
-          className='p-fluid'
-        >
-          <div className='flex flex-column gap-4 pt-2'>
-            <div className='flex justify-content-center'>
-              <SelectButton
-                value={vehicleType}
-                onChange={(e) => {
-                  if (e.value) {
-                    setVehicleType(e.value)
-                    setForm({ ...form, marca: '', modelo: '' })
-                  }
-                }}
-                options={typeOptions}
-                className='w-full'
-                itemTemplate={(option) => (
-                  <div className='font-bold w-full text-center'>
-                    {option.label}
-                  </div>
-                )}
-              />
-            </div>
-
-            <div className='flex gap-3 flex-column md:flex-row'>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <Dropdown
-                    id='marca'
-                    value={form.marca}
-                    onChange={(e) => {
-                      setForm({ ...form, marca: e.value, modelo: '' })
-                    }}
-                    options={makes}
-                    filter
-                    editable
-                    placeholder='Selecciona o escribe'
-                    disabled={loadingAPI}
-                  />
-                  <label htmlFor='marca'>Marca</label>
-                </span>
-              </div>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <Dropdown
-                    id='modelo'
-                    value={form.modelo}
-                    onChange={(e) => setForm({ ...form, modelo: e.value })}
-                    options={models}
-                    filter
-                    editable
-                    placeholder='Selecciona o escribe'
-                    disabled={!form.marca || loadingAPI}
-                  />
-                  <label htmlFor='modelo'>Modelo</label>
-                </span>
-              </div>
-            </div>
-
-            <div className='flex gap-3'>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <InputNumber
-                    id='cv'
-                    value={form.cv}
-                    onValueChange={(e) => setForm({ ...form, cv: e.value })}
-                    suffix=' CV'
-                  />
-                  <label htmlFor='cv'>Potencia</label>
-                </span>
-              </div>
-              <div className='flex-1'>
-                <span className='p-float-label'>
-                  <InputNumber
-                    id='anio'
-                    value={form.anio}
-                    onValueChange={(e) => setForm({ ...form, anio: e.value })}
-                    useGrouping={false}
-                  />
-                  <label htmlFor='anio'>Año</label>
-                </span>
-              </div>
-            </div>
-
-            <span className='p-float-label'>
-              <Dropdown
-                id='fuel'
-                value={form.combustible}
-                options={fuelOptions}
-                onChange={(e) => setForm({ ...form, combustible: e.value })}
-              />
-              <label htmlFor='fuel'>Combustible</label>
-            </span>
-
-            <span className='p-float-label'>
-              <InputTextarea
-                id='desc'
-                value={form.descripcion}
-                onChange={(e) =>
-                  setForm({ ...form, descripcion: e.target.value })
-                }
-                rows={3}
-                autoResize
-              />
-              <label htmlFor='desc'>Modificaciones / Descripción</label>
-            </span>
-
-            {/* --- SECCIÓN DE FOTOS --- */}
-            <div className='border-top-1 border-300 pt-4 mt-2'>
-              <h3 className='text-xl font-bold text-800 m-0 mb-3'>
-                Imágenes del Vehículo
-              </h3>
-
-              {/* Foto Principal */}
-              <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative mb-4'>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={(e) => setImageFile(e.target.files[0])}
-                  className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
+          {/* DIALOG DE CREAR / EDITAR */}
+          <Dialog
+            header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
+            visible={showDialog}
+            style={{ width: '90vw', maxWidth: '600px' }}
+            onHide={() => setShowDialog(false)}
+            className='p-fluid'
+          >
+            <div className='flex flex-column gap-4 pt-2'>
+              <div className='flex justify-content-center'>
+                <SelectButton
+                  value={vehicleType}
+                  onChange={(e) => {
+                    if (e.value) {
+                      setVehicleType(e.value)
+                      setForm({ ...form, marca: '', modelo: '' })
+                    }
+                  }}
+                  options={typeOptions}
+                  className='w-full'
+                  itemTemplate={(option) => (
+                    <div className='font-bold w-full text-center'>
+                      {option.label}
+                    </div>
+                  )}
                 />
-                <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
-                  <i className='pi pi-camera text-2xl text-600'></i>
-                  <span className='text-sm text-700 font-semibold'>
-                    {imageFile
-                      ? imageFile.name
-                      : form.image_url
-                        ? 'Cambiar foto principal'
-                        : 'Subir Foto principal (Portada)'}
+              </div>
+
+              <div className='flex gap-3 flex-column md:flex-row'>
+                <div className='flex-1'>
+                  <span className='p-float-label'>
+                    <Dropdown
+                      id='marca'
+                      value={form.marca}
+                      onChange={(e) => {
+                        setForm({ ...form, marca: e.value, modelo: '' })
+                      }}
+                      options={makes}
+                      filter
+                      editable
+                      placeholder='Selecciona o escribe'
+                      disabled={loadingAPI}
+                    />
+                    <label htmlFor='marca'>Marca</label>
+                  </span>
+                </div>
+                <div className='flex-1'>
+                  <span className='p-float-label'>
+                    <Dropdown
+                      id='modelo'
+                      value={form.modelo}
+                      onChange={(e) => setForm({ ...form, modelo: e.value })}
+                      options={models}
+                      filter
+                      editable
+                      placeholder='Selecciona o escribe'
+                      disabled={!form.marca || loadingAPI}
+                    />
+                    <label htmlFor='modelo'>Modelo</label>
                   </span>
                 </div>
               </div>
 
-              {/* Galería Adicional */}
-              <div className='bg-gray-50 border-round-xl p-3 border-1 border-200'>
-                <div className='gallery-upload-zone'>
+              <div className='flex gap-3'>
+                <div className='flex-1'>
+                  <span className='p-float-label'>
+                    <InputNumber
+                      id='cv'
+                      value={form.cv}
+                      onValueChange={(e) => setForm({ ...form, cv: e.value })}
+                      suffix=' CV'
+                    />
+                    <label htmlFor='cv'>Potencia</label>
+                  </span>
+                </div>
+                <div className='flex-1'>
+                  <span className='p-float-label'>
+                    <InputNumber
+                      id='anio'
+                      value={form.anio}
+                      onValueChange={(e) => setForm({ ...form, anio: e.value })}
+                      useGrouping={false}
+                    />
+                    <label htmlFor='anio'>Año</label>
+                  </span>
+                </div>
+              </div>
+
+              <span className='p-float-label'>
+                <Dropdown
+                  id='fuel'
+                  value={form.combustible}
+                  options={fuelOptions}
+                  onChange={(e) => setForm({ ...form, combustible: e.value })}
+                />
+                <label htmlFor='fuel'>Combustible</label>
+              </span>
+
+              <span className='p-float-label'>
+                <InputTextarea
+                  id='desc'
+                  value={form.descripcion}
+                  onChange={(e) =>
+                    setForm({ ...form, descripcion: e.target.value })
+                  }
+                  rows={3}
+                  autoResize
+                />
+                <label htmlFor='desc'>Modificaciones / Descripción</label>
+              </span>
+
+              {/* --- SECCIÓN DE FOTOS --- */}
+              <div className='border-top-1 border-300 pt-4 mt-2'>
+                <h3 className='text-xl font-bold text-800 m-0 mb-3'>
+                  Imágenes del Vehículo
+                </h3>
+
+                {/* Foto Principal */}
+                <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative mb-4'>
                   <input
                     type='file'
                     accept='image/*'
-                    multiple
-                    onChange={handleExtraImagesChange}
+                    onChange={(e) => setImageFile(e.target.files[0])}
                     className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
                   />
-                  <div className='flex flex-column align-items-center gap-1 pointer-events-none'>
-                    <i className='pi pi-images text-xl text-blue-500'></i>
-                    <span className='text-sm font-bold text-700'>
-                      Añadir fotos a la galería
-                    </span>
-                    <span className='text-xs text-500'>
-                      Selecciona varias imágenes a la vez
+                  <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
+                    <i className='pi pi-camera text-2xl text-600'></i>
+                    <span className='text-sm text-700 font-semibold'>
+                      {imageFile
+                        ? imageFile.name
+                        : form.image_url
+                          ? 'Cambiar foto principal'
+                          : 'Subir Foto principal (Portada)'}
                     </span>
                   </div>
                 </div>
 
-                {/* Previsualización de imágenes (Existentes y Nuevas) */}
-                {(existingExtraImages.length > 0 ||
-                  extraImageFiles.length > 0) && (
-                  <div className='gallery-preview-grid'>
-                    {/* Fotos ya guardadas en DB */}
-                    {existingExtraImages.map((img) => (
-                      <div key={img.id} className='gallery-preview-item'>
-                        <img src={img.image_url} alt='Extra guardada' />
-                        <button
-                          type='button'
-                          className='remove-preview-btn'
-                          onClick={() => removeExistingImage(img.id)}
-                        >
-                          <i className='pi pi-times'></i>
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* Fotos nuevas pendientes de subir */}
-                    {extraImageFiles.map((file, idx) => (
-                      <div key={idx} className='gallery-preview-item'>
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt='Nueva preview'
-                        />
-                        <button
-                          type='button'
-                          className='remove-preview-btn'
-                          onClick={() => removeExtraFile(idx)}
-                        >
-                          <i className='pi pi-times'></i>
-                        </button>
-                      </div>
-                    ))}
+                {/* Galería Adicional */}
+                <div className='bg-gray-50 border-round-xl p-3 border-1 border-200'>
+                  <div className='gallery-upload-zone'>
+                    <input
+                      type='file'
+                      accept='image/*'
+                      multiple
+                      onChange={handleExtraImagesChange}
+                      className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
+                    />
+                    <div className='flex flex-column align-items-center gap-1 pointer-events-none'>
+                      <i className='pi pi-images text-xl text-blue-500'></i>
+                      <span className='text-sm font-bold text-700'>
+                        Añadir fotos a la galería
+                      </span>
+                      <span className='text-xs text-500'>
+                        Selecciona varias imágenes a la vez
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
 
-            <Button
-              label={editingId ? 'Guardar Cambios' : 'Guardar Vehículo'}
-              icon='pi pi-check'
-              severity='help'
-              onClick={handleSubmit}
-              loading={loading}
-              className='mt-4 py-3 font-bold text-lg border-round-xl shadow-2'
-            />
-          </div>
-        </Dialog>
-      </div>
-    </PageTransition>
+                  {/* Previsualización de imágenes (Existentes y Nuevas) */}
+                  {(existingExtraImages.length > 0 ||
+                    extraImageFiles.length > 0) && (
+                    <div className='gallery-preview-grid'>
+                      {/* Fotos ya guardadas en DB */}
+                      {existingExtraImages.map((img) => (
+                        <div key={img.id} className='gallery-preview-item'>
+                          <img src={img.image_url} alt='Extra guardada' />
+                          <button
+                            type='button'
+                            className='remove-preview-btn'
+                            onClick={() => removeExistingImage(img.id)}
+                          >
+                            <i className='pi pi-times'></i>
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* Fotos nuevas pendientes de subir */}
+                      {extraImageFiles.map((file, idx) => (
+                        <div key={idx} className='gallery-preview-item'>
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt='Nueva preview'
+                          />
+                          <button
+                            type='button'
+                            className='remove-preview-btn'
+                            onClick={() => removeExtraFile(idx)}
+                          >
+                            <i className='pi pi-times'></i>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Button
+                label={editingId ? 'Guardar Cambios' : 'Guardar Vehículo'}
+                icon='pi pi-check'
+                severity='help'
+                onClick={handleSubmit}
+                loading={loading}
+                className='mt-4 py-3 font-bold text-lg border-round-xl shadow-2'
+              />
+            </div>
+          </Dialog>
+        </div>
+      </PageTransition>
+    </>
   )
 }
 

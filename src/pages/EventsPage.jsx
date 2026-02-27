@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import './EventsPage.css'
 import { Helmet } from 'react-helmet-async'
+import SEO from '../components/SEO'
 
 const MotionDiv = motion.div
 
@@ -385,184 +386,198 @@ const EventsPage = ({ session }) => {
   const currentList = activeTab === 'upcoming' ? filteredUpcoming : filteredPast
 
   return (
-    <PageTransition>
-      <Helmet>
-        <title>Agenda de Eventos | CarMeet ESP</title>
-      </Helmet>
-      <div className='technical-page-wrapper'>
-        <Toast ref={toast} position='top-center' className='mt-6 z-5' />
-        <div className='max-w-8xl mx-auto'>
-          <div className='grid grid-nogutter'>
-            <div className='col-12 lg:col-3 lg:pr-5 relative'>
-              <div className='sticky-sidebar py-6 px-4 lg:px-0'>
-                <div className='mb-6'>
-                  <h1 className='text-4xl font-black m-0 tracking-tight text-900 capitalize'>
-                    {activeLocation
-                      ? `Eventos en ${activeLocation}`
-                      : 'Agenda de Eventos'}
-                  </h1>
-                  <p className='text-500 font-medium mt-2'>
-                    Explora las KDDs y rutas de la comunidad.
-                  </p>
+    <>
+      <SEO
+        title={
+          activeLocation
+            ? `Eventos de Motor en ${activeLocation}`
+            : 'Agenda de Eventos y KDDs'
+        }
+        description='Consulta la agenda completa de eventos de motor, trackdays, rutas y exposiciones en España. ¡Apunta tu coche y no te pierdas ninguna KDD!'
+        url={window.location.href}
+      />
+      <PageTransition>
+        <Helmet>
+          <title>Agenda de Eventos | CarMeet ESP</title>
+        </Helmet>
+        <div className='technical-page-wrapper'>
+          <Toast ref={toast} position='top-center' className='mt-6 z-5' />
+          <div className='max-w-8xl mx-auto'>
+            <div className='grid grid-nogutter'>
+              <div className='col-12 lg:col-3 lg:pr-5 relative'>
+                <div className='sticky-sidebar py-6 px-4 lg:px-0'>
+                  <div className='mb-6'>
+                    <h1 className='text-4xl font-black m-0 tracking-tight text-900 capitalize'>
+                      {activeLocation
+                        ? `Eventos en ${activeLocation}`
+                        : 'Agenda de Eventos'}
+                    </h1>
+                    <p className='text-500 font-medium mt-2'>
+                      Explora las KDDs y rutas de la comunidad.
+                    </p>
 
-                  <Button
-                    label='Crear Nuevo Evento'
-                    icon={<Plus size={20} className='mr-2' />}
-                    className='w-full mt-4 btn-create-modern'
-                    onClick={handleOpenModal}
-                  />
-
-                  {/* Botón Restaurado que usa navigate */}
-                  {activeLocation && (
                     <Button
-                      label='Ver toda España'
-                      icon='pi pi-map'
-                      className='p-button-outlined p-button-secondary w-full mt-3 font-bold'
-                      onClick={() => navigate('/eventos')}
+                      label='Crear Nuevo Evento'
+                      icon={<Plus size={20} className='mr-2' />}
+                      className='w-full mt-4 btn-create-modern'
+                      onClick={handleOpenModal}
                     />
-                  )}
-                </div>
 
-                <div className='mb-6'>
-                  <div className='technical-search mb-4'>
-                    <Search size={16} className='search-icon' />
-                    <input
-                      type='text'
-                      placeholder='Busca por nombre...'
-                      value={filters.text}
-                      onChange={(e) =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          text: e.target.value,
-                        }))
-                      }
-                    />
+                    {/* Botón Restaurado que usa navigate */}
+                    {activeLocation && (
+                      <Button
+                        label='Ver toda España'
+                        icon='pi pi-map'
+                        className='p-button-outlined p-button-secondary w-full mt-3 font-bold'
+                        onClick={() => navigate('/eventos')}
+                      />
+                    )}
                   </div>
-                  <div className='flex flex-column gap-2'>
-                    {EVENT_TYPES.map((type, i) => (
-                      <div
-                        key={i}
-                        className={`category-item ${filters.type === type.value ? `active theme-${type.theme}` : ''}`}
-                        onClick={() =>
+
+                  <div className='mb-6'>
+                    <div className='technical-search mb-4'>
+                      <Search size={16} className='search-icon' />
+                      <input
+                        type='text'
+                        placeholder='Busca por nombre...'
+                        value={filters.text}
+                        onChange={(e) =>
                           setFilters((prev) => ({
                             ...prev,
-                            type: prev.type === type.value ? null : type.value,
+                            text: e.target.value,
                           }))
                         }
-                      >
-                        <span className='text-xl mr-2'>
-                          {type.icon || <Grid size={16} />}
-                        </span>
-                        <span className='font-bold text-sm'>{type.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Favoritos Restaurados que usa favorites */}
-                {favorites.length > 0 && (
-                  <div>
-                    <div className='text-xs font-bold text-400 uppercase tracking-widest mb-3 flex align-items-center gap-2'>
-                      <Heart size={14} /> Favoritos ({favorites.length})
+                      />
                     </div>
                     <div className='flex flex-column gap-2'>
-                      {favorites.slice(0, 3).map((fav) => (
+                      {EVENT_TYPES.map((type, i) => (
                         <div
-                          key={fav.id}
-                          className='flex align-items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 border-round-md transition-colors'
-                          onClick={() => navigate(`/evento/${fav.id}`)}
+                          key={i}
+                          className={`category-item ${filters.type === type.value ? `active theme-${type.theme}` : ''}`}
+                          onClick={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              type:
+                                prev.type === type.value ? null : type.value,
+                            }))
+                          }
                         >
-                          <img
-                            src={fav.image}
-                            alt=''
-                            className='w-2rem h-2rem border-round-md object-cover'
-                          />
-                          <span className='text-sm font-bold text-700 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
-                            {fav.titulo}
+                          <span className='text-xl mr-2'>
+                            {type.icon || <Grid size={16} />}
+                          </span>
+                          <span className='font-bold text-sm'>
+                            {type.label}
                           </span>
                         </div>
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
 
-            <div className='col-12 lg:col-9 py-6 px-4 lg:pl-5 border-left-1 border-gray-200 content-area'>
-              {events.featured.length > 0 &&
-                !filters.text &&
-                !filters.type &&
-                !activeLocation && (
-                  <div className='mb-8'>
-                    <TechnicalCoverCard event={events.featured[0]} />
-                  </div>
-                )}
-
-              <div className='flex align-items-center justify-content-between mb-5 border-bottom-2 border-gray-100 pb-2'>
-                <div className='flex gap-5'>
-                  <button
-                    className={`tech-tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('upcoming')}
-                  >
-                    PRÓXIMOS{' '}
-                    <span className='bg-gray-100 text-gray-900 px-2 py-0 border-round-sm text-xs ml-1'>
-                      {filteredUpcoming.length}
-                    </span>
-                  </button>
-                  <button
-                    className={`tech-tab-btn ${activeTab === 'past' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('past')}
-                  >
-                    HISTORIAL{' '}
-                    <span className='bg-gray-100 text-gray-600 px-2 py-0 border-round-sm text-xs ml-1'>
-                      {filteredPast.length}
-                    </span>
-                  </button>
+                  {/* Favoritos Restaurados que usa favorites */}
+                  {favorites.length > 0 && (
+                    <div>
+                      <div className='text-xs font-bold text-400 uppercase tracking-widest mb-3 flex align-items-center gap-2'>
+                        <Heart size={14} /> Favoritos ({favorites.length})
+                      </div>
+                      <div className='flex flex-column gap-2'>
+                        {favorites.slice(0, 3).map((fav) => (
+                          <div
+                            key={fav.id}
+                            className='flex align-items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 border-round-md transition-colors'
+                            onClick={() => navigate(`/evento/${fav.id}`)}
+                          >
+                            <img
+                              src={fav.image}
+                              alt=''
+                              className='w-2rem h-2rem border-round-md object-cover'
+                            />
+                            <span className='text-sm font-bold text-700 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
+                              {fav.titulo}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className='flex flex-column gap-4'>
-                <AnimatePresence mode='popLayout'>
-                  {currentList.length > 0 ? (
-                    currentList.map((ev) => (
-                      <MotionDiv
-                        key={ev.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <TimelineEventCard
-                          event={ev}
-                          isPast={activeTab === 'past'}
-                          session={session}
-                        />
-                      </MotionDiv>
-                    ))
-                  ) : (
-                    <div className='text-center py-8 border-2 border-dashed border-gray-200 border-round-lg'>
-                      <Layers
-                        size={48}
-                        className='text-gray-300 mb-3 mx-auto'
-                      />
-                      <h3 className='text-xl font-black text-gray-900 m-0'>
-                        Sin resultados
-                      </h3>
+              <div className='col-12 lg:col-9 py-6 px-4 lg:pl-5 border-left-1 border-gray-200 content-area'>
+                {events.featured.length > 0 &&
+                  !filters.text &&
+                  !filters.type &&
+                  !activeLocation && (
+                    <div className='mb-8'>
+                      <TechnicalCoverCard event={events.featured[0]} />
                     </div>
                   )}
-                </AnimatePresence>
+
+                <div className='flex align-items-center justify-content-between mb-5 border-bottom-2 border-gray-100 pb-2'>
+                  <div className='flex gap-5'>
+                    <button
+                      className={`tech-tab-btn ${activeTab === 'upcoming' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('upcoming')}
+                    >
+                      PRÓXIMOS{' '}
+                      <span className='bg-gray-100 text-gray-900 px-2 py-0 border-round-sm text-xs ml-1'>
+                        {filteredUpcoming.length}
+                      </span>
+                    </button>
+                    <button
+                      className={`tech-tab-btn ${activeTab === 'past' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('past')}
+                    >
+                      HISTORIAL{' '}
+                      <span className='bg-gray-100 text-gray-600 px-2 py-0 border-round-sm text-xs ml-1'>
+                        {filteredPast.length}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className='flex flex-column gap-4'>
+                  <AnimatePresence mode='popLayout'>
+                    {currentList.length > 0 ? (
+                      currentList.map((ev) => (
+                        <MotionDiv
+                          key={ev.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <TimelineEventCard
+                            event={ev}
+                            isPast={activeTab === 'past'}
+                            session={session}
+                          />
+                        </MotionDiv>
+                      ))
+                    ) : (
+                      <div className='text-center py-8 border-2 border-dashed border-gray-200 border-round-lg'>
+                        <Layers
+                          size={48}
+                          className='text-gray-300 mb-3 mx-auto'
+                        />
+                        <h3 className='text-xl font-black text-gray-900 m-0'>
+                          Sin resultados
+                        </h3>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           </div>
+          <AddEventDialog
+            visible={showModal}
+            onHide={() => setShowModal(false)}
+            onEventAdded={fetchAllEvents}
+            session={session}
+          />
         </div>
-        <AddEventDialog
-          visible={showModal}
-          onHide={() => setShowModal(false)}
-          onEventAdded={fetchAllEvents}
-          session={session}
-        />
-      </div>
-    </PageTransition>
+      </PageTransition>
+    </>
   )
 }
 
