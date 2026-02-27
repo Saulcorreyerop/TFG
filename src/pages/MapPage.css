@@ -171,3 +171,59 @@
     display: none;
   }
 }
+/* =========================================
+   4. BARRA DE FILTROS FLOTANTE DEL MAPA
+   ========================================= */
+.map-filter-bar {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000; /* Asegura que esté por encima del mapa de Leaflet */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 2rem;
+  padding: 0.35rem;
+  display: flex;
+  gap: 0.25rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 90%;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  scroll-behavior: smooth;
+}
+
+/* Ocultar barra de scroll pero mantener funcionalidad táctil */
+.map-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+.map-filter-bar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.map-filter-btn {
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 1.5rem;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: transparent;
+  color: #4b5563;
+  text-transform: capitalize;
+}
+
+.map-filter-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.map-filter-btn.active {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 10px -2px rgba(59, 130, 246, 0.5);
+}

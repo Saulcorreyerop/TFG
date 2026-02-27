@@ -540,7 +540,21 @@ const Header = ({ session }) => {
           </div>
 
           {session && (
-            <div className='p-3 border-top-1 border-100 bg-gray-50'>
+            <div className='p-3 border-top-1 border-100 bg-gray-50 flex flex-column'>
+              {userProfile?.is_admin && (
+                <Button
+                  label='Panel de Moderación'
+                  icon={<ShieldAlert size={18} className='mr-2' />}
+                  severity='warning'
+                  text
+                  className='w-full font-bold border-round-xl bg-yellow-50 hover:bg-yellow-100 text-yellow-700 py-2 p-button-text mb-2'
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    navigate('/admin')
+                  }}
+                />
+              )}
+
               <Button
                 label='Cerrar Sesión'
                 icon={<LogOut size={18} className='mr-2' />}

@@ -45,7 +45,6 @@ const MapController = ({ selectedEvent }) => {
 
   // 🚨 SOLUCIÓN DEFINITIVA A LOS CUADROS BLANCOS 🚨
   useEffect(() => {
-    // 1. Observador de redimensionamiento: si el div cambia de tamaño, ajusta el mapa al instante
     const resizeObserver = new ResizeObserver(() => {
       map.invalidateSize()
     })
@@ -55,7 +54,6 @@ const MapController = ({ selectedEvent }) => {
       resizeObserver.observe(container)
     }
 
-    // 2. Apoyo secundario para la animación de entrada
     const timer1 = setTimeout(() => map.invalidateSize(), 300)
     const timer2 = setTimeout(() => map.invalidateSize(), 800)
 
@@ -154,6 +152,9 @@ const MapPage = ({ session }) => {
   const [posicionTemp, setPosicionTemp] = useState({ lat: null, lng: null })
   const [selectedEvent, setSelectedEvent] = useState(null)
 
+  // ESTADO PARA LA BARRA DE FILTROS
+  const [activeFilter, setActiveFilter] = useState('Todos')
+
   const centerSpain = [40.0, -3.7492]
   const spainBounds = [
     [20.0, -25.0],
@@ -204,7 +205,7 @@ const MapPage = ({ session }) => {
   }, [session])
 
   useEffect(() => {
-    //eslint-disable-next-line
+    // eslint-disable-next-line
     fetchEventos()
   }, [fetchEventos])
 
@@ -238,6 +239,19 @@ const MapPage = ({ session }) => {
   const showToast = (severity, summary, detail) =>
     toast.current.show({ severity, summary, detail })
 
+  // --- LÓGICA DE FILTRADO ---
+  // Obtenemos los tipos de eventos únicos que existen ahora mismo en el mapa
+  const eventCategories = [
+    'Todos',
+    ...new Set(eventos.map((ev) => ev.tipo).filter(Boolean)),
+  ]
+
+  // Filtramos la lista final basándonos en la selección
+  const filteredEventos =
+    activeFilter === 'Todos'
+      ? eventos
+      : eventos.filter((ev) => ev.tipo === activeFilter)
+
   return (
     <PageTransition>
       <div className='map-page-container'>
@@ -245,10 +259,29 @@ const MapPage = ({ session }) => {
           <title>Mapa de Eventos en Vivo | CarMeetESP</title>
         </Helmet>
 
-        <div ref={mainContainerRef} className='map-page-container'>
+        <div
+          ref={mainContainerRef}
+          className='map-page-container w-full relative'
+        >
           <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
-          <div className='map-section'>
+          <div className='map-section relative'>
+            {/* 🔴 BARRA DE FILTROS FLOTANTE 🔴 */}
+            <div className='map-filter-bar'>
+              {eventCategories.map((cat) => (
+                <button
+                  key={cat}
+                  className={`map-filter-btn ${activeFilter === cat ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveFilter(cat)
+                    setSelectedEvent(null) // Quitar selección al cambiar de filtro
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             <MapContainer
               center={centerSpain}
               zoom={5}
@@ -282,7 +315,8 @@ const MapPage = ({ session }) => {
                 showToast={showToast}
               />
 
-              {eventos.map((ev) => (
+              {/* DIBUJAMOS SOLO LOS PINES FILTRADOS */}
+              {filteredEventos.map((ev) => (
                 <Marker
                   key={ev.id}
                   position={[ev.lat, ev.lng]}
@@ -367,7 +401,7 @@ const MapPage = ({ session }) => {
                   Eventos
                 </h1>
                 <p className='text-500 m-0 text-xs md:text-sm mt-1 text-center'>
-                  {eventos.length} disponibles
+                  {filteredEventos.length} disponibles
                 </p>
               </div>
               <Button
@@ -386,16 +420,18 @@ const MapPage = ({ session }) => {
             <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
               <div className='flex flex-column gap-2'>
                 <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center mt-3'>
-                  Eventos Próximos
+                  {activeFilter === 'Todos'
+                    ? 'Próximos Eventos'
+                    : `Eventos de ${activeFilter}`}
                 </h2>
                 <hr className='event-separator' />
-                {eventos.length === 0 && (
+                {filteredEventos.length === 0 && (
                   <div className='text-center p-5 text-500'>
-                    <i className='pi pi-map text-4xl mb-2 opacity-50' />
-                    <p>No hay eventos próximos.</p>
+                    <i className='pi pi-filter-slash text-4xl mb-2 opacity-50' />
+                    <p>No hay eventos disponibles para esta categoría.</p>
                   </div>
                 )}
-                {eventos.map((ev) => (
+                {filteredEventos.map((ev) => (
                   <EventCard
                     key={ev.id}
                     ev={ev}
