@@ -21,7 +21,7 @@ import PageTransition from '../components/PageTransition'
 
 // --- CREADOR DE PINES PERSONALIZADOS ---
 const getCustomIcon = (isPrivate) => {
-  const bgColor = isPrivate ? '#eab308' : '#3b82f6' // Dorado para Crew, Azul para públicos
+  const bgColor = isPrivate ? '#eab308' : '#3b82f6'
   const iconClass = isPrivate ? 'pi-lock' : 'pi-map-marker'
 
   return L.divIcon({
@@ -43,7 +43,6 @@ const getCustomIcon = (isPrivate) => {
 const MapController = ({ selectedEvent }) => {
   const map = useMap()
 
-  // 🚨 SOLUCIÓN DEFINITIVA A LOS CUADROS BLANCOS 🚨
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
       map.invalidateSize()
@@ -65,7 +64,6 @@ const MapController = ({ selectedEvent }) => {
     }
   }, [map])
 
-  // VUELO AL EVENTO SELECCIONADO
   useEffect(() => {
     if (selectedEvent?.lat && selectedEvent?.lng) {
       map.flyTo(
@@ -147,12 +145,18 @@ const MapPage = ({ session }) => {
   const toast = useRef(null)
   const mainContainerRef = useRef(null)
 
+  // REFERENCIAS PARA LA ANIMACIÓN APPLE
+  const filterBarRef = useRef(null)
+  const [indicatorStyle, setIndicatorStyle] = useState({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  })
+
   const [eventos, setEventos] = useState([])
   const [dialogVisible, setDialogVisible] = useState(false)
   const [posicionTemp, setPosicionTemp] = useState({ lat: null, lng: null })
   const [selectedEvent, setSelectedEvent] = useState(null)
-
-  // ESTADO PARA LA BARRA DE FILTROS
   const [activeFilter, setActiveFilter] = useState('Todos')
 
   const centerSpain = [40.0, -3.7492]
@@ -209,6 +213,49 @@ const MapPage = ({ session }) => {
     fetchEventos()
   }, [fetchEventos])
 
+  // --- LÓGICA DE FILTRADO ---
+  const eventCategories = [
+    'Todos',
+    ...new Set(eventos.map((ev) => ev.tipo).filter(Boolean)),
+  ]
+
+  const filteredEventos =
+    activeFilter === 'Todos'
+      ? eventos
+      : eventos.filter((ev) => ev.tipo === activeFilter)
+
+  // 🔴 LÓGICA DE LA ANIMACIÓN Y CENTRADO DE LA BARRA 🔴
+  useEffect(() => {
+    const updateIndicator = () => {
+      if (filterBarRef.current) {
+        const activeBtn = filterBarRef.current.querySelector(
+          '.map-filter-btn.active',
+        )
+        if (activeBtn) {
+          // 1. Movemos la píldora azul
+          setIndicatorStyle({
+            left: activeBtn.offsetLeft,
+            width: activeBtn.offsetWidth,
+            opacity: 1,
+          })
+
+          // 2. Centramos el scroll (Magia UX para móviles)
+          const container = filterBarRef.current
+          const scrollTarget =
+            activeBtn.offsetLeft -
+            container.offsetWidth / 2 +
+            activeBtn.offsetWidth / 2
+          container.scrollTo({ left: scrollTarget, behavior: 'smooth' })
+        }
+      }
+    }
+
+    // Pequeño delay para que React dibuje el DOM antes de medir
+    setTimeout(updateIndicator, 50)
+    window.addEventListener('resize', updateIndicator)
+    return () => window.removeEventListener('resize', updateIndicator)
+  }, [activeFilter, eventos.length])
+
   const handleAddClick = () => {
     if (!session) {
       toast.current.show({
@@ -239,19 +286,6 @@ const MapPage = ({ session }) => {
   const showToast = (severity, summary, detail) =>
     toast.current.show({ severity, summary, detail })
 
-  // --- LÓGICA DE FILTRADO ---
-  // Obtenemos los tipos de eventos únicos que existen ahora mismo en el mapa
-  const eventCategories = [
-    'Todos',
-    ...new Set(eventos.map((ev) => ev.tipo).filter(Boolean)),
-  ]
-
-  // Filtramos la lista final basándonos en la selección
-  const filteredEventos =
-    activeFilter === 'Todos'
-      ? eventos
-      : eventos.filter((ev) => ev.tipo === activeFilter)
-
   return (
     <PageTransition>
       <div className='map-page-container'>
@@ -266,15 +300,16 @@ const MapPage = ({ session }) => {
           <Toast ref={toast} position='top-center' className='mt-6 z-5' />
 
           <div className='map-section relative'>
-            {/* 🔴 BARRA DE FILTROS FLOTANTE 🔴 */}
-            <div className='map-filter-bar'>
+            {/* 🔴 BARRA DE FILTROS ANIMADA ESTILO APPLE 🔴 */}
+            <div className='map-filter-bar' ref={filterBarRef}>
+              <div className='filter-indicator' style={indicatorStyle}></div>
               {eventCategories.map((cat) => (
                 <button
                   key={cat}
                   className={`map-filter-btn ${activeFilter === cat ? 'active' : ''}`}
                   onClick={() => {
                     setActiveFilter(cat)
-                    setSelectedEvent(null) // Quitar selección al cambiar de filtro
+                    setSelectedEvent(null)
                   }}
                 >
                   {cat}
@@ -315,7 +350,6 @@ const MapPage = ({ session }) => {
                 showToast={showToast}
               />
 
-              {/* DIBUJAMOS SOLO LOS PINES FILTRADOS */}
               {filteredEventos.map((ev) => (
                 <Marker
                   key={ev.id}

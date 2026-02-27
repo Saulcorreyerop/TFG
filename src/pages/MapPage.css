@@ -179,7 +179,7 @@
   top: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000; /* Asegura que esté por encima del mapa de Leaflet */
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -192,6 +192,7 @@
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.5);
   scroll-behavior: smooth;
+  position: relative; /* Clave para el indicador absoluto */
 }
 
 /* Ocultar barra de scroll pero mantener funcionalidad táctil */
@@ -203,14 +204,29 @@
   scrollbar-width: none;
 }
 
+/* 🔴 EL INDICADOR DESLIZANTE (ESTILO APPLE) 🔴 */
+.filter-indicator {
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  background-color: #3b82f6; /* Azul premium */
+  border-radius: 1.5rem;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Animación "muelle" suave */
+  z-index: 0;
+  box-shadow: 0 4px 10px -2px rgba(59, 130, 246, 0.5);
+  pointer-events: none; /* Para que no tape los clics de los botones */
+}
+
 .map-filter-btn {
+  position: relative;
+  z-index: 1; /* Por encima del indicador animado */
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 1.5rem;
   font-weight: 800;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease;
   white-space: nowrap;
   flex-shrink: 0;
   background: transparent;
@@ -219,11 +235,9 @@
 }
 
 .map-filter-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
+  color: #1e293b;
 }
 
 .map-filter-btn.active {
-  background: #3b82f6;
-  color: white;
-  box-shadow: 0 4px 10px -2px rgba(59, 130, 246, 0.5);
+  color: white; /* Solo cambiamos el texto, el fondo lo pone el indicador */
 }
