@@ -8,6 +8,7 @@ import { Tag } from 'primereact/tag'
 import { Dialog } from 'primereact/dialog'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Toast } from 'primereact/toast'
+import { Avatar } from 'primereact/avatar'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 import {
@@ -18,6 +19,7 @@ import {
   Car,
   Plus,
   Image as ImageIcon,
+  Heart,
 } from 'lucide-react'
 
 const CommunityPage = () => {
@@ -31,6 +33,7 @@ const CommunityPage = () => {
   const [allUsers, setAllUsers] = useState([])
   const [followingUsers, setFollowingUsers] = useState([])
   const [crews, setCrews] = useState([])
+  const [communityVehicles, setCommunityVehicles] = useState([])
 
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -84,7 +87,90 @@ const CommunityPage = () => {
       .select('*, crew_members(id)')
     if (crewsData) setCrews(crewsData)
 
+    // 4. VEHÍCULOS GLOBALES (TOP COCHES)
+    const { data: vData } = await supabase
+      .from('vehicles')
+      .select('*, profiles(username, avatar_url), vehicle_likes(user_id)')
+
+    if (vData) {
+      const formattedVehicles = vData
+        .map((v) => {
+          const likesArray = v.vehicle_likes || []
+          const isLikedByMe = currentSession
+            ? likesArray.some((like) => like.user_id === currentSession.user.id)
+            : false
+          return {
+            ...v,
+            likesCount: likesArray.length,
+            isLikedByMe,
+          }
+        })
+        .sort((a, b) => b.likesCount - a.likesCount)
+      setCommunityVehicles(formattedVehicles)
+    }
+
     setLoading(false)
+  }
+
+  // --- LÓGICA DAR ME GUSTA EN EL TOP COCHES ---
+  const handleToggleLikeVehicle = async (
+    e,
+    vehicleId,
+    isCurrentlyLiked,
+    vehicleOwnerId,
+  ) => {
+    e.stopPropagation()
+
+    if (!session?.user?.id) {
+      toast.current.show({
+        severity: 'info',
+        summary: 'Acceso',
+        detail: 'Inicia sesión para dar Me gusta.',
+      })
+      return navigate('/login', { state: { returnUrl: '/comunidad' } })
+    }
+
+    // Actualización Optimista
+    setCommunityVehicles((prevVehicles) =>
+      prevVehicles.map((v) => {
+        if (v.id === vehicleId) {
+          return {
+            ...v,
+            isLikedByMe: !isCurrentlyLiked,
+            likesCount: isCurrentlyLiked ? v.likesCount - 1 : v.likesCount + 1,
+          }
+        }
+        return v
+      }),
+    )
+
+    try {
+      if (isCurrentlyLiked) {
+        await supabase
+          .from('vehicle_likes')
+          .delete()
+          .match({ user_id: session.user.id, vehicle_id: vehicleId })
+      } else {
+        await supabase
+          .from('vehicle_likes')
+          .insert({ user_id: session.user.id, vehicle_id: vehicleId })
+
+        if (vehicleOwnerId !== session.user.id) {
+          await supabase.from('notifications').insert({
+            user_id: vehicleOwnerId,
+            actor_id: session.user.id,
+            tipo: 'nuevo_like_vehiculo',
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Error al dar like al vehículo:', err)
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo guardar la acción',
+      })
+    }
   }
 
   // --- LÓGICA CREAR CREW ---
@@ -177,6 +263,11 @@ const CommunityPage = () => {
   const displayedCrews = crews.filter((c) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+  const displayedVehicles = communityVehicles.filter((v) =>
+    `${v.marca} ${v.modelo} ${v.profiles?.username}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()),
+  )
 
   // --- COMPONENTES VISUALES ---
   const renderUserCard = (user) => {
@@ -188,7 +279,6 @@ const CommunityPage = () => {
           style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
           onClick={() => navigate(`/usuario/${user.username || user.id}`)}
         >
-          {/* Banner */}
           <div
             className='w-full bg-gray-200 relative'
             style={{ height: '120px' }}
@@ -206,10 +296,7 @@ const CommunityPage = () => {
               </div>
             )}
           </div>
-
-          {/* Cuerpo y Avatar */}
           <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative bg-white'>
-            {/* Avatar Solapado */}
             <div
               className='bg-white border-circle flex justify-content-center align-items-center shadow-1'
               style={{
@@ -232,11 +319,9 @@ const CommunityPage = () => {
                 </div>
               )}
             </div>
-
             <h3 className='m-0 mt-3 mb-1 text-xl text-900 font-bold line-clamp-1 text-center w-full'>
               {user.username || 'Usuario'}
             </h3>
-
             <div className='mt-2 mb-4'>
               {user.vehicles?.length > 0 ? (
                 <Tag
@@ -255,7 +340,6 @@ const CommunityPage = () => {
                 </Tag>
               )}
             </div>
-
             <Button
               label='Ver Perfil'
               outlined
@@ -275,7 +359,6 @@ const CommunityPage = () => {
           className='bg-white shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
           style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
         >
-          {/* Banner */}
           <div
             className='w-full bg-gray-800 relative'
             style={{ height: '140px' }}
@@ -289,10 +372,7 @@ const CommunityPage = () => {
               />
             )}
           </div>
-
-          {/* Cuerpo y Avatar */}
           <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative bg-white'>
-            {/* Logo Solapado con borde cuadrado redondeado */}
             <div
               className='bg-white flex justify-content-center align-items-center shadow-1'
               style={{
@@ -319,7 +399,6 @@ const CommunityPage = () => {
                 </div>
               )}
             </div>
-
             <h3 className='m-0 mt-3 mb-1 text-2xl text-900 font-black line-clamp-1 text-center w-full'>
               {crew.name}
             </h3>
@@ -329,17 +408,107 @@ const CommunityPage = () => {
             <p className='text-600 text-sm line-clamp-2 text-center mb-4 font-medium px-2'>
               {crew.description || 'Sin descripción disponible.'}
             </p>
-
             <button
               className='w-full mt-auto font-bold border-none p-2 text-white cursor-pointer'
               style={{ borderRadius: '0.5rem', backgroundColor: '#2563eb' }}
               onClick={(e) => {
-                e.stopPropagation() // Evita conflictos
-                navigate(`/crew/${crew.name}`) // Redirige usando el nombre de la crew
+                e.stopPropagation()
+                navigate(`/crew/${crew.name}`)
               }}
             >
               Ver Crew
             </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // --- TARJETA: COCHES TOP ACTUALIZADA (Botón abajo + Click en la tarjeta va al perfil) ---
+  const renderVehicleCard = (v) => {
+    return (
+      <div key={v.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
+        <div
+          className='bg-white shadow-2 hover:shadow-4 transition-all flex flex-column relative overflow-hidden h-full'
+          style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
+        >
+          {/* ÁREA CLICABLE: REDIRIGE AL PERFIL */}
+          <div
+            className='cursor-pointer flex flex-column flex-grow-1'
+            onClick={() =>
+              navigate(`/usuario/${v.profiles?.username || v.user_id}`)
+            }
+          >
+            <div
+              className='w-full bg-gray-200 relative'
+              style={{ height: '200px' }}
+            >
+              {v.image_url ? (
+                <img
+                  src={v.image_url}
+                  alt={v.modelo}
+                  className='w-full h-full'
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <div className='flex h-full align-items-center justify-content-center text-300'>
+                  <Car size={40} />
+                </div>
+              )}
+
+              {/* CONTADOR DE ME GUSTA (ESTÁTICO) */}
+              <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
+                <Heart
+                  size={16}
+                  fill={v.likesCount > 0 ? '#ec4899' : 'none'}
+                  className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
+                />
+                <span className='text-white font-bold text-sm'>
+                  {v.likesCount}
+                </span>
+              </div>
+            </div>
+            <div className='p-3 flex flex-column flex-grow-1'>
+              <div className='flex justify-content-between align-items-start mb-2'>
+                <div>
+                  <h3 className='m-0 text-xl font-black text-900'>
+                    {v.marca} {v.modelo}
+                  </h3>
+                  <p className='m-0 text-500 text-sm font-bold mt-1'>
+                    {v.anio} • {v.cv} CV
+                  </p>
+                </div>
+              </div>
+              <div className='mt-auto pt-3 border-top-1 border-100 flex align-items-center gap-2'>
+                <Avatar
+                  image={v.profiles?.avatar_url}
+                  icon={!v.profiles?.avatar_url && 'pi pi-user'}
+                  shape='circle'
+                  className='w-2rem h-2rem shadow-1'
+                />
+                <span className='text-sm font-bold text-700'>
+                  {v.profiles?.username || 'Usuario'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* BARRA INFERIOR: BOTÓN ME GUSTA */}
+          <div className=' border-100 p-3 bg-gray-50 mt-auto'>
+            <Button
+              label={v.isLikedByMe ? 'Marcado como me gusta' : 'Me gusta'}
+              icon={
+                <Heart
+                  size={18}
+                  fill={v.isLikedByMe ? 'currentColor' : 'none'}
+                  className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
+                />
+              }
+              className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary bg-white' : 'p-button-help shadow-2 hover:shadow-4'}`}
+              onClick={(e) =>
+                handleToggleLikeVehicle(e, v.id, v.isLikedByMe, v.user_id)
+              }
+            />
           </div>
         </div>
       </div>
@@ -356,18 +525,17 @@ const CommunityPage = () => {
               Comunidad
             </h1>
             <p className='text-600 text-lg m-0 font-medium'>
-              Descubre usuarios y únete a los mejores clubes.
+              Descubre usuarios, clubes y los mejores coches.
             </p>
           </div>
 
-          {/* NAVEGACIÓN ESTILO PÍLDORA CENTRAL */}
           <div className='flex justify-content-center mb-6'>
             <div
-              className='bg-white p-1 shadow-1 flex flex-wrap'
+              className='bg-white p-1 shadow-1 flex flex-wrap justify-content-center gap-1'
               style={{ borderRadius: '2rem', border: '1px solid #e2e8f0' }}
             >
               <button
-                className={`flex align-items-center gap-2 px-5 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'bg-gray-900 text-blacks shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
                 style={{ borderRadius: '1.75rem' }}
                 onClick={() => setActiveTab('explorar')}
               >
@@ -375,7 +543,7 @@ const CommunityPage = () => {
               </button>
 
               <button
-                className={`flex align-items-center gap-2 px-5 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'bg-blue-600 text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
                 style={{ borderRadius: '1.75rem' }}
                 onClick={() => {
                   if (!session)
@@ -391,16 +559,24 @@ const CommunityPage = () => {
               </button>
 
               <button
-                className={`flex align-items-center gap-2 px-5 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'bg-blue-600 text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
                 style={{ borderRadius: '1.75rem' }}
                 onClick={() => setActiveTab('crews')}
               >
                 <Shield size={18} /> Crews
               </button>
+
+              {/* PESTAÑA: TOP COCHES */}
+              <button
+                className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                style={{ borderRadius: '1.75rem' }}
+                onClick={() => setActiveTab('vehiculos')}
+              >
+                <Car size={18} /> Top Coches
+              </button>
             </div>
           </div>
 
-          {/* BUSCADOR Y BOTÓN CREAR CREW */}
           <div className='flex flex-column md:flex-row justify-content-center align-items-center gap-3 mb-6'>
             <div className='relative w-full md:w-6 lg:w-5'>
               <Search
@@ -410,8 +586,10 @@ const CommunityPage = () => {
               <InputText
                 placeholder={
                   activeTab === 'crews'
-                    ? 'Buscar club por nombre...'
-                    : 'Buscar usuario...'
+                    ? 'Buscar club...'
+                    : activeTab === 'vehiculos'
+                      ? 'Buscar modelo o marca...'
+                      : 'Buscar usuario...'
                 }
                 className='w-full bg-white border-none shadow-1 font-medium text-lg text-900'
                 style={{ padding: '1rem 1rem 1rem 3rem', borderRadius: '2rem' }}
@@ -452,6 +630,20 @@ const CommunityPage = () => {
                     </p>
                   </div>
                 )
+              ) : activeTab === 'vehiculos' ? (
+                displayedVehicles.length > 0 ? (
+                  displayedVehicles.map(renderVehicleCard)
+                ) : (
+                  <div className='col-12 text-center py-8'>
+                    <Car size={64} className='text-300 mb-4 mx-auto' />
+                    <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
+                      No hay coches en el ranking
+                    </h3>
+                    <p className='text-600 text-lg'>
+                      Aún no hay vehículos subidos en la comunidad.
+                    </p>
+                  </div>
+                )
               ) : displayedUsers.length > 0 ? (
                 displayedUsers.map(renderUserCard)
               ) : (
@@ -467,7 +659,7 @@ const CommunityPage = () => {
           )}
         </div>
 
-        {/* MODAL CREAR CREW (Diseño Realista) */}
+        {/* MODAL CREAR CREW */}
         <Dialog
           header={
             <span className='text-2xl font-black text-900'>
@@ -486,12 +678,10 @@ const CommunityPage = () => {
               Sube las imágenes haciendo clic en los recuadros correspondientes.
             </p>
 
-            {/* PREVIEW INTERACTIVA */}
             <div
               className='w-full bg-white border-1 border-gray-200 mb-5 relative'
               style={{ borderRadius: '1rem', height: '180px' }}
             >
-              {/* Contenedor Banner */}
               <div
                 className='w-full bg-gray-100 relative cursor-pointer hover:opacity-80 transition-opacity flex align-items-center justify-content-center overflow-hidden'
                 style={{ height: '120px', borderRadius: '1rem 1rem 0 0' }}
@@ -516,7 +706,6 @@ const CommunityPage = () => {
                 />
               </div>
 
-              {/* Contenedor Logo (Solapado) */}
               <div
                 className='absolute bg-white shadow-2 flex align-items-center justify-content-center cursor-pointer hover:bg-gray-50 transition-colors z-2 overflow-hidden'
                 style={{
@@ -554,7 +743,6 @@ const CommunityPage = () => {
               </div>
             </div>
 
-            {/* FORMULARIO TEXTO */}
             <div className='flex flex-column gap-4'>
               <span className='p-float-label'>
                 <InputText

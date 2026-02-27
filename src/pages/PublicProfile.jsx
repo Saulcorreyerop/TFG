@@ -7,6 +7,7 @@ import { Tag } from 'primereact/tag'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
 import { Galleria } from 'primereact/galleria'
+import { Dialog } from 'primereact/dialog'
 import PageTransition from '../components/PageTransition'
 import {
   Share2,
@@ -18,8 +19,8 @@ import {
   MapPin,
   Image as ImageIcon,
   Shield,
+  Heart,
 } from 'lucide-react'
-import { Dialog } from 'primereact/dialog'
 import './ProfilePage.css'
 
 const PublicProfile = () => {
@@ -35,13 +36,11 @@ const PublicProfile = () => {
   const [createdEvents, setCreatedEvents] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Estados de Seguidores
   const [followersCount, setFollowersCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
   const [isFollowing, setIsFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
 
-  // ESTADO PARA LA GALERÍA
   const [galleryImages, setGalleryImages] = useState(null)
 
   useEffect(() => {
@@ -59,7 +58,6 @@ const PublicProfile = () => {
             identifier,
           )
 
-        // 1. Buscar Perfil (incluye la biografía nueva)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -71,7 +69,6 @@ const PublicProfile = () => {
         setProfile(profileData)
         const actualUserId = profileData.id
 
-        // 2. Buscar si pertenece a alguna Crew
         const { data: crewMemberData } = await supabase
           .from('crew_members')
           .select('crews(*)')
@@ -84,14 +81,26 @@ const PublicProfile = () => {
           setUserCrew(crewMemberData.crews)
         }
 
-        // 3. Vehículos (Ahora traemos TODAS las fotos)
         const { data: vehicleData } = await supabase
           .from('vehicles')
-          .select('*, vehicle_images(*)')
+          .select('*, vehicle_images(*), vehicle_likes(user_id)')
           .eq('user_id', actualUserId)
-        if (vehicleData) setVehicles(vehicleData)
 
-        // 4. Eventos Creados por él
+        if (vehicleData) {
+          const formattedVehicles = vehicleData.map((v) => {
+            const likesArray = v.vehicle_likes || []
+            const isLikedByMe = session
+              ? likesArray.some((like) => like.user_id === session.user.id)
+              : false
+            return {
+              ...v,
+              likesCount: likesArray.length,
+              isLikedByMe,
+            }
+          })
+          setVehicles(formattedVehicles)
+        }
+
         const { data: eventsData } = await supabase
           .from('events')
           .select('*')
@@ -99,7 +108,6 @@ const PublicProfile = () => {
           .order('fecha', { ascending: false })
         if (eventsData) setCreatedEvents(eventsData)
 
-        // 5. Estadísticas de Seguidores
         const { count: f1 } = await supabase
           .from('follows')
           .select('*', { count: 'exact', head: true })
@@ -111,7 +119,6 @@ const PublicProfile = () => {
         setFollowersCount(f1 || 0)
         setFollowingCount(f2 || 0)
 
-        // 6. ¿Lo sigo yo?
         if (session?.user?.id) {
           const { data: followData } = await supabase
             .from('follows')
@@ -128,10 +135,9 @@ const PublicProfile = () => {
       }
     }
 
-    if (identifier) fetchPublicData()
+    fetchPublicData()
   }, [identifier, session])
 
-  // --- LÓGICA DE GALERÍA ---
   const openGalleryViewer = (car) => {
     const images = []
     if (car.image_url)
@@ -181,6 +187,62 @@ const PublicProfile = () => {
         }}
       />
     )
+  }
+
+  const handleToggleLikeVehicle = async (e, vehicleId, isCurrentlyLiked) => {
+    e.stopPropagation()
+
+    if (!session?.user?.id) {
+      toast.current.show({
+        severity: 'info',
+        summary: 'Acceso',
+        detail: 'Inicia sesión para dar Respetos.',
+      })
+      return navigate('/login', {
+        state: { returnUrl: `/usuario/${identifier}` },
+      })
+    }
+
+    setVehicles((prevVehicles) =>
+      prevVehicles.map((v) => {
+        if (v.id === vehicleId) {
+          return {
+            ...v,
+            isLikedByMe: !isCurrentlyLiked,
+            likesCount: isCurrentlyLiked ? v.likesCount - 1 : v.likesCount + 1,
+          }
+        }
+        return v
+      }),
+    )
+
+    try {
+      if (isCurrentlyLiked) {
+        await supabase
+          .from('vehicle_likes')
+          .delete()
+          .match({ user_id: session.user.id, vehicle_id: vehicleId })
+      } else {
+        await supabase
+          .from('vehicle_likes')
+          .insert({ user_id: session.user.id, vehicle_id: vehicleId })
+
+        if (profile.id !== session.user.id) {
+          await supabase.from('notifications').insert({
+            user_id: profile.id,
+            actor_id: session.user.id,
+            tipo: 'nuevo_like_vehiculo',
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Error al dar like al vehículo:', err)
+      toast.current.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo guardar la acción',
+      })
+    }
   }
 
   const handleFollowToggle = async () => {
@@ -297,7 +359,6 @@ const PublicProfile = () => {
       <div className='max-w-6xl mx-auto p-3 md:p-5 min-h-screen'>
         <Toast ref={toast} />
 
-        {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
         <Dialog
           visible={!!galleryImages}
           onHide={() => setGalleryImages(null)}
@@ -336,7 +397,6 @@ const PublicProfile = () => {
           />
         </div>
 
-        {/* CABECERA PÚBLICA */}
         <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5 border-1 border-100'>
           <Avatar
             icon='pi pi-user'
@@ -345,13 +405,10 @@ const PublicProfile = () => {
             className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white flex-shrink-0'
             image={profile.avatar_url}
           />
-
           <div className='text-center md:text-left flex-1'>
             <h1 className='text-3xl font-black m-0 text-900'>
               {profile.username || 'Usuario'}
             </h1>
-
-            {/* Bio del Usuario */}
             {profile.bio ? (
               <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto md:mx-0'>
                 {profile.bio}
@@ -361,8 +418,6 @@ const PublicProfile = () => {
                 Miembro de CarMeet ESP
               </p>
             )}
-
-            {/* Crew del Usuario (Solo si pertenece a una) */}
             {userCrew && (
               <div className='mt-3'>
                 <div
@@ -381,7 +436,6 @@ const PublicProfile = () => {
                 </div>
               </div>
             )}
-
             {!isMyOwnProfile && (
               <div className='mt-4'>
                 <Button
@@ -410,7 +464,6 @@ const PublicProfile = () => {
             )}
           </div>
 
-          {/* ESTADÍSTICAS */}
           <div className='flex gap-4 md:gap-5 text-center border-top-1 md:border-top-none md:border-left-1 border-200 pt-4 md:pt-0 md:pl-5 w-full md:w-auto justify-content-center'>
             <div>
               <div className='text-2xl font-black text-900'>
@@ -439,7 +492,6 @@ const PublicProfile = () => {
           </div>
         </div>
 
-        {/* --- SECCIÓN 1: GARAJE --- */}
         <section className='profile-section'>
           <h2 className='profile-section-title'>
             <Car className='text-purple-600' size={28} /> Garaje de{' '}
@@ -461,46 +513,89 @@ const PublicProfile = () => {
 
                 return (
                   <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
-                    {/* Al hacer click en la tarjeta, abre la galería */}
-                    <div
-                      className='vehicle-card cursor-pointer hover:-translate-y-1 hover:shadow-2'
-                      onClick={() => openGalleryViewer(v)}
-                    >
+                    <div className='vehicle-card hover:-translate-y-1 hover:shadow-2 flex flex-column overflow-hidden bg-white'>
+                      {/* ZONA CLICABLE: ABRE GALERÍA */}
                       <div
-                        className='vehicle-img-wrapper'
-                        style={{ height: '240px' }}
+                        className='cursor-pointer flex-grow-1'
+                        onClick={() => openGalleryViewer(v)}
                       >
-                        {v.image_url ? (
-                          <img src={v.image_url} alt={v.modelo} />
-                        ) : (
-                          <div className='flex h-full align-items-center justify-content-center text-300'>
-                            <ImageIcon size={40} />
-                          </div>
-                        )}
-                        <Tag
-                          value={v.combustible}
-                          className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
-                        />
+                        <div
+                          className='vehicle-img-wrapper relative'
+                          style={{ height: '220px' }}
+                        >
+                          {v.image_url ? (
+                            <img
+                              src={v.image_url}
+                              alt={v.modelo}
+                              className='w-full h-full'
+                              style={{ objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div className='flex h-full align-items-center justify-content-center text-300 bg-gray-100'>
+                              <ImageIcon size={40} />
+                            </div>
+                          )}
 
-                        {/* INDICADOR DE FOTOS */}
-                        {totalImages > 1 && (
-                          <div className='gallery-indicator-badge'>
-                            <i className='pi pi-images'></i> 1/{totalImages}
+                          <Tag
+                            value={v.combustible}
+                            className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
+                          />
+
+                          {/* CONTADOR DE LIKES (ESTÁTICO, SIN ONCLICK) */}
+                          <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
+                            <Heart
+                              size={16}
+                              fill={v.likesCount > 0 ? '#ec4899' : 'none'}
+                              className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
+                            />
+                            <span className='text-white font-bold text-sm'>
+                              {v.likesCount}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      <div className='p-4 text-center bg-white'>
-                        <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
-                          {v.marca} {v.modelo}
-                        </h3>
-                        <div className='text-md text-500 font-bold mb-3'>
-                          {v.anio} • {v.cv} CV
+
+                          {totalImages > 1 && (
+                            <div className='gallery-indicator-badge absolute bottom-0 right-0 m-2 bg-black-alpha-60 text-white text-xs px-2 py-1 border-round'>
+                              <i className='pi pi-images mr-1'></i> 1/
+                              {totalImages}
+                            </div>
+                          )}
                         </div>
-                        {v.descripcion && (
-                          <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
-                            {v.descripcion}
-                          </p>
-                        )}
+
+                        <div className='p-4 text-center'>
+                          <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
+                            {v.marca} {v.modelo}
+                          </h3>
+                          <div className='text-md text-500 font-bold mb-3'>
+                            {v.anio} • {v.cv} CV
+                          </div>
+                          {v.descripcion && (
+                            <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
+                              {v.descripcion}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* NUEVA BARRA DE ACCIÓN INFERIOR */}
+                      <div className='border-top-1 border-100 p-3 bg-gray-50 mt-auto'>
+                        <Button
+                          label={
+                            v.isLikedByMe
+                              ? 'Marcado como me gusta'
+                              : 'Me gusta'
+                          }
+                          icon={
+                            <Heart
+                              size={18}
+                              fill={v.isLikedByMe ? 'currentColor' : 'none'}
+                              className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
+                            />
+                          }
+                          className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary bg-white' : 'p-button-help shadow-2 hover:shadow-4'}`}
+                          onClick={(e) =>
+                            handleToggleLikeVehicle(e, v.id, v.isLikedByMe)
+                          }
+                        />
                       </div>
                     </div>
                   </div>
@@ -510,7 +605,6 @@ const PublicProfile = () => {
           )}
         </section>
 
-        {/* --- SECCIÓN 2: EVENTOS CREADOS --- */}
         <section className='profile-section mb-0'>
           <h2 className='profile-section-title'>
             <Flag className='text-blue-600' size={28} /> Eventos Organizados

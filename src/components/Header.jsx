@@ -32,13 +32,15 @@ const timeAgo = (dateString) => {
   return date.toLocaleDateString()
 }
 
-// Función auxiliar para tener el código de textos más limpio
+// LÓGICA DE TEXTOS DE NOTIFICACIONES (¡AQUÍ ESTÁ EL ARREGLO!)
 const getNotificationText = (tipo) => {
   if (tipo === 'comentario') return ' ha comentado en '
   if (tipo === 'nuevo_evento') return ' ha publicado un nuevo evento: '
   if (tipo === 'nuevo_seguidor') return ' ha empezado a seguirte.'
   if (tipo === 'solicitud_crew') return ' quiere unirse a tu Crew: '
   if (tipo === 'crew_aceptada') return ' te ha aceptado en la Crew: '
+  if (tipo === 'nuevo_like_vehiculo')
+    return ' le ha dado me gusta a tu coche 🔥' // <-- LA MAGIA
   return ' va a asistir a '
 }
 
@@ -167,7 +169,10 @@ const Header = ({ session }) => {
 
   const handleNotificationClick = (notif) => {
     op.current.hide()
-    if (notif.tipo === 'nuevo_seguidor') {
+    if (
+      notif.tipo === 'nuevo_seguidor' ||
+      notif.tipo === 'nuevo_like_vehiculo'
+    ) {
       navigate(`/usuario/${notif.profiles?.username}`)
     } else if (
       notif.tipo === 'solicitud_crew' ||
@@ -407,16 +412,17 @@ const Header = ({ session }) => {
                     {/* TEXTO FORMATEADO SEGÚN TIPO */}
                     {getNotificationText(notif.tipo)}
 
-                    {/* EVENTOS (Si no es seguidor ni crew) */}
+                    {/* EVENTOS */}
                     {!notif.tipo.includes('seguidor') &&
                       !notif.tipo.includes('crew') &&
+                      !notif.tipo.includes('vehiculo') &&
                       notif.events?.titulo && (
                         <span className='font-bold text-blue-600'>
                           {notif.events?.titulo}
                         </span>
                       )}
 
-                    {/* CREWS (Si es solicitud o aceptación) */}
+                    {/* CREWS */}
                     {(notif.tipo === 'solicitud_crew' ||
                       notif.tipo === 'crew_aceptada') &&
                       notif.crews?.name && (
