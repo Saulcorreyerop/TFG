@@ -31,21 +31,15 @@ const AuthPage = ({ session }) => {
   const [regPassword, setRegPassword] = useState('')
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
 
-  // 🔴 LA MAGIA DE LA REDIRECCIÓN A PRUEBA DE FALLOS
   useEffect(() => {
     if (session) {
-      setLoading(false) // Paramos el botón de cargar por si acaso
+      setLoading(false)
 
-      // 1. Si venimos de una ruta protegida (ej: /garaje nos mandó aquí)
       if (location.state?.returnUrl) {
         navigate(location.state.returnUrl, { replace: true })
-      }
-      // 2. Si el usuario pinchó en "Entrar" desde otra página (ej: /eventos)
-      else if (window.history.length > 2) {
+      } else if (window.history.length > 2) {
         navigate(-1)
-      }
-      // 3. Si entró escribiendo /login directamente
-      else {
+      } else {
         navigate('/', { replace: true })
       }
     }
@@ -63,13 +57,15 @@ const AuthPage = ({ session }) => {
     setLoading(true)
 
     try {
-      let emailToUse = loginInput.trim()
+      // 🚀 LIMPIEZA: Quitamos espacios al correo/usuario
+      let inputLimpio = loginInput.trim()
+      let emailToUse = inputLimpio
 
-      if (!loginInput.includes('@')) {
+      if (!inputLimpio.includes('@')) {
         const { data, error } = await supabase
           .from('profiles')
           .select('email')
-          .eq('username', loginInput)
+          .eq('username', inputLimpio)
           .single()
 
         if (error || !data) {
@@ -84,7 +80,7 @@ const AuthPage = ({ session }) => {
       })
 
       if (error) {
-        setLoading(false) // Solo paramos el loading si hay error
+        setLoading(false)
         throw error
       }
 
@@ -94,7 +90,6 @@ const AuthPage = ({ session }) => {
         detail: 'Autenticando...',
         life: 2000,
       })
-      // No tocamos nada más. El useEffect de arriba se encargará de redirigir en cuanto llegue la sesión.
     } catch (error) {
       toast.current.show({
         severity: 'error',
@@ -109,6 +104,10 @@ const AuthPage = ({ session }) => {
   const handleRegister = async (e) => {
     e.preventDefault()
 
+    // 🚀 LIMPIEZA: Quitamos espacios accidentales
+    const usernameLimpio = regUsername.trim()
+    const emailLimpio = regEmail.trim()
+
     if (regPassword !== regConfirmPassword) {
       return toast.current.show({
         severity: 'warn',
@@ -116,7 +115,7 @@ const AuthPage = ({ session }) => {
         detail: 'Las contraseñas no coinciden',
       })
     }
-    if (!regUsername) {
+    if (!usernameLimpio) {
       return toast.current.show({
         severity: 'warn',
         summary: 'Faltan datos',
@@ -126,9 +125,9 @@ const AuthPage = ({ session }) => {
 
     setLoading(true)
     const { error } = await supabase.auth.signUp({
-      email: regEmail,
+      email: emailLimpio,
       password: regPassword,
-      options: { data: { username: regUsername } },
+      options: { data: { username: usernameLimpio } },
     })
 
     if (error) {
@@ -158,7 +157,6 @@ const AuthPage = ({ session }) => {
       <PageTransition>
         <Toast ref={toast} />
         <div className={`auth-wrapper ${!isLogin ? 'reverse' : ''}`}>
-          {/* LADO DE LA IMAGEN */}
           <div className='auth-image-side'>
             <img
               src={LOGIN_IMAGE}
@@ -189,7 +187,6 @@ const AuthPage = ({ session }) => {
             </div>
           </div>
 
-          {/* LADO DEL FORMULARIO */}
           <div className='auth-form-side'>
             <div className='auth-form-container'>
               <div className='text-center mb-6'>
@@ -207,7 +204,6 @@ const AuthPage = ({ session }) => {
               </div>
 
               {isLogin ? (
-                // --- FORMULARIO DE LOGIN ---
                 <form
                   onSubmit={handleLogin}
                   className='flex flex-column gap-4 w-full'
@@ -248,7 +244,6 @@ const AuthPage = ({ session }) => {
                   />
                 </form>
               ) : (
-                // --- FORMULARIO DE REGISTRO ---
                 <form
                   onSubmit={handleRegister}
                   className='flex flex-column gap-4 w-full'
