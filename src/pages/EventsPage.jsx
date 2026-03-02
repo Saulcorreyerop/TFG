@@ -28,7 +28,6 @@ import {
   Shield,
 } from 'lucide-react'
 import './EventsPage.css'
-import { Helmet } from 'react-helmet-async'
 import SEO from '../components/SEO'
 
 const MotionDiv = motion.div
@@ -397,9 +396,6 @@ const EventsPage = ({ session }) => {
         url={window.location.href}
       />
       <PageTransition>
-        <Helmet>
-          <title>Agenda de Eventos | CarMeet ESP</title>
-        </Helmet>
         <div className='technical-page-wrapper'>
           <Toast ref={toast} position='top-center' className='mt-6 z-5' />
           <div className='max-w-8xl mx-auto'>
