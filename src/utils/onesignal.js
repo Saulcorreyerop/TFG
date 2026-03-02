@@ -21,7 +21,9 @@ export const sendPushNotification = async (
       body: JSON.stringify({ targetUserIds, title, message, urlPath }),
     })
 
-    console.log('4. Respuesta de Netlify:', response.status)
+    // 🚀 AHORA LEEMOS EL JSON QUE NOS DEVUELVE NETLIFY
+    const data = await response.json()
+    console.log('4. Respuesta exacta de OneSignal:', data)
   } catch (error) {
     console.error('❌ Error al contactar con Netlify:', error)
   }

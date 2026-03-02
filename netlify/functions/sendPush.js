@@ -22,6 +22,7 @@ export const handler = async (event) => {
         include_external_user_ids: Array.isArray(targetUserIds)
           ? targetUserIds
           : [targetUserIds],
+        channel_for_external_user_ids: 'push', // 🚀 ESTA ES LA CLAVE PARA LA API MODERNA
         headings: { en: title, es: title },
         contents: { en: message, es: message },
         url: `https://carmeetesp.netlify.app${urlPath}`,
@@ -29,6 +30,8 @@ export const handler = async (event) => {
     })
 
     const data = await response.json()
+    console.log('Respuesta de OneSignal:', data) // 🚀 Se guardará en los logs de Netlify
+
     return { statusCode: 200, body: JSON.stringify(data) }
   } catch (error) {
     console.error('Error en Netlify Function:', error)

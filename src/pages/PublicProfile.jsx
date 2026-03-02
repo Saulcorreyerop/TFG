@@ -278,7 +278,7 @@ const PublicProfile = () => {
           setFollowersCount((prev) => prev + 1)
 
           // Insertar en la campanita interna
-          await supabase.from('notifications').insert({
+          await supabase.from('notifications').insert({ 
             user_id: profile.id,
             actor_id: session.user.id,
             tipo: 'nuevo_seguidor',
