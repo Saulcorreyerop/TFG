@@ -126,7 +126,7 @@ const PublicProfile = () => {
             .select('id')
             .eq('follower_id', session.user.id)
             .eq('following_id', actualUserId)
-            .single()
+            .maybeSingle()
           setIsFollowing(!!followData)
         }
       } catch (error) {
