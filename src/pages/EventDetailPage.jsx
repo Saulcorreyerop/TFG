@@ -34,6 +34,7 @@ import {
 } from 'lucide-react'
 import './EventDetailPage.css'
 import SEO from '../components/SEO'
+import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 
 const MotionDiv = motion.div
 
@@ -187,7 +188,7 @@ const EventDetailPage = ({ session }) => {
       }
     }
     fetchEvent()
-  }, [id, fetchAttendees, fetchComments, fetchExtraImages]) // 2. Añadidas las dependencias requeridas
+  }, [id, fetchAttendees, fetchComments, fetchExtraImages])
 
   useEffect(() => {
     if (!event) return
@@ -232,15 +233,12 @@ const EventDetailPage = ({ session }) => {
           .from('event_attendees')
           .insert({ event_id: parseInt(id), user_id: session.user.id })
 
-        // --- LÓGICA INTELIGENTE (CORREGIDA USANDO EL ESTADO LOCAL) ---
         let usersToNotify = new Set()
 
-        // 1. Añadimos al creador del evento
         if (event.user_id !== session.user.id) {
           usersToNotify.add(event.user_id)
         }
 
-        // 2. Añadimos a los asistentes que ya están en la pantalla (estado 'attendees')
         attendees.forEach((a) => {
           if (a.user_id !== session.user.id) {
             usersToNotify.add(a.user_id)
@@ -263,11 +261,19 @@ const EventDetailPage = ({ session }) => {
             .insert(notificationsToInsert)
           if (notifError)
             console.error('Error al insertar notificaciones:', notifError)
+
+          // 🚀 NOTIFICACIÓN PUSH PERSONALIZADA
+          const miNombre = session.user.user_metadata?.username || 'Un usuario'
+          await sendPushNotification(
+            Array.from(usersToNotify),
+            '¡Nuevo participante! 🏎️',
+            `¡${miNombre} se ha apuntado a ${event.titulo}!`,
+            `/evento/${event.id}`,
+          )
         }
-        // -------------------------------------------------------------
       }
 
-      await fetchAttendees() // Actualizamos la lista visualmente
+      await fetchAttendees()
       toast.current.show({
         severity: 'success',
         summary: isAttending
@@ -291,7 +297,6 @@ const EventDetailPage = ({ session }) => {
       })
     setPostingComment(true)
     try {
-      // 1. Insertamos el comentario
       const { error } = await supabase.from('event_comments').insert({
         event_id: parseInt(id),
         user_id: session.user.id,
@@ -299,28 +304,23 @@ const EventDetailPage = ({ session }) => {
       })
       if (error) throw error
 
-      // 2. LÓGICA INTELIGENTE DE NOTIFICACIONES (Dueño + Asistentes)
       const { data: attendeesData } = await supabase
         .from('event_attendees')
         .select('user_id')
         .eq('event_id', parseInt(id))
 
-      // Usamos un Set para no enviar notificaciones duplicadas
       let usersToNotify = new Set()
 
-      // Añadimos al creador del evento (si no es el que comenta)
       if (event.user_id !== session.user.id) {
         usersToNotify.add(event.user_id)
       }
 
-      // Añadimos a todos los asistentes (si no son los que comentan)
       if (attendeesData) {
         attendeesData.forEach((a) => {
           if (a.user_id !== session.user.id) usersToNotify.add(a.user_id)
         })
       }
 
-      // Preparamos el paquete de notificaciones
       const notificationsToInsert = Array.from(usersToNotify).map((userId) => ({
         user_id: userId,
         actor_id: session.user.id,
@@ -328,9 +328,17 @@ const EventDetailPage = ({ session }) => {
         evento_id: parseInt(id),
       }))
 
-      // Las enviamos todas de golpe a la base de datos
       if (notificationsToInsert.length > 0) {
         await supabase.from('notifications').insert(notificationsToInsert)
+
+        // 🚀 NOTIFICACIÓN PUSH PERSONALIZADA
+        const miNombre = session.user.user_metadata?.username || 'Un usuario'
+        await sendPushNotification(
+          Array.from(usersToNotify),
+          'Nuevo comentario 💬',
+          `¡${miNombre} ha comentado en ${event.titulo}!`,
+          `/evento/${event.id}`,
+        )
       }
 
       setNewComment('')
@@ -352,7 +360,6 @@ const EventDetailPage = ({ session }) => {
     }
   }
 
-  // Lógica de Gestión (Creador)
   const handleSaveDescription = async () => {
     try {
       const { error } = await supabase
@@ -368,7 +375,7 @@ const EventDetailPage = ({ session }) => {
         detail: 'Descripción actualizada correctamente',
       })
     } catch (error) {
-      console.error('Error saving description:', error) // Uso de la variable error
+      console.error('Error saving description:', error)
       toast.current.show({
         severity: 'error',
         summary: 'Error',
@@ -401,7 +408,7 @@ const EventDetailPage = ({ session }) => {
         detail: 'Añadida a la descripción',
       })
     } catch (error) {
-      console.error('Error uploading extra image:', error) // Uso de la variable error
+      console.error('Error uploading extra image:', error)
       toast.current.show({
         severity: 'error',
         summary: 'Error',
@@ -418,7 +425,7 @@ const EventDetailPage = ({ session }) => {
       setExtraImages((prev) => prev.filter((img) => img.id !== imageId))
     } catch (error) {
       console.error('Error deleting extra image:', error)
-    } // Uso de la variable error
+    }
   }
 
   const handleDeleteEvent = async () => {
@@ -431,7 +438,7 @@ const EventDetailPage = ({ session }) => {
       })
       setTimeout(() => navigate('/eventos'), 1500)
     } catch (error) {
-      console.error('Error deleting event:', error) // Uso de la variable error
+      console.error('Error deleting event:', error)
       toast.current.show({
         severity: 'error',
         summary: 'Error',
@@ -550,7 +557,6 @@ const EventDetailPage = ({ session }) => {
     },
   }
 
-  // Componente Reutilizable de Panel de Control
   const CreatorControls = () => {
     if (!isCreator) return null
     return (
@@ -603,7 +609,6 @@ const EventDetailPage = ({ session }) => {
         >
           <Toast ref={toast} position='bottom-center' />
 
-          {/* HERO SECTION */}
           <MotionDiv
             initial={{ y: -40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -678,7 +683,6 @@ const EventDetailPage = ({ session }) => {
               animate='show'
               className='grid gap-4 md:gap-0'
             >
-              {/* LEFT COLUMN */}
               <div className='col-12 lg:col-8 lg:pr-6 flex-order-1 lg:flex-order-0'>
                 <MotionDiv variants={itemAnim} className='fichar-card'>
                   <h2 className='text-2xl md:text-3xl font-black text-900 mb-4 flex align-items-center gap-4'>
@@ -692,7 +696,6 @@ const EventDetailPage = ({ session }) => {
                       'El organizador no ha proporcionado una descripción detallada para este evento.'}
                   </p>
 
-                  {/* GALERÍA EXTRA EN LA DESCRIPCIÓN */}
                   {extraImages.length > 0 && (
                     <div className='mt-5 grid'>
                       {extraImages.map((img) => (
@@ -867,7 +870,6 @@ const EventDetailPage = ({ session }) => {
                   </div>
                 </MotionDiv>
 
-                {/* ORGANIZADO POR - MOBILE ONLY */}
                 <MotionDiv
                   variants={itemAnim}
                   className='fichar-card block lg:hidden mt-4'
@@ -906,7 +908,6 @@ const EventDetailPage = ({ session }) => {
                 </MotionDiv>
               </div>
 
-              {/* RIGHT COLUMN */}
               <div className='col-12 lg:col-4 flex-order-0 lg:flex-order-1'>
                 <div
                   className='flex flex-column gap-5 sticky'
@@ -1047,7 +1048,6 @@ const EventDetailPage = ({ session }) => {
                     />
                   </MotionDiv>
 
-                  {/* ORGANIZADO POR - DESKTOP ONLY */}
                   <MotionDiv
                     variants={itemAnim}
                     className='fichar-card m-0 hidden lg:block'
@@ -1088,7 +1088,6 @@ const EventDetailPage = ({ session }) => {
               </div>
             </MotionDiv>
 
-            {/* DIÁLOGO: ASISTENTES */}
             <Dialog
               header={
                 <span className='text-2xl font-black text-900'>Asistentes</span>
@@ -1146,7 +1145,6 @@ const EventDetailPage = ({ session }) => {
               </div>
             </Dialog>
 
-            {/* DIÁLOGO: EDITAR EVENTO (Creador) */}
             <Dialog
               header={
                 <span className='text-2xl font-black text-900'>
@@ -1227,7 +1225,6 @@ const EventDetailPage = ({ session }) => {
               </div>
             </Dialog>
 
-            {/* DIÁLOGO: CONFIRMAR ELIMINACIÓN */}
             <Dialog
               header='¿Eliminar Evento?'
               visible={showDeleteModal}

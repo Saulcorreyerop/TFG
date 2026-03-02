@@ -17,6 +17,7 @@ import {
   Car,
 } from 'lucide-react'
 import SEO from '../components/SEO'
+import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTACIÓN AÑADIDA
 
 const CrewDetailPage = ({ session }) => {
   const { crewName } = useParams()
@@ -99,13 +100,21 @@ const CrewDetailPage = ({ session }) => {
         status: 'pending',
       })
 
-      // Añadimos el crew_id para que la notificación sepa a dónde enlazar
       await supabase.from('notifications').insert({
         user_id: crew.created_by,
         actor_id: session.user.id,
         tipo: 'solicitud_crew',
-        crew_id: crew.id, // <-- LÍNEA NUEVA
+        crew_id: crew.id,
       })
+
+      // 🚀 NOTIFICACIÓN PUSH PERSONALIZADA
+      const miNombre = session.user.user_metadata?.username || 'Un usuario'
+      await sendPushNotification(
+        [crew.created_by],
+        'Solicitud de Crew 🛡️',
+        `¡${miNombre} ha solicitado unirse a tu Crew ${crew.name}!`,
+        `/crew/${encodeURIComponent(crew.name)}`,
+      )
 
       toast.current.show({
         severity: 'success',
@@ -132,13 +141,20 @@ const CrewDetailPage = ({ session }) => {
           .update({ status: 'approved' })
           .eq('id', requestId)
 
-        // Añadimos el crew_id para notificar que ha sido aceptado
         await supabase.from('notifications').insert({
           user_id: applicantId,
           actor_id: session.user.id,
           tipo: 'crew_aceptada',
-          crew_id: crew.id, // <-- LÍNEA NUEVA
+          crew_id: crew.id,
         })
+
+        // 🚀 NOTIFICACIÓN PUSH AL USUARIO ACEPTADO
+        await sendPushNotification(
+          [applicantId],
+          '¡Solicitud Aceptada! 🏁',
+          `¡Ya eres miembro oficial de ${crew.name}!`,
+          `/crew/${encodeURIComponent(crew.name)}`,
+        )
 
         toast.current.show({
           severity: 'success',
@@ -294,7 +310,6 @@ const CrewDetailPage = ({ session }) => {
                           <div className='flex gap-2'>
                             <button
                               type='button'
-                              /* NUEVO: Le pasamos req.user_id para poder notificarle */
                               onClick={() =>
                                 handleActionRequest(
                                   req.id,
@@ -312,7 +327,6 @@ const CrewDetailPage = ({ session }) => {
                             </button>
                             <button
                               type='button'
-                              /* NUEVO: Le pasamos req.user_id también al rechazar */
                               onClick={() =>
                                 handleActionRequest(
                                   req.id,

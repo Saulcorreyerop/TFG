@@ -22,6 +22,7 @@ import {
   Heart,
 } from 'lucide-react'
 import SEO from '../components/SEO'
+import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 
 const CommunityPage = () => {
   const navigate = useNavigate()
@@ -162,6 +163,16 @@ const CommunityPage = () => {
             actor_id: session.user.id,
             tipo: 'nuevo_like_vehiculo',
           })
+
+          // 🚀 NOTIFICACIÓN PUSH PERSONALIZADA
+          const myName =
+            session.user.user_metadata?.username || 'Un miembro de la comunidad'
+          await sendPushNotification(
+            [vehicleOwnerId],
+            '¡Nuevos Respetos! 🚘',
+            `¡A ${myName} le gusta tu coche!`,
+            `/comunidad`,
+          )
         }
       }
     } catch (err) {
