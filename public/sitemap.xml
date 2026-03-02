@@ -20,4 +20,10 @@
       <priority>0.7</priority>
       <changefreq>weekly</changefreq>
    </url>
+
+      <url>
+      <loc>https://carmeetesp.netlify.app/contacto</loc>
+      <priority>0.7</priority>
+      <changefreq>weekly</changefreq>
+   </url>
 </urlset>
