@@ -116,7 +116,6 @@ const GaragePage = ({ session }) => {
   }
 
   const fetchVehicles = async () => {
-    // AHORA TAMBIÉN PEDIMOS vehicle_images
     const { data } = await supabase
       .from('vehicles')
       .select('*, vehicle_images(*)')
@@ -161,7 +160,6 @@ const GaragePage = ({ session }) => {
     setShowDialog(true)
   }
 
-  // --- LÓGICA DE SUBIDA DE IMÁGENES ---
   const handleUploadSingleFile = async (file, isMain = true, index = 0) => {
     const options = {
       maxSizeMB: 0.8,
@@ -194,9 +192,35 @@ const GaragePage = ({ session }) => {
       return
     }
 
+    // 🚀 1. BLINDAJE: LA FOTO PRINCIPAL ES OBLIGATORIA
+    if (!imageFile && !form.image_url) {
+      toast.current.show({
+        severity: 'warn',
+        summary: 'Foto Requerida',
+        detail: 'Debes subir una foto principal (portada) de tu vehículo.',
+      })
+      return
+    }
+
     setLoading(true)
     try {
       let finalImageUrl = form.image_url
+
+      // 🚀 2. FUNCIÓN PRO: BORRAR LA FOTO ANTIGUA DEL SERVIDOR SI SE SUBE UNA NUEVA
+      if (editingId && imageFile && form.image_url) {
+        try {
+          // Extraemos la ruta interna de Supabase a partir de la URL pública
+          const oldPath = form.image_url.split('/public/vehicles/')[1]
+          if (oldPath) {
+            await supabase.storage.from('vehicles').remove([oldPath])
+            console.log(
+              'Foto antigua eliminada del storage para ahorrar espacio.',
+            )
+          }
+        } catch (e) {
+          console.error('No se pudo borrar la foto antigua:', e)
+        }
+      }
 
       // 1. Subir imagen principal
       if (imageFile) {
@@ -212,7 +236,7 @@ const GaragePage = ({ session }) => {
       const vehicleData = { ...form, image_url: finalImageUrl }
       let currentVehicleId = editingId
 
-      // 2. Guardar datos del vehículo (Insert o Update blindado)
+      // 2. Guardar datos del vehículo
       if (editingId) {
         const { error: updateError } = await supabase
           .from('vehicles')
@@ -220,7 +244,6 @@ const GaragePage = ({ session }) => {
           .eq('id', editingId)
         if (updateError) throw updateError
       } else {
-        // Le quitamos el .single() que a veces da fallos de RLS y sacamos el ID del array
         const { data: newVehicle, error: insertError } = await supabase
           .from('vehicles')
           .insert({ user_id: session.user.id, ...vehicleData })
@@ -230,7 +253,7 @@ const GaragePage = ({ session }) => {
           currentVehicleId = newVehicle[0].id
         } else {
           throw new Error(
-            'El vehículo se guardó pero no se pudo obtener su ID para la galería.',
+            'El vehículo se guardó pero no se pudo obtener su ID.',
           )
         }
       }
@@ -262,7 +285,6 @@ const GaragePage = ({ session }) => {
       fetchVehicles()
     } catch (error) {
       console.error('Error detallado:', error)
-      // Si falla, ahora mostrará el error exacto de Supabase en rojo
       toast.current.show({
         severity: 'error',
         summary: 'Error al guardar',
@@ -274,6 +296,7 @@ const GaragePage = ({ session }) => {
   }
 
   const handleDelete = async (id) => {
+    // 🚀 También podríamos borrar las fotos del storage aquí como paso extra futuro!
     const { error } = await supabase.from('vehicles').delete().eq('id', id)
     if (!error) {
       toast.current.show({
@@ -285,7 +308,6 @@ const GaragePage = ({ session }) => {
     }
   }
 
-  // --- LÓGICA DE MANEJO DE PREVISUALIZACIONES DE GALERÍA ---
   const handleExtraImagesChange = (e) => {
     const files = Array.from(e.target.files)
     setExtraImageFiles((prev) => [...prev, ...files])
@@ -297,6 +319,15 @@ const GaragePage = ({ session }) => {
 
   const removeExistingImage = async (imgId) => {
     try {
+      // 🚀 FUNCIÓN PRO: Borrar del Storage también al quitar de la galería
+      const imgToDelete = existingExtraImages.find((img) => img.id === imgId)
+      if (imgToDelete) {
+        const oldPath = imgToDelete.image_url.split('/public/vehicles/')[1]
+        if (oldPath) {
+          await supabase.storage.from('vehicles').remove([oldPath])
+        }
+      }
+
       await supabase.from('vehicle_images').delete().eq('id', imgId)
       setExistingExtraImages((prev) => prev.filter((img) => img.id !== imgId))
       toast.current.show({
@@ -311,7 +342,6 @@ const GaragePage = ({ session }) => {
     }
   }
 
-  // --- VISOR DE GALERÍA (GALLERIA) ---
   const openGalleryViewer = (car) => {
     const images = []
     if (car.image_url)
@@ -363,7 +393,6 @@ const GaragePage = ({ session }) => {
     )
   }
 
-  // --- PLANTILLA DE LA TARJETA DEL COCHE ---
   const carTemplate = (car) => {
     const totalImages =
       (car.image_url ? 1 : 0) +
@@ -383,7 +412,6 @@ const GaragePage = ({ session }) => {
         )}
         <div className='garage-badge'>{car.combustible}</div>
 
-        {/* INDICADOR DE FOTOS */}
         {totalImages > 1 && (
           <div className='gallery-indicator-badge'>
             <i className='pi pi-images'></i> 1/{totalImages}
@@ -441,7 +469,6 @@ const GaragePage = ({ session }) => {
         <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
           <Toast ref={toast} />
 
-          {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
           <Dialog
             visible={!!galleryImages}
             onHide={() => setGalleryImages(null)}
@@ -492,7 +519,6 @@ const GaragePage = ({ session }) => {
             </div>
           )}
 
-          {/* DIALOG DE CREAR / EDITAR */}
           <Dialog
             header={editingId ? 'Editar Vehículo' : 'Nuevo Vehículo'}
             visible={showDialog}
@@ -603,7 +629,6 @@ const GaragePage = ({ session }) => {
                 <label htmlFor='desc'>Modificaciones / Descripción</label>
               </span>
 
-              {/* --- SECCIÓN DE FOTOS --- */}
               <div className='border-top-1 border-300 pt-4 mt-2'>
                 <h3 className='text-xl font-bold text-800 m-0 mb-3'>
                   Imágenes del Vehículo
@@ -624,12 +649,11 @@ const GaragePage = ({ session }) => {
                         ? imageFile.name
                         : form.image_url
                           ? 'Cambiar foto principal'
-                          : 'Subir Foto principal (Portada)'}
+                          : 'Subir Foto principal (Portada) *OBLIGATORIA*'}
                     </span>
                   </div>
                 </div>
 
-                {/* Galería Adicional */}
                 <div className='bg-gray-50 border-round-xl p-3 border-1 border-200'>
                   <div className='gallery-upload-zone'>
                     <input
@@ -650,11 +674,9 @@ const GaragePage = ({ session }) => {
                     </div>
                   </div>
 
-                  {/* Previsualización de imágenes (Existentes y Nuevas) */}
                   {(existingExtraImages.length > 0 ||
                     extraImageFiles.length > 0) && (
                     <div className='gallery-preview-grid'>
-                      {/* Fotos ya guardadas en DB */}
                       {existingExtraImages.map((img) => (
                         <div key={img.id} className='gallery-preview-item'>
                           <img src={img.image_url} alt='Extra guardada' />
@@ -668,7 +690,6 @@ const GaragePage = ({ session }) => {
                         </div>
                       ))}
 
-                      {/* Fotos nuevas pendientes de subir */}
                       {extraImageFiles.map((file, idx) => (
                         <div key={idx} className='gallery-preview-item'>
                           <img
