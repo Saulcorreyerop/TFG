@@ -9,16 +9,6 @@ import 'primereact/resources/primereact.min.css'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
 import './App.css'
-// CÓDIGO PARA DESTRUIR SERVICE WORKERS ANTIGUOS
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    for (let registration of registrations) {
-      registration.unregister()
-      console.log('Service Worker eliminado para evitar problemas de caché.')
-    }
-  })
-}
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HelmetProvider>
