@@ -4,18 +4,25 @@ export const sendPushNotification = async (
   message,
   urlPath = '/',
 ) => {
-  if (!targetUserIds || targetUserIds.length === 0) return
+  console.log(
+    '1. Entrando a sendPushNotification. Usuarios destino:',
+    targetUserIds,
+  )
+
+  if (!targetUserIds || targetUserIds.length === 0) {
+    console.warn('2. Cancelado: No hay usuarios a los que enviar.')
+    return
+  }
 
   try {
-    await fetch('/.netlify/functions/sendPush', {
+    console.log('3. Disparando fetch a Netlify...')
+    const response = await fetch('/.netlify/functions/sendPush', {
       method: 'POST',
       body: JSON.stringify({ targetUserIds, title, message, urlPath }),
     })
-    console.log('Orden de notificación enviada al servidor.')
+
+    console.log('4. Respuesta de Netlify:', response.status)
   } catch (error) {
-    console.error(
-      'Error al contactar con el servidor de notificaciones:',
-      error,
-    )
+    console.error('❌ Error al contactar con Netlify:', error)
   }
 }

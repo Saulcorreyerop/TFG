@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import './ProfilePage.css'
 import SEO from '../components/SEO'
+import { sendPushNotification } from '../utils/onesignal'
 
 const PublicProfile = () => {
   const { userId, username } = useParams()
@@ -267,17 +268,31 @@ const PublicProfile = () => {
         setFollowersCount((prev) => prev - 1)
         setIsFollowing(false)
       } else {
-        await supabase
+        // --- CÓDIGO CUANDO LE DAS A SEGUIR ---
+        const { error: insertError } = await supabase
           .from('follows')
           .insert({ follower_id: session.user.id, following_id: profile.id })
-        setFollowersCount((prev) => prev + 1)
-        setIsFollowing(true)
 
-        await supabase.from('notifications').insert({
-          user_id: profile.id,
-          actor_id: session.user.id,
-          tipo: 'nuevo_seguidor',
-        })
+        if (!insertError) {
+          setIsFollowing(true)
+          setFollowersCount((prev) => prev + 1)
+
+          // Insertar en la campanita interna
+          await supabase.from('notifications').insert({
+            user_id: profile.id,
+            actor_id: session.user.id,
+            tipo: 'nuevo_seguidor',
+          })
+
+          // 🚀 AQUÍ ESTÁ LA CLAVE: Llamar a la función con el ID entre corchetes [ ]
+          console.log('Llamando a OneSignal para el usuario:', profile.id)
+          await sendPushNotification(
+            [profile.id], // MUY IMPORTANTE LOS CORCHETES
+            '¡Tienes un nuevo seguidor! 👤',
+            'Alguien ha empezado a seguir tu perfil en CarMeet ESP.',
+            `/usuario/${profile.username}`,
+          )
+        }
       }
     } catch (error) {
       console.error('Error en seguimiento:', error)
