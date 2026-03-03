@@ -23,6 +23,8 @@ import {
   LogOut,
   Image as ImageIcon,
   Shield,
+  Instagram,
+  Youtube,
 } from 'lucide-react'
 import './ProfilePage.css'
 import SEO from '../components/SEO'
@@ -35,12 +37,10 @@ const ProfilePage = ({ session }) => {
   const [myVehicles, setMyVehicles] = useState([])
   const [myCrew, setMyCrew] = useState(null)
 
-  // Estados de Eventos
   const [favorites, setFavorites] = useState([])
   const [attendingEvents, setAttendingEvents] = useState([])
   const [createdEvents, setCreatedEvents] = useState([])
 
-  // Estados de Seguidores
   const [followersCount, setFollowersCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
 
@@ -50,21 +50,21 @@ const ProfilePage = ({ session }) => {
     username: '',
     avatar_url: null,
     bio: '',
+    instagram: '',
+    twitter: '',
+    tiktok: '',
+    youtube: '',
   })
   const [avatarFile, setAvatarFile] = useState(null)
-
-  // ESTADO PARA LA GALERÍA
   const [galleryImages, setGalleryImages] = useState(null)
 
   useEffect(() => {
     if (session) {
       fetchAllData()
     }
-    // eslint-disable-next-line
   }, [session])
 
   const fetchAllData = async () => {
-    // 1. Perfil
     const { data: profData } = await supabase
       .from('profiles')
       .select('*')
@@ -77,17 +77,19 @@ const ProfilePage = ({ session }) => {
         username: profData.username || '',
         avatar_url: profData.avatar_url,
         bio: profData.bio || '',
+        instagram: profData.instagram || '',
+        twitter: profData.twitter || '',
+        tiktok: profData.tiktok || '',
+        youtube: profData.youtube || '',
       })
     }
 
-    // 2. Vehículos (Ahora traemos TODAS las fotos)
     const { data: vehData } = await supabase
       .from('vehicles')
       .select('*, vehicle_images(*)')
       .eq('user_id', session.user.id)
     if (vehData) setMyVehicles(vehData)
 
-    // 3. Mi Crew
     const { data: crewMemberData } = await supabase
       .from('crew_members')
       .select('crews(*)')
@@ -100,7 +102,6 @@ const ProfilePage = ({ session }) => {
       setMyCrew(crewMemberData.crews)
     }
 
-    // 4. Favoritos
     const { data: favData } = await supabase
       .from('favorites')
       .select(`event_id, events (*)`)
@@ -110,7 +111,6 @@ const ProfilePage = ({ session }) => {
         favData.map((item) => item.events).filter((ev) => ev !== null),
       )
 
-    // 5. Asistencias
     const { data: attData } = await supabase
       .from('event_attendees')
       .select(`event_id, events (*)`)
@@ -120,7 +120,6 @@ const ProfilePage = ({ session }) => {
         attData.map((item) => item.events).filter((ev) => ev !== null),
       )
 
-    // 6. Creados
     const { data: creData } = await supabase
       .from('events')
       .select('*')
@@ -128,7 +127,6 @@ const ProfilePage = ({ session }) => {
       .order('fecha', { ascending: false })
     if (creData) setCreatedEvents(creData)
 
-    // 7. Seguidores
     try {
       const { count: f1 } = await supabase
         .from('follows')
@@ -145,7 +143,6 @@ const ProfilePage = ({ session }) => {
     }
   }
 
-  // --- LÓGICA DE GALERÍA ---
   const openGalleryViewer = (car) => {
     const images = []
     if (car.image_url)
@@ -164,7 +161,7 @@ const ProfilePage = ({ session }) => {
       })
     }
     if (images.length > 0) setGalleryImages(images)
-    else navigate('/garaje') // Si no hay fotos ni siquiera principal, le mandamos a su garaje a añadir
+    else navigate('/garaje')
   }
 
   const galleryItemTemplate = (item) => {
@@ -229,12 +226,30 @@ const ProfilePage = ({ session }) => {
         })
         finalAvatarUrl = await handleAvatarUpload(avatarFile)
       }
+
+      const cleanInsta = editForm.instagram
+        ? editForm.instagram.replace('@', '').trim()
+        : null
+      const cleanTwitter = editForm.twitter
+        ? editForm.twitter.replace('@', '').trim()
+        : null
+      const cleanTiktok = editForm.tiktok
+        ? editForm.tiktok.replace('@', '').trim()
+        : null
+      const cleanYoutube = editForm.youtube
+        ? editForm.youtube.replace('@', '').trim()
+        : null
+
       const { error } = await supabase
         .from('profiles')
         .update({
           username: editForm.username,
           avatar_url: finalAvatarUrl,
           bio: editForm.bio,
+          instagram: cleanInsta,
+          twitter: cleanTwitter,
+          tiktok: cleanTiktok,
+          youtube: cleanYoutube,
           updated_at: new Date(),
         })
         .eq('id', session.user.id)
@@ -331,7 +346,6 @@ const ProfilePage = ({ session }) => {
         <div className='max-w-6xl mx-auto p-3 md:p-5'>
           <Toast ref={toast} />
 
-          {/* VISOR DE GALERÍA PANTALLA COMPLETA */}
           <Dialog
             visible={!!galleryImages}
             onHide={() => setGalleryImages(null)}
@@ -353,7 +367,6 @@ const ProfilePage = ({ session }) => {
             )}
           </Dialog>
 
-          {/* HEADER DEL PERFIL */}
           <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 border-100'>
             <div className='relative'>
               <Avatar
@@ -370,7 +383,6 @@ const ProfilePage = ({ session }) => {
                 {profile?.username || 'Usuario'}
               </h1>
 
-              {/* Biografía */}
               {profile?.bio ? (
                 <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto lg:mx-0'>
                   {profile.bio}
@@ -381,7 +393,73 @@ const ProfilePage = ({ session }) => {
                 </p>
               )}
 
-              {/* Crew Badge */}
+              {/* REDES SOCIALES COMPLETAS */}
+              {(profile?.instagram ||
+                profile?.twitter ||
+                profile?.tiktok ||
+                profile?.youtube) && (
+                <div className='flex gap-3 mt-3 justify-content-center lg:justify-content-start'>
+                  {profile?.instagram && (
+                    <a
+                      href={`https://instagram.com/${profile.instagram}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='social-icon-btn instagram'
+                      title='Instagram'
+                    >
+                      <Instagram size={18} />
+                    </a>
+                  )}
+                  {profile?.tiktok && (
+                    <a
+                      href={`https://tiktok.com/@${profile.tiktok}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='social-icon-btn tiktok'
+                      title='TikTok'
+                    >
+                      <svg
+                        viewBox='0 0 24 24'
+                        width='18'
+                        height='18'
+                        fill='currentColor'
+                      >
+                        <path d='M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z' />
+                      </svg>
+                    </a>
+                  )}
+                  {profile?.youtube && (
+                    <a
+                      href={`https://youtube.com/@${profile.youtube}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='social-icon-btn youtube'
+                      title='YouTube'
+                    >
+                      <Youtube size={18} />
+                    </a>
+                  )}
+                  {profile?.twitter && (
+                    <a
+                      href={`https://x.com/${profile.twitter}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='social-icon-btn twitter'
+                      title='X'
+                    >
+                      <svg
+                        viewBox='0 0 24 24'
+                        width='16'
+                        height='16'
+                        fill='currentColor'
+                      >
+                        <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )}
+
               <div className='mt-3'>
                 {myCrew ? (
                   <div
@@ -443,14 +521,13 @@ const ProfilePage = ({ session }) => {
               </div>
             </div>
 
-            {/* ESTADÍSTICAS */}
             <div className='flex gap-4 md:gap-5 text-center border-top-1 lg:border-top-none lg:border-left-1 border-200 pt-4 lg:pt-0 lg:pl-5 w-full lg:w-auto justify-content-center'>
               <div>
                 <div className='text-2xl font-black text-900'>
                   {myVehicles.length}
                 </div>
                 <div className='text-xs font-bold text-500 uppercase tracking-widest'>
-                  Coches
+                  Vehículos
                 </div>
               </div>
               <div>
@@ -472,7 +549,6 @@ const ProfilePage = ({ session }) => {
             </div>
           </div>
 
-          {/* --- SECCIÓN EN CASCADA 1: GARAJE --- */}
           <section className='profile-section'>
             <h2 className='profile-section-title'>
               <Car className='text-purple-600' size={28} /> Mi Garaje
@@ -500,8 +576,6 @@ const ProfilePage = ({ session }) => {
                             <ImageIcon size={40} />
                           </div>
                         )}
-
-                        {/* INDICADOR DE FOTOS */}
                         {totalImages > 1 && (
                           <div className='gallery-indicator-badge'>
                             <i className='pi pi-images'></i> 1/{totalImages}
@@ -532,7 +606,6 @@ const ProfilePage = ({ session }) => {
             </div>
           </section>
 
-          {/* --- SECCIÓN EN CASCADA 2: EVENTOS CREADOS --- */}
           <section className='profile-section'>
             <h2 className='profile-section-title'>
               <Flag className='text-blue-600' size={28} /> Eventos Organizados
@@ -551,7 +624,6 @@ const ProfilePage = ({ session }) => {
             )}
           </section>
 
-          {/* --- SECCIÓN EN CASCADA 3: ASISTENCIAS --- */}
           <section className='profile-section'>
             <h2 className='profile-section-title'>
               <CheckCircle className='text-emerald-600' size={28} /> Me Apunto
@@ -570,7 +642,6 @@ const ProfilePage = ({ session }) => {
             )}
           </section>
 
-          {/* --- SECCIÓN EN CASCADA 4: FAVORITOS --- */}
           <section className='profile-section mb-0'>
             <h2 className='profile-section-title'>
               <Heart className='text-pink-500' size={28} /> Eventos Favoritos
@@ -652,6 +723,55 @@ const ProfilePage = ({ session }) => {
                     autoResize
                   />
                   <label htmlFor='bio'>Biografía (Opcional)</label>
+                </span>
+
+                {/* REDES SOCIALES INPUTS */}
+                <span className='p-float-label'>
+                  <InputText
+                    id='instagram'
+                    value={editForm.instagram}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, instagram: e.target.value })
+                    }
+                    className='w-full border-round-xl p-3'
+                  />
+                  <label htmlFor='instagram'>Instagram (Tu @usuario)</label>
+                </span>
+
+                <span className='p-float-label'>
+                  <InputText
+                    id='tiktok'
+                    value={editForm.tiktok}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, tiktok: e.target.value })
+                    }
+                    className='w-full border-round-xl p-3'
+                  />
+                  <label htmlFor='tiktok'>TikTok (Tu @usuario)</label>
+                </span>
+
+                <span className='p-float-label'>
+                  <InputText
+                    id='youtube'
+                    value={editForm.youtube}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, youtube: e.target.value })
+                    }
+                    className='w-full border-round-xl p-3'
+                  />
+                  <label htmlFor='youtube'>YouTube (Tu @canal)</label>
+                </span>
+
+                <span className='p-float-label'>
+                  <InputText
+                    id='twitter'
+                    value={editForm.twitter}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, twitter: e.target.value })
+                    }
+                    className='w-full border-round-xl p-3'
+                  />
+                  <label htmlFor='twitter'>X (Tu @usuario)</label>
                 </span>
               </div>
 

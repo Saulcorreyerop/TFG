@@ -133,3 +133,47 @@
   z-index: 10;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+/* Botones de Redes Sociales */
+.social-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  color: white;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  text-decoration: none;
+}
+
+.social-icon-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.social-icon-btn.instagram {
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
+}
+
+.social-icon-btn.twitter {
+  background: #000000; /* Color oficial de X / Twitter */
+}
+
+.social-icon-btn.tiktok {
+  background: #000000; /* TikTok usa fondo negro con su logo blanco */
+}
+
+.social-icon-btn.youtube {
+  background: #ff0000; /* El rojo inconfundible de YouTube */
+}
