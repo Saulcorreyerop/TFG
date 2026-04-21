@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+/*import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { addLocale } from 'primereact/api'
@@ -160,4 +160,35 @@ function App() {
   )
 }
 
+export default App*/
+
+import React from 'react'
+
+// ==========================================
+// PANTALLA DE MANTENIMIENTO
+// ==========================================
+function App() {
+  return (
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+        fontFamily: 'system-ui, sans-serif',
+      }}
+    >
+      <h1 style={{ fontSize: '3rem', color: '#1e293b', margin: '0 0 10px 0' }}>
+        🛠️ En Desarrollo
+      </h1>
+      <p style={{ fontSize: '1.5rem', color: '#64748b', margin: '0' }}>
+        CarMeet ESP - Proyecto de Saúl Correyero Pañero.
+      </p>
+    </div>
+  )
+}
+
 export default App
+
