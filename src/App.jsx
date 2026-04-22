@@ -1,4 +1,4 @@
-/*import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { addLocale } from 'primereact/api'
@@ -160,9 +160,9 @@ function App() {
   )
 }
 
-export default App*/
+export default App
 
-import React from 'react'
+/*import React from 'react'
 
 // ==========================================
 // PANTALLA DE MANTENIMIENTO
@@ -190,5 +190,5 @@ function App() {
   )
 }
 
-export default App
+export default App*/
 
