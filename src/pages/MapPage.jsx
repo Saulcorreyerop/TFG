@@ -9,7 +9,7 @@ import {
   Marker,
   Popup,
   useMapEvents,
-  <useM></useM>ap,
+  useMap,
 } from 'react-leaflet'
 import { Button } from 'primereact/button'
 import { Toast } from 'primereact/toast'
