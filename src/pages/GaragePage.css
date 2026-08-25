@@ -1,0 +1,273 @@
+/* --- CONTENEDOR PRINCIPAL (GRID RESPONSIVE) --- */
+.garage-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Móvil: 1 columna */
+  gap: 2rem;
+  width: 100%;
+  padding-bottom: 2rem;
+}
+
+/* Tablet: 2 columnas */
+@media (min-width: 768px) {
+  .garage-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* PC: 3 columnas */
+@media (min-width: 1200px) {
+  .garage-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- TARJETA (CARD) --- */
+.garage-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border: 1px solid #f0f0f0;
+}
+
+/* Reset de PrimeReact */
+.garage-card .p-card-body,
+.garage-card .p-card-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.garage-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: #a855f7;
+}
+
+/* --- IMAGEN --- */
+.garage-image-container {
+  width: 100%;
+  height: 240px;
+  position: relative;
+  background-color: #f3f4f6;
+  overflow: hidden;
+}
+
+.garage-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.5s ease;
+}
+
+.garage-card:hover .garage-image {
+  transform: scale(1.05);
+}
+
+.garage-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+/* --- BADGE --- */
+.garage-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #111827;
+  text-transform: uppercase;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+/* --- CONTENIDO --- */
+.garage-info {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.garage-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.garage-specs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.garage-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.garage-desc {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+  min-height: 3rem;
+}
+
+/* --- BOTONES DE ACCIÓN --- */
+.garage-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.garage-btn {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  transition: all 0.2s;
+}
+
+.garage-btn.edit {
+  background-color: #eff6ff !important;
+  color: #3b82f6 !important;
+}
+
+.garage-btn.edit:hover {
+  background-color: #dbeafe !important;
+  transform: scale(1.1);
+}
+
+.garage-btn.delete {
+  background-color: #fee2e2 !important;
+  color: #ef4444 !important;
+}
+
+.garage-btn.delete:hover {
+  background-color: #fecaca !important;
+  transform: scale(1.1);
+}
+
+/* --- ESTADO VACÍO --- */
+.garage-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px dashed #e5e7eb;
+}
+/* --- GALERÍA DE IMÁGENES (SUBIDA Y PREVIEWS) --- */
+.gallery-upload-zone {
+  background-color: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.gallery-upload-zone:hover {
+  background-color: #eff6ff;
+  border-color: #60a5fa;
+}
+
+.gallery-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.gallery-preview-item {
+  position: relative;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.gallery-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-preview-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.remove-preview-btn:hover {
+  transform: scale(1.1);
+  background: #dc2626;
+}
+
+/* Indicador de fotos en la tarjeta principal */
+.gallery-indicator-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

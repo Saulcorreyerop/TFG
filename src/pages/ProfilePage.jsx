@@ -27,6 +27,7 @@ import {
   Youtube,
 } from 'lucide-react'
 
+import './ProfilePage.css'
 import SEO from '../components/SEO'
 
 const ProfilePage = ({ session }) => {

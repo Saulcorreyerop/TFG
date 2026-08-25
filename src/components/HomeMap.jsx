@@ -135,7 +135,7 @@ const HomeMap = () => {
             >
               <div className='absolute top-0 left-0 p-4 z-5 pointer-events-none w-full flex justify-content-between'>
                 <div className='fichar-dark-badge font-bold border-round-2xl px-4 py-3 shadow-4 flex align-items-center gap-3'>
-                  <div className='w-2rem h-2rem surface-hover0 border-circle flex align-items-center justify-content-center'>
+                  <div className='w-2rem h-2rem surface-hover border-circle flex align-items-center justify-content-center'>
                     <MapPin size={16} className='text-white' />
                   </div>
                   <span className='text-lg'>

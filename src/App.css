@@ -226,3 +226,41 @@ body {
   color: #64748b;
   font-size: 0.85rem;
 }
+
+/* --- Piezas del footer que faltaban --- */
+.footer-nav-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.copyright {
+  color: #64748b;
+}
+
+.version {
+  color: #64748b;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .footer-bottom {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
+/* --- Latido suave para iconos de "en directo" --- */
+.pulse-soft {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-soft { animation: none; }
+}

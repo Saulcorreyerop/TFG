@@ -278,3 +278,10 @@
   background: linear-gradient(135deg, #7e22ce 0%, #a855f7 100%);
   border: 1px solid #d8b4fe;
 }
+
+/* --- Contenedor del contenido del hero --- */
+.hero-content {
+  max-width: 60rem;
+  margin-inline: auto;
+  text-align: center;
+}

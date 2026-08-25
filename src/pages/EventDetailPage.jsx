@@ -33,6 +33,7 @@ import {
   X,
 } from 'lucide-react'
 
+import './EventDetailPage.css'
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 

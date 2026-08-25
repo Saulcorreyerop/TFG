@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import PageTransition from '../components/PageTransition'
 
+import './ContactPage.css'
 import SEO from '../components/SEO'
 
 const ContactPage = () => {

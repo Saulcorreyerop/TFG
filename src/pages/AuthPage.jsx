@@ -8,6 +8,7 @@ import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
 import { Zap, ShieldCheck } from 'lucide-react'
 
+import './AuthPage.css'
 import SEO from '../components/SEO'
 
 const LOGIN_IMAGE =

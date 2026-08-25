@@ -28,6 +28,7 @@ import {
   Shield,
 } from 'lucide-react'
 
+import './EventsPage.css'
 import SEO from '../components/SEO'
 
 const MotionDiv = motion.div

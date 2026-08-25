@@ -1,0 +1,283 @@
+/* =========================================================================
+   utilities.css — capa de utilidades que faltaba
+
+   El proyecto usa clases con sintaxis de Tailwind (font-black, max-w-7xl,
+   object-cover, hover:scale-105...) pero Tailwind nunca ha estado instalado,
+   así que ninguna de ellas aplicaba nada. Este archivo las implementa.
+
+   Se escriben a mano en vez de instalar Tailwind por dos motivos:
+     1. El preflight de Tailwind resetea botones, bordes e inputs, y chocaría
+        con PrimeReact y PrimeFlex.
+     2. Son 91 clases concretas: ~4 KB frente a un framework entero.
+
+   Los colores salen de las variables del tema de PrimeReact siempre que
+   existe una equivalente, para que el modo oscuro funcione al cambiarlo.
+
+   Se importa una sola vez desde main.jsx, después de PrimeFlex.
+   ========================================================================= */
+
+
+/* -------------------------------------------------------------------------
+   Tipografía
+   ------------------------------------------------------------------------- */
+
+.font-black       { font-weight: 900; }
+.font-extrabold   { font-weight: 800; }
+.font-mono        { font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", monospace; }
+
+.tracking-tight   { letter-spacing: -0.015em; }
+.tracking-tighter { letter-spacing: -0.03em; }
+.tracking-widest  { letter-spacing: 0.1em; }
+
+.text-md          { font-size: 1rem; }
+
+.white-space-pre-wrap { white-space: pre-wrap; }
+
+/* Recorte a N líneas con puntos suspensivos */
+.line-clamp-1,
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-1 { -webkit-line-clamp: 1; line-clamp: 1; }
+.line-clamp-2 { -webkit-line-clamp: 2; line-clamp: 2; }
+
+
+/* -------------------------------------------------------------------------
+   Color
+   ------------------------------------------------------------------------- */
+
+.bg-black   { background-color: #000; }
+.text-black { color: #000; }
+
+/* Emerald no existe en la paleta de PrimeReact */
+.text-emerald-500 { color: #10b981; }
+.text-emerald-600 { color: #059669; }
+
+/* Superficies translúcidas: se usan sobre fondos oscuros (héroes, bento) */
+.surface-card-alpha-10 { background-color: rgb(255 255 255 / 0.10); }
+.surface-card-alpha-90 { background-color: rgb(255 255 255 / 0.90); }
+
+
+/* -------------------------------------------------------------------------
+   Tamaño
+   ------------------------------------------------------------------------- */
+
+.max-w-sm  { max-width: 24rem; }
+.max-w-2xl { max-width: 42rem; }
+.max-w-4xl { max-width: 56rem; }
+.max-w-5xl { max-width: 64rem; }
+.max-w-6xl { max-width: 72rem; }
+.max-w-7xl { max-width: 80rem; }
+
+.w-40rem   { width: 40rem; }
+.w-50rem   { width: 50rem; }
+.w-1\.5rem { width: 1.5rem; }
+
+.h-40rem   { height: 40rem; }
+.h-50rem   { height: 50rem; }
+.h-1\.5rem { height: 1.5rem; }
+.h-1       { height: 0.25rem; }   /* barritas y separadores */
+
+
+/* -------------------------------------------------------------------------
+   Posición y caja
+   ------------------------------------------------------------------------- */
+
+.inset-0      { top: 0; right: 0; bottom: 0; left: 0; }
+.z-10         { z-index: 10; }
+.items-start  { align-items: flex-start; }
+.object-cover { object-fit: cover; }
+
+/* Marcadores sin estilo propio.
+   .group  -> ancla para las variantes group-hover: de más abajo
+   .transform -> herencia de Tailwind; aquí no hace falta porque usamos
+                 las propiedades translate/scale/rotate, que ya componen
+                 entre sí sin necesidad de activarlas. */
+
+
+/* -------------------------------------------------------------------------
+   Desenfoques
+   ------------------------------------------------------------------------- */
+
+.blur-3xl { filter: blur(64px); }
+
+.backdrop-blur-sm {
+  -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
+}
+.backdrop-blur-md {
+  -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px);
+}
+
+
+/* -------------------------------------------------------------------------
+   Degradados
+   ------------------------------------------------------------------------- */
+
+.bg-gradient-to-r {
+  background-image: linear-gradient(
+    to right,
+    var(--u-from, transparent),
+    var(--u-to, transparent)
+  );
+}
+.from-blue-700  { --u-from: #1d4ed8; }
+.to-indigo-900  { --u-to:   #312e81; }
+
+
+/* -------------------------------------------------------------------------
+   Transformaciones
+
+   Se usan las propiedades independientes translate / scale / rotate en vez
+   de transform. Así componen solas entre ellas y, sobre todo, NO pisan el
+   transform que PrimeFlex aplica en clases como .translate-middle.
+
+   Sobre las unidades: la mayoría son porcentajes, porque en este proyecto
+   acompañan a posicionamientos tipo top-0 right-0 / top-50 left-50 y sirven
+   para descolgar elementos decorativos de una esquina. Las dos excepciones
+   son micro-interacciones (levantar una tarjeta, desplazar una flecha),
+   donde un porcentaje del propio elemento sería invisible y lo correcto
+   son rem.
+   ------------------------------------------------------------------------- */
+
+.translate-x-30,
+.translate-x-50,
+.-translate-x-50,
+.translate-y-50,
+.-translate-y-4,
+.-translate-y-10,
+.-translate-y-50,
+.hover\:-translate-y-1,
+.group-hover\:translate-x-2 {
+  translate: var(--u-tx, 0) var(--u-ty, 0);
+}
+
+.translate-x-30   { --u-tx:  30%; }
+.translate-x-50   { --u-tx:  50%; }
+.-translate-x-50  { --u-tx: -50%; }
+.translate-y-50   { --u-ty:  50%; }
+.-translate-y-10  { --u-ty: -10%; }
+.-translate-y-50  { --u-ty: -50%; }
+.-translate-y-4   { --u-ty: -1rem; }        /* separación, no posicionamiento */
+
+.rotate-6    { rotate:   6deg; }
+.-rotate-12  { rotate: -12deg; }
+.scale-90    { scale: 0.9; }
+
+/* Márgenes negativos (solapes de cabecera en CrewDetailPage) */
+.-mt-6rem { margin-top: -6rem; }
+.-mt-8rem { margin-top: -8rem; }
+
+
+/* -------------------------------------------------------------------------
+   Transiciones
+   ------------------------------------------------------------------------- */
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-200  { transition-duration:  200ms; }
+.duration-300  { transition-duration:  300ms; }
+.duration-500  { transition-duration:  500ms; }
+.duration-700  { transition-duration:  700ms; }
+.duration-1000 { transition-duration: 1000ms; }
+
+
+/* -------------------------------------------------------------------------
+   Estados: hover
+   ------------------------------------------------------------------------- */
+
+/* Fondos */
+.hover\:bg-black:hover        { background-color: #000; }
+.hover\:bg-blue-100:hover     { background-color: var(--blue-100); }
+.hover\:bg-gray-200:hover     { background-color: var(--gray-200); }
+.hover\:bg-red-50:hover       { background-color: var(--red-50); }
+.hover\:bg-red-100:hover      { background-color: var(--red-100); }
+.hover\:bg-yellow-50:hover    { background-color: var(--yellow-50); }
+.hover\:bg-yellow-100:hover   { background-color: var(--yellow-100); }
+.hover\:surface-100:hover     { background-color: var(--surface-100); }
+.hover\:surface-200:hover     { background-color: var(--surface-200); }
+.hover\:surface-ground:hover  { background-color: var(--surface-ground); }
+.hover\:surface-hover:hover   { background-color: var(--surface-hover); }
+.hover\:surface-card-alpha-20:hover { background-color: rgb(255 255 255 / 0.20); }
+
+/* Bordes */
+.hover\:border-blue-300:hover  { border-color: var(--blue-300); }
+.hover\:border-blue-400:hover  { border-color: var(--blue-400); }
+.hover\:border-gray-100:hover  { border-color: var(--gray-100); }
+.hover\:surface-border:hover   { border-color: var(--surface-border); }
+
+/* Texto */
+.hover\:text-blue-400:hover        { color: var(--blue-400); }
+.hover\:text-blue-500:hover        { color: var(--blue-500); }
+.hover\:text-blue-600:hover        { color: var(--blue-600); }
+.hover\:text-purple-600:hover      { color: var(--purple-600); }
+.hover\:text-primary:hover         { color: var(--primary-color); }
+.hover\:text-color-secondary:hover { color: var(--text-color-secondary); }
+.hover\:underline:hover            { text-decoration: underline; }
+
+/* Sombras — mismos valores que .shadow-2/3/4 de PrimeFlex */
+.hover\:shadow-2:hover { box-shadow: 0 4px 10px #00000008, 0 0 2px #0000000f, 0 2px 6px #0000001f; }
+.hover\:shadow-3:hover { box-shadow: 0 1px 8px #00000014, 0 3px 4px #0000001a, 0 1px 4px -1px #0000001a; }
+.hover\:shadow-4:hover { box-shadow: 0 1px 10px #0000001f, 0 4px 5px #00000024, 0 2px 4px -1px #0003; }
+
+/* Movimiento */
+.hover\:opacity-80:hover     { opacity: 0.8; }
+.hover\:scale-105:hover      { scale: 1.05; }
+.hover\:scale-110:hover      { scale: 1.10; }
+.hover\:-translate-y-1:hover { --u-ty: -0.25rem; }   /* levantar tarjeta */
+
+
+/* -------------------------------------------------------------------------
+   Estados: focus y active
+   ------------------------------------------------------------------------- */
+
+.focus\:border-blue-500:focus { border-color: var(--blue-500); }
+.active\:scale-95:active      { scale: 0.95; }
+
+
+/* -------------------------------------------------------------------------
+   Estados: group-hover
+   Se activan al pasar el ratón por un ancestro con la clase .group
+   ------------------------------------------------------------------------- */
+
+.group:hover .group-hover\:opacity-20    { opacity: 0.2; }
+.group:hover .group-hover\:scale-105     { scale: 1.05; }
+.group:hover .group-hover\:scale-110     { scale: 1.10; }
+.group:hover .group-hover\:text-blue-300 { color: var(--blue-300); }
+.group:hover .group-hover\:translate-x-2 { --u-tx: 0.5rem; }   /* flecha */
+
+
+/* -------------------------------------------------------------------------
+   Huecos de PrimeFlex
+
+   PrimeFlex llega hasta la escala 8 en espaciado; el proyecto usa py-12.
+   ------------------------------------------------------------------------- */
+
+@media screen and (min-width: 768px) {
+  .md\:py-12 { padding-top: 5rem; padding-bottom: 5rem; }
+}
+
+
+/* -------------------------------------------------------------------------
+   Accesibilidad
+   ------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover,
+  .hover\:-translate-y-1:hover,
+  .active\:scale-95:active,
+  .group:hover .group-hover\:scale-105,
+  .group:hover .group-hover\:scale-110,
+  .group:hover .group-hover\:translate-x-2 {
+    scale: 1;
+    translate: 0 0;
+  }
+}

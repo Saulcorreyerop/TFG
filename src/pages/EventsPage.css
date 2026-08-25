@@ -1,0 +1,363 @@
+/* src/pages/EventsPage.css */
+
+.technical-page-wrapper {
+  background-color: #ffffff;
+  min-height: 100vh;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+.max-w-8xl {
+  max-width: 1400px;
+}
+
+/* --- STICKY SIDEBAR --- */
+@media (min-width: 992px) {
+  .sticky-sidebar {
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+  .content-area {
+    min-height: calc(100vh - 64px);
+  }
+}
+
+/* --- BOTÓN CREAR EVENTO MODERNIZADO --- */
+.btn-create-modern {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 1.2rem !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px;
+  box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4) !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.btn-create-modern:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px -5px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* BUSCADOR TÉCNICO */
+.technical-search {
+  position: relative;
+}
+.technical-search input {
+  width: 100%;
+  background: #f4f4f5;
+  border: 1px solid transparent;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #18181b;
+  outline: none;
+  transition: all 0.2s;
+}
+.technical-search input:focus {
+  background: white;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.technical-search .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #71717a;
+}
+
+/* ITEMS DE CATEGORÍA SIDEBAR */
+.category-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #52525b;
+  border: 1px solid transparent;
+}
+.category-item:hover {
+  background: #f4f4f5;
+  color: #000;
+}
+.category-item.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  font-weight: 700;
+}
+
+/* --- PORTADA DESTACADA TÉCNICA --- */
+.technical-cover {
+  position: relative;
+  height: 450px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+}
+.cover-image-wrapper {
+  position: absolute;
+  inset: 0;
+}
+.cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+}
+.cover-content {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2.5rem;
+}
+.tech-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+
+/* --- TABS TÉCNICOS --- */
+.tech-tab-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #a1a1aa;
+  cursor: pointer;
+  padding: 0 0 0.75rem 0;
+  position: relative;
+  transition: color 0.3s;
+  letter-spacing: 0.05em;
+}
+.tech-tab-btn:hover {
+  color: #52525b;
+}
+.tech-tab-btn.active {
+  color: #000000;
+}
+.tech-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #3b82f6; /* Toque de color en el tab activo */
+}
+
+/* --- TARJETA TIMELINE (Fila) --- */
+.timeline-card {
+  display: flex;
+  background: white;
+  border: 1px solid #e4e4e7;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.timeline-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.timeline-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #f8fafc;
+  min-width: 95px;
+  border-right: 1px solid #e4e4e7;
+}
+.timeline-date .day {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #0f172a;
+}
+.timeline-date .month {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #ef4444;
+  margin-top: 0.25rem;
+}
+
+.timeline-image-wrapper {
+  width: 220px;
+  position: relative;
+  border-right: 1px solid #e4e4e7;
+}
+.timeline-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.past-label {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+.timeline-info {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.is-past .timeline-card {
+  opacity: 0.7;
+}
+
+/* --- BOTÓN "VER" CORREGIDO --- */
+.btn-timeline-ver {
+  background-color: transparent !important;
+  border: 2px solid #e4e4e7 !important;
+  color: #18181b !important;
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Forzamos colores explícitos en hover para que no se quede blanco sobre blanco */
+.btn-timeline-ver:hover {
+  background-color: #18181b !important;
+  border-color: #18181b !important;
+  color: #ffffff !important;
+}
+
+/* Adaptación a móviles para la lista */
+@media (max-width: 768px) {
+  .technical-cover {
+    height: 350px;
+  }
+  .cover-content {
+    padding: 1.5rem;
+  }
+
+  .timeline-card {
+    flex-direction: column;
+  }
+  .timeline-date {
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: baseline;
+    padding: 1rem;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e4e4e7;
+  }
+  .timeline-date .day {
+    font-size: 1.5rem;
+  }
+  .timeline-image-wrapper {
+    width: 100%;
+    height: 180px;
+    border-right: none;
+    border-bottom: 1px solid #e4e4e7;
+  }
+}
+/* =========================================
+   COLORES DINÁMICOS PARA FILTROS (THEMES)
+   ========================================= */
+
+/* Tema por defecto (Azul - Todos los tipos) */
+.category-item.active.theme-blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.category-item.active.theme-blue .indicator {
+  background-color: #2563eb;
+}
+
+/* Tema Stance (Morado) */
+.category-item.active.theme-purple {
+  background: #faf5ff;
+  color: #7e22ce;
+  border-color: #e9d5ff;
+}
+.category-item.active.theme-purple .indicator {
+  background-color: #9333ea;
+}
+
+/* Tema Ruta (Verde Esmeralda) */
+.category-item.active.theme-emerald {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+.category-item.active.theme-emerald .indicator {
+  background-color: #10b981;
+}
+
+/* Tema Circuito (Rojo Racing) */
+.category-item.active.theme-red {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+.category-item.active.theme-red .indicator {
+  background-color: #ef4444;
+}
+
+/* Tema Clásicos (Ámbar / Dorado) */
+.category-item.active.theme-amber {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+.category-item.active.theme-amber .indicator {
+  background-color: #f59e0b;
+}
+
+/* Tema Off-road (Naranja / Tierra) */
+.category-item.active.theme-orange {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+.category-item.active.theme-orange .indicator {
+  background-color: #ea580c;
+}

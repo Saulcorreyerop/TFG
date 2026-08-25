@@ -18,6 +18,7 @@ import AddEventDialog from '../components/AddEventDialog'
 import 'leaflet/dist/leaflet.css'
 
 import PageTransition from '../components/PageTransition'
+import './MapPage.css'
 import SEO from '../components/SEO'
 
 // --- CREADOR DE PINES PERSONALIZADOS ---

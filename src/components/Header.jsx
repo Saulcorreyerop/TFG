@@ -448,7 +448,7 @@ const Header = ({ session }) => {
                 </div>
                 {!notif.leida && (
                   <div className='flex align-items-center justify-content-center'>
-                    <div className='w-1rem h-1rem surface-hover0 border-circle shadow-1'></div>
+                    <div className='w-1rem h-1rem surface-hover border-circle shadow-1'></div>
                   </div>
                 )}
               </div>

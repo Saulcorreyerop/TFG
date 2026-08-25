@@ -297,7 +297,7 @@ const EventCarousel = () => {
         className='max-w-7xl mx-auto px-4 md:px-6 relative z-1'
       >
         {/* CABECERA */}
-        <div className='flex flex-column md:flex-row justify-content-between align-items-md-end mb-7 gap-4'>
+        <div className='flex flex-column md:flex-row justify-content-between md:align-items-end mb-7 gap-4'>
           <div>
             <div className='inline-flex align-items-center gap-2 bg-purple-50 text-purple-600 font-black border-round-3xl px-4 py-2 mb-3 uppercase tracking-widest text-xs shadow-1 border-1 border-purple-100'>
               <Sparkles size={16} />

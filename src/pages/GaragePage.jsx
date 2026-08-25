@@ -14,6 +14,7 @@ import imageCompression from 'browser-image-compression'
 
 
 
+import './GaragePage.css'
 import SEO from '../components/SEO'
 
 const GaragePage = ({ session }) => {
