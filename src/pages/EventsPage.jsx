@@ -27,7 +27,7 @@ import {
   ArrowRight,
   Shield,
 } from 'lucide-react'
-import './EventsPage.css'
+
 import SEO from '../components/SEO'
 
 const MotionDiv = motion.div
@@ -127,7 +127,7 @@ const TechnicalCoverCard = ({ event }) => {
       </div>
       <div className='cover-content'>
         <div className='flex align-items-center gap-2 mb-4'>
-          <span className='tech-badge bg-white text-black'>
+          <span className='tech-badge surface-card text-black'>
             <Star size={14} className='mr-1' /> DESTACADO
           </span>
           <span className='tech-badge bg-black text-white border-1 border-white-alpha-30'>
@@ -198,7 +198,7 @@ const TimelineEventCard = React.memo(({ event, isPast = false, session }) => {
         {isPast && <div className='past-label'>FINALIZADO</div>}
       </div>
       <div className='timeline-info'>
-        <div className='flex align-items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-500'>
+        <div className='flex align-items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-color-secondary'>
           <span className='text-blue-600'>{event.tipo}</span>
 
           {event.is_private && (
@@ -215,10 +215,10 @@ const TimelineEventCard = React.memo(({ event, isPast = false, session }) => {
             <Clock size={12} /> {event.time}h
           </span>
         </div>
-        <h3 className='text-xl font-black text-900 m-0 mb-3'>{event.titulo}</h3>
+        <h3 className='text-xl font-black text-color m-0 mb-3'>{event.titulo}</h3>
         <div className='flex align-items-center justify-content-between mt-auto'>
-          <div className='flex align-items-center gap-2 text-sm font-semibold text-700'>
-            <User size={16} className='text-500' />{' '}
+          <div className='flex align-items-center gap-2 text-sm font-semibold text-color-secondary'>
+            <User size={16} className='text-color-secondary' />{' '}
             {event.profiles?.username || 'Anónimo'}
           </div>
           <div className='flex gap-2 align-items-center'>
@@ -227,13 +227,13 @@ const TimelineEventCard = React.memo(({ event, isPast = false, session }) => {
                 <Heart
                   size={18}
                   className={
-                    isFavorite ? 'fill-current text-red-500' : 'text-700'
+                    isFavorite ? 'fill-current text-red-500' : 'text-color-secondary'
                   }
                 />
               }
               rounded
               text
-              className='hover:bg-gray-100 p-2'
+              className='hover:surface-hover p-2'
               onClick={(e) => {
                 e.stopPropagation()
                 toggleFavorite()
@@ -403,12 +403,12 @@ const EventsPage = ({ session }) => {
               <div className='col-12 lg:col-3 lg:pr-5 relative'>
                 <div className='sticky-sidebar py-6 px-4 lg:px-0'>
                   <div className='mb-6'>
-                    <h1 className='text-4xl font-black m-0 tracking-tight text-900 capitalize'>
+                    <h1 className='text-4xl font-black m-0 tracking-tight text-color capitalize'>
                       {activeLocation
                         ? `Eventos en ${activeLocation}`
                         : 'Agenda de Eventos'}
                     </h1>
-                    <p className='text-500 font-medium mt-2'>
+                    <p className='text-color-secondary font-medium mt-2'>
                       Explora las KDDs y rutas de la comunidad.
                     </p>
 
@@ -479,7 +479,7 @@ const EventsPage = ({ session }) => {
                         {favorites.slice(0, 3).map((fav) => (
                           <div
                             key={fav.id}
-                            className='flex align-items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 border-round-md transition-colors'
+                            className='flex align-items-center gap-2 cursor-pointer hover:surface-hover p-2 border-round-md transition-colors'
                             onClick={() => navigate(`/evento/${fav.id}`)}
                           >
                             <img
@@ -487,7 +487,7 @@ const EventsPage = ({ session }) => {
                               alt=''
                               className='w-2rem h-2rem border-round-md object-cover'
                             />
-                            <span className='text-sm font-bold text-700 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
+                            <span className='text-sm font-bold text-color-secondary white-space-nowrap overflow-hidden text-overflow-ellipsis'>
                               {fav.titulo}
                             </span>
                           </div>
@@ -498,7 +498,7 @@ const EventsPage = ({ session }) => {
                 </div>
               </div>
 
-              <div className='col-12 lg:col-9 py-6 px-4 lg:pl-5 border-left-1 border-gray-200 content-area'>
+              <div className='col-12 lg:col-9 py-6 px-4 lg:pl-5 border-left-1 surface-border content-area'>
                 {events.featured.length > 0 &&
                   !filters.text &&
                   !filters.type &&
@@ -515,7 +515,7 @@ const EventsPage = ({ session }) => {
                       onClick={() => setActiveTab('upcoming')}
                     >
                       PRÓXIMOS{' '}
-                      <span className='bg-gray-100 text-gray-900 px-2 py-0 border-round-sm text-xs ml-1'>
+                      <span className='surface-hover text-gray-900 px-2 py-0 border-round-sm text-xs ml-1'>
                         {filteredUpcoming.length}
                       </span>
                     </button>
@@ -524,7 +524,7 @@ const EventsPage = ({ session }) => {
                       onClick={() => setActiveTab('past')}
                     >
                       HISTORIAL{' '}
-                      <span className='bg-gray-100 text-gray-600 px-2 py-0 border-round-sm text-xs ml-1'>
+                      <span className='surface-hover text-gray-600 px-2 py-0 border-round-sm text-xs ml-1'>
                         {filteredPast.length}
                       </span>
                     </button>
@@ -550,7 +550,7 @@ const EventsPage = ({ session }) => {
                         </MotionDiv>
                       ))
                     ) : (
-                      <div className='text-center py-8 border-2 border-dashed border-gray-200 border-round-lg'>
+                      <div className='text-center py-8 border-2 border-dashed surface-border border-round-lg'>
                         <Layers
                           size={48}
                           className='text-gray-300 mb-3 mx-auto'

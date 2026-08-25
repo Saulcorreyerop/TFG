@@ -23,7 +23,7 @@ import {
   Instagram,
   Youtube,
 } from 'lucide-react'
-import './ProfilePage.css'
+
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal'
 
@@ -335,7 +335,7 @@ const PublicProfile = () => {
     )
   if (!profile)
     return (
-      <div className='text-center p-8 text-2xl font-bold text-500'>
+      <div className='text-center p-8 text-2xl font-bold text-color-secondary'>
         Usuario no encontrado
       </div>
     )
@@ -351,13 +351,13 @@ const PublicProfile = () => {
         <div className='event-card-body'>
           <Tag
             value={event.tipo}
-            className='w-min mb-3 bg-blue-50 text-blue-700 font-bold'
+            className='w-min mb-3 surface-hover text-blue-700 font-bold'
           />
-          <h4 className='m-0 mb-3 text-xl font-black text-900 line-clamp-1'>
+          <h4 className='m-0 mb-3 text-xl font-black text-color line-clamp-1'>
             {event.titulo}
           </h4>
           <div className='mt-auto flex flex-column gap-2'>
-            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
               <Calendar size={16} className='text-blue-500' />
               <span>
                 {new Date(event.fecha).toLocaleDateString('es-ES', {
@@ -367,7 +367,7 @@ const PublicProfile = () => {
                 })}
               </span>
             </div>
-            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
               <MapPin size={16} className='text-red-500' />
               <span className='line-clamp-1'>
                 {event.ubicacion || 'En mapa'}
@@ -425,36 +425,36 @@ const PublicProfile = () => {
               label='Volver'
               icon='pi pi-arrow-left'
               text
-              className='font-bold text-700'
+              className='font-bold text-color-secondary'
               onClick={() => navigate(-1)}
             />
             <Button
               icon={<Share2 size={18} />}
               rounded
               text
-              className='bg-white shadow-1'
+              className='surface-card shadow-1'
               onClick={handleShare}
             />
           </div>
 
-          <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5 border-1 border-100'>
+          <div className='surface-card shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5 border-1 surface-border'>
             <Avatar
               icon='pi pi-user'
               size='xlarge'
               shape='circle'
-              className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white flex-shrink-0'
+              className='surface-hover text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white flex-shrink-0'
               image={profile.avatar_url}
             />
             <div className='text-center md:text-left flex-1'>
-              <h1 className='text-3xl font-black m-0 text-900'>
+              <h1 className='text-3xl font-black m-0 text-color'>
                 {profile.username || 'Usuario'}
               </h1>
               {profile.bio ? (
-                <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto md:mx-0'>
+                <p className='text-color-secondary mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto md:mx-0'>
                   {profile.bio}
                 </p>
               ) : (
-                <p className='text-500 mt-1 mb-0 font-medium'>
+                <p className='text-color-secondary mt-1 mb-0 font-medium'>
                   Miembro de CarMeet ESP
                 </p>
               )}
@@ -529,7 +529,7 @@ const PublicProfile = () => {
               {userCrew && (
                 <div className='mt-3'>
                   <div
-                    className='inline-flex align-items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 border-300'
+                    className='inline-flex align-items-center gap-2 surface-hover hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 surface-border'
                     onClick={() => navigate(`/crew/${userCrew.name}`)}
                   >
                     <Avatar
@@ -538,7 +538,7 @@ const PublicProfile = () => {
                       shape='circle'
                       className='w-2rem h-2rem shadow-1'
                     />
-                    <span className='font-bold text-sm text-900'>
+                    <span className='font-bold text-sm text-color'>
                       {userCrew.name}
                     </span>
                   </div>
@@ -572,28 +572,28 @@ const PublicProfile = () => {
               )}
             </div>
 
-            <div className='flex gap-4 md:gap-5 text-center border-top-1 md:border-top-none md:border-left-1 border-200 pt-4 md:pt-0 md:pl-5 w-full md:w-auto justify-content-center'>
+            <div className='flex gap-4 md:gap-5 text-center border-top-1 md:border-top-none md:border-left-1 surface-border pt-4 md:pt-0 md:pl-5 w-full md:w-auto justify-content-center'>
               <div>
-                <div className='text-2xl font-black text-900'>
+                <div className='text-2xl font-black text-color'>
                   {vehicles.length}
                 </div>
-                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
                   Coches
                 </div>
               </div>
               <div>
-                <div className='text-2xl font-black text-900'>
+                <div className='text-2xl font-black text-color'>
                   {followersCount}
                 </div>
-                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
                   Seguidores
                 </div>
               </div>
               <div>
-                <div className='text-2xl font-black text-900'>
+                <div className='text-2xl font-black text-color'>
                   {followingCount}
                 </div>
-                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
                   Seguidos
                 </div>
               </div>
@@ -621,7 +621,7 @@ const PublicProfile = () => {
 
                   return (
                     <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
-                      <div className='vehicle-card hover:-translate-y-1 hover:shadow-2 flex flex-column overflow-hidden bg-white'>
+                      <div className='vehicle-card hover:-translate-y-1 hover:shadow-2 flex flex-column overflow-hidden surface-card'>
                         <div
                           className='cursor-pointer flex-grow-1'
                           onClick={() => openGalleryViewer(v)}
@@ -638,7 +638,7 @@ const PublicProfile = () => {
                                 style={{ objectFit: 'cover' }}
                               />
                             ) : (
-                              <div className='flex h-full align-items-center justify-content-center text-300 bg-gray-100'>
+                              <div className='flex h-full align-items-center justify-content-center text-300 surface-hover'>
                                 <ImageIcon size={40} />
                               </div>
                             )}
@@ -668,21 +668,21 @@ const PublicProfile = () => {
                           </div>
 
                           <div className='p-4 text-center'>
-                            <h3 className='font-black text-2xl text-900 mb-1 m-0 line-clamp-1'>
+                            <h3 className='font-black text-2xl text-color mb-1 m-0 line-clamp-1'>
                               {v.marca} {v.modelo}
                             </h3>
-                            <div className='text-md text-500 font-bold mb-3'>
+                            <div className='text-md text-color-secondary font-bold mb-3'>
                               {v.anio} • {v.cv} CV
                             </div>
                             {v.descripcion && (
-                              <p className='text-600 text-sm line-clamp-2 m-0 bg-gray-50 p-3 border-round-xl border-1 border-100'>
+                              <p className='text-color-secondary text-sm line-clamp-2 m-0 surface-ground p-3 border-round-xl border-1 surface-border'>
                                 {v.descripcion}
                               </p>
                             )}
                           </div>
                         </div>
 
-                        <div className='border-top-1 border-100 p-3 bg-gray-50 mt-auto'>
+                        <div className='border-top-1 surface-border p-3 surface-ground mt-auto'>
                           <Button
                             label={
                               v.isLikedByMe
@@ -696,7 +696,7 @@ const PublicProfile = () => {
                                 className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
                               />
                             }
-                            className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary bg-white' : 'p-button-help shadow-2 hover:shadow-4'}`}
+                            className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary surface-card' : 'p-button-help shadow-2 hover:shadow-4'}`}
                             onClick={(e) =>
                               handleToggleLikeVehicle(e, v.id, v.isLikedByMe)
                             }

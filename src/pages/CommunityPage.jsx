@@ -52,7 +52,6 @@ const CommunityPage = () => {
       setSession(session)
       fetchData(session)
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchData = async (currentSession) => {
@@ -287,7 +286,7 @@ const CommunityPage = () => {
     return (
       <div key={user.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
         <div
-          className='bg-white shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
+          className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
           style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
           onClick={() => navigate(`/usuario/${user.username || user.id}`)}
         >
@@ -308,9 +307,9 @@ const CommunityPage = () => {
               </div>
             )}
           </div>
-          <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative bg-white'>
+          <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative surface-card'>
             <div
-              className='bg-white border-circle flex justify-content-center align-items-center shadow-1'
+              className='surface-card border-circle flex justify-content-center align-items-center shadow-1'
               style={{
                 width: '80px',
                 height: '80px',
@@ -326,18 +325,18 @@ const CommunityPage = () => {
                   style={{ objectFit: 'cover' }}
                 />
               ) : (
-                <div className='w-full h-full border-circle bg-gray-100 flex align-items-center justify-content-center'>
+                <div className='w-full h-full border-circle surface-hover flex align-items-center justify-content-center'>
                   <Users size={32} className='text-400' />
                 </div>
               )}
             </div>
-            <h3 className='m-0 mt-3 mb-1 text-xl text-900 font-bold line-clamp-1 text-center w-full'>
+            <h3 className='m-0 mt-3 mb-1 text-xl text-color font-bold line-clamp-1 text-center w-full'>
               {user.username || 'Usuario'}
             </h3>
             <div className='mt-2 mb-4'>
               {user.vehicles?.length > 0 ? (
                 <Tag
-                  className='bg-blue-50 text-blue-700 font-bold px-3 py-2'
+                  className='surface-hover text-blue-700 font-bold px-3 py-2'
                   style={{ borderRadius: '1rem' }}
                 >
                   <i className='pi pi-car text-xs mr-2'></i>
@@ -345,7 +344,7 @@ const CommunityPage = () => {
                 </Tag>
               ) : (
                 <Tag
-                  className='bg-gray-100 text-600 font-bold px-3 py-2'
+                  className='surface-hover text-color-secondary font-bold px-3 py-2'
                   style={{ borderRadius: '1rem' }}
                 >
                   Nuevo Miembro
@@ -355,7 +354,7 @@ const CommunityPage = () => {
             <Button
               label='Ver Perfil'
               outlined
-              className='w-full mt-auto font-bold border-gray-300 text-700 hover:bg-gray-50'
+              className='w-full mt-auto font-bold surface-border text-color-secondary hover:surface-ground'
               style={{ borderRadius: '0.75rem' }}
             />
           </div>
@@ -368,7 +367,7 @@ const CommunityPage = () => {
     return (
       <div key={crew.id} className='col-12 sm:col-6 md:col-4 p-2'>
         <div
-          className='bg-white shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
+          className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
           style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
         >
           <div
@@ -384,9 +383,9 @@ const CommunityPage = () => {
               />
             )}
           </div>
-          <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative bg-white'>
+          <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative surface-card'>
             <div
-              className='bg-white flex justify-content-center align-items-center shadow-1'
+              className='surface-card flex justify-content-center align-items-center shadow-1'
               style={{
                 width: '90px',
                 height: '90px',
@@ -404,20 +403,20 @@ const CommunityPage = () => {
                 />
               ) : (
                 <div
-                  className='w-full h-full bg-gray-100 flex align-items-center justify-content-center'
+                  className='w-full h-full surface-hover flex align-items-center justify-content-center'
                   style={{ borderRadius: '0.75rem' }}
                 >
                   <Shield size={36} className='text-400' />
                 </div>
               )}
             </div>
-            <h3 className='m-0 mt-3 mb-1 text-2xl text-900 font-black line-clamp-1 text-center w-full'>
+            <h3 className='m-0 mt-3 mb-1 text-2xl text-color font-black line-clamp-1 text-center w-full'>
               {crew.name}
             </h3>
-            <p className='text-500 text-sm font-bold mt-0 mb-3 flex align-items-center gap-2'>
+            <p className='text-color-secondary text-sm font-bold mt-0 mb-3 flex align-items-center gap-2'>
               <Users size={16} /> {crew.crew_members?.length || 0} Miembros
             </p>
-            <p className='text-600 text-sm line-clamp-2 text-center mb-4 font-medium px-2'>
+            <p className='text-color-secondary text-sm line-clamp-2 text-center mb-4 font-medium px-2'>
               {crew.description || 'Sin descripción disponible.'}
             </p>
             <button
@@ -441,7 +440,7 @@ const CommunityPage = () => {
     return (
       <div key={v.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
         <div
-          className='bg-white shadow-2 hover:shadow-4 transition-all flex flex-column relative overflow-hidden h-full'
+          className='surface-card shadow-2 hover:shadow-4 transition-all flex flex-column relative overflow-hidden h-full'
           style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
         >
           {/* ÁREA CLICABLE: REDIRIGE AL PERFIL */}
@@ -483,22 +482,22 @@ const CommunityPage = () => {
             <div className='p-3 flex flex-column flex-grow-1'>
               <div className='flex justify-content-between align-items-start mb-2'>
                 <div>
-                  <h3 className='m-0 text-xl font-black text-900'>
+                  <h3 className='m-0 text-xl font-black text-color'>
                     {v.marca} {v.modelo}
                   </h3>
-                  <p className='m-0 text-500 text-sm font-bold mt-1'>
+                  <p className='m-0 text-color-secondary text-sm font-bold mt-1'>
                     {v.anio} • {v.cv} CV
                   </p>
                 </div>
               </div>
-              <div className='mt-auto pt-3 border-top-1 border-100 flex align-items-center gap-2'>
+              <div className='mt-auto pt-3 border-top-1 surface-border flex align-items-center gap-2'>
                 <Avatar
                   image={v.profiles?.avatar_url}
                   icon={!v.profiles?.avatar_url && 'pi pi-user'}
                   shape='circle'
                   className='w-2rem h-2rem shadow-1'
                 />
-                <span className='text-sm font-bold text-700'>
+                <span className='text-sm font-bold text-color-secondary'>
                   {v.profiles?.username || 'Usuario'}
                 </span>
               </div>
@@ -506,7 +505,7 @@ const CommunityPage = () => {
           </div>
 
           {/* BARRA INFERIOR: BOTÓN ME GUSTA */}
-          <div className=' border-100 p-3 bg-gray-50 mt-auto'>
+          <div className=' surface-border p-3 surface-ground mt-auto'>
             <Button
               label={v.isLikedByMe ? 'Marcado como me gusta' : 'Me gusta'}
               icon={
@@ -516,7 +515,7 @@ const CommunityPage = () => {
                   className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
                 />
               }
-              className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary bg-white' : 'p-button-help shadow-2 hover:shadow-4'}`}
+              className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary surface-card' : 'p-button-help shadow-2 hover:shadow-4'}`}
               onClick={(e) =>
                 handleToggleLikeVehicle(e, v.id, v.isLikedByMe, v.user_id)
               }
@@ -535,25 +534,25 @@ const CommunityPage = () => {
         url={window.location.href}
       />
       <PageTransition>
-        <div className='min-h-screen bg-gray-50 p-4 md:p-6 pb-8'>
+        <div className='min-h-screen surface-ground p-4 md:p-6 pb-8'>
           <Toast ref={toast} />
           <div className='max-w-7xl mx-auto'>
             <div className='text-center mb-5'>
-              <h1 className='text-4xl md:text-5xl font-black text-900 m-0 mb-2'>
+              <h1 className='text-4xl md:text-5xl font-black text-color m-0 mb-2'>
                 Comunidad
               </h1>
-              <p className='text-600 text-lg m-0 font-medium'>
+              <p className='text-color-secondary text-lg m-0 font-medium'>
                 Descubre usuarios, clubes y los mejores coches.
               </p>
             </div>
 
             <div className='flex justify-content-center mb-6'>
               <div
-                className='bg-white p-1 shadow-1 flex flex-wrap justify-content-center gap-1'
+                className='surface-card p-1 shadow-1 flex flex-wrap justify-content-center gap-1'
                 style={{ borderRadius: '2rem', border: '1px solid #e2e8f0' }}
               >
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: '1.75rem' }}
                   onClick={() => setActiveTab('explorar')}
                 >
@@ -561,7 +560,7 @@ const CommunityPage = () => {
                 </button>
 
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: '1.75rem' }}
                   onClick={() => {
                     if (!session)
@@ -577,7 +576,7 @@ const CommunityPage = () => {
                 </button>
 
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: '1.75rem' }}
                   onClick={() => setActiveTab('crews')}
                 >
@@ -586,7 +585,7 @@ const CommunityPage = () => {
 
                 {/* PESTAÑA: TOP COCHES */}
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'text-black shadow-2' : 'bg-transparent text-600 hover:text-900 hover:bg-gray-50'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: '1.75rem' }}
                   onClick={() => setActiveTab('vehiculos')}
                 >
@@ -609,7 +608,7 @@ const CommunityPage = () => {
                         ? 'Buscar modelo o marca...'
                         : 'Buscar usuario...'
                   }
-                  className='w-full bg-white border-none shadow-1 font-medium text-lg text-900'
+                  className='w-full surface-card border-none shadow-1 font-medium text-lg text-color'
                   style={{
                     padding: '1rem 1rem 1rem 3rem',
                     borderRadius: '2rem',
@@ -643,10 +642,10 @@ const CommunityPage = () => {
                   ) : (
                     <div className='col-12 text-center py-8'>
                       <Shield size={64} className='text-300 mb-4 mx-auto' />
-                      <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
+                      <h3 className='text-2xl font-bold text-color m-0 mb-2'>
                         No hay Crews disponibles
                       </h3>
-                      <p className='text-600 text-lg'>
+                      <p className='text-color-secondary text-lg'>
                         Sé el primero en fundar un club en tu zona.
                       </p>
                     </div>
@@ -657,10 +656,10 @@ const CommunityPage = () => {
                   ) : (
                     <div className='col-12 text-center py-8'>
                       <Car size={64} className='text-300 mb-4 mx-auto' />
-                      <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
+                      <h3 className='text-2xl font-bold text-color m-0 mb-2'>
                         No hay coches en el ranking
                       </h3>
-                      <p className='text-600 text-lg'>
+                      <p className='text-color-secondary text-lg'>
                         Aún no hay vehículos subidos en la comunidad.
                       </p>
                     </div>
@@ -670,10 +669,10 @@ const CommunityPage = () => {
                 ) : (
                   <div className='col-12 text-center py-8'>
                     <Users size={64} className='text-300 mb-4 mx-auto' />
-                    <h3 className='text-2xl font-bold text-900 m-0 mb-2'>
+                    <h3 className='text-2xl font-bold text-color m-0 mb-2'>
                       No hay resultados
                     </h3>
-                    <p className='text-600 text-lg'>
+                    <p className='text-color-secondary text-lg'>
                       Prueba con otra búsqueda.
                     </p>
                   </div>
@@ -685,7 +684,7 @@ const CommunityPage = () => {
           {/* MODAL CREAR CREW */}
           <Dialog
             header={
-              <span className='text-2xl font-black text-900'>
+              <span className='text-2xl font-black text-color'>
                 Fundar Nueva Crew
               </span>
             }
@@ -697,17 +696,17 @@ const CommunityPage = () => {
             headerClassName='px-4 md:px-5 pt-4 pb-2 border-none'
           >
             <div className='flex flex-column pt-3'>
-              <p className='text-600 mb-4 mt-0 text-sm'>
+              <p className='text-color-secondary mb-4 mt-0 text-sm'>
                 Sube las imágenes haciendo clic en los recuadros
                 correspondientes.
               </p>
 
               <div
-                className='w-full bg-white border-1 border-gray-200 mb-5 relative'
+                className='w-full surface-card border-1 surface-border mb-5 relative'
                 style={{ borderRadius: '1rem', height: '180px' }}
               >
                 <div
-                  className='w-full bg-gray-100 relative cursor-pointer hover:opacity-80 transition-opacity flex align-items-center justify-content-center overflow-hidden'
+                  className='w-full surface-hover relative cursor-pointer hover:opacity-80 transition-opacity flex align-items-center justify-content-center overflow-hidden'
                   style={{ height: '120px', borderRadius: '1rem 1rem 0 0' }}
                 >
                   {crewBannerImg ? (
@@ -718,7 +717,7 @@ const CommunityPage = () => {
                       alt='Banner'
                     />
                   ) : (
-                    <div className='flex flex-column align-items-center text-500 font-bold text-sm'>
+                    <div className='flex flex-column align-items-center text-color-secondary font-bold text-sm'>
                       <ImageIcon size={24} className='mb-1' /> Banner Fondo
                     </div>
                   )}
@@ -731,7 +730,7 @@ const CommunityPage = () => {
                 </div>
 
                 <div
-                  className='absolute bg-white shadow-2 flex align-items-center justify-content-center cursor-pointer hover:bg-gray-50 transition-colors z-2 overflow-hidden'
+                  className='absolute surface-card shadow-2 flex align-items-center justify-content-center cursor-pointer hover:surface-ground transition-colors z-2 overflow-hidden'
                   style={{
                     width: '80px',
                     height: '80px',
@@ -742,7 +741,7 @@ const CommunityPage = () => {
                   }}
                 >
                   <div
-                    className='w-full h-full bg-gray-100 flex align-items-center justify-content-center text-500 relative'
+                    className='w-full h-full surface-hover flex align-items-center justify-content-center text-color-secondary relative'
                     style={{ borderRadius: '0.5rem' }}
                   >
                     {crewProfileImg ? (

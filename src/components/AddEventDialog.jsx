@@ -445,10 +445,10 @@ const AddEventDialog = ({
               <CalendarPlus size={30} />
             </div>
             <div>
-              <h2 className='font-black text-3xl text-900 m-0 tracking-tight'>
+              <h2 className='font-black text-3xl text-color m-0 tracking-tight'>
                 Publicar Evento
               </h2>
-              <p className='text-500 font-medium m-0 mt-1'>
+              <p className='text-color-secondary font-medium m-0 mt-1'>
                 Comparte tu KDD o ruta con la comunidad.
               </p>
             </div>
@@ -524,7 +524,7 @@ const AddEventDialog = ({
                     onChange={(e) =>
                       setNuevoEvento({ ...nuevoEvento, crew_id: e.value })
                     }
-                    className='w-full premium-input border-none shadow-1 bg-white'
+                    className='w-full premium-input border-none shadow-1 surface-card'
                   />
                 </div>
               )}
@@ -576,7 +576,7 @@ const AddEventDialog = ({
             >
               <MapPin size={120} />
             </div>
-            <label className='text-900 font-black mb-4 flex align-items-center gap-3 text-xl relative z-1'>
+            <label className='text-color font-black mb-4 flex align-items-center gap-3 text-xl relative z-1'>
               <div className='bg-blue-100 text-blue-600 p-2 border-circle flex align-items-center justify-content-center'>
                 <MapPin size={22} />
               </div>
@@ -595,41 +595,41 @@ const AddEventDialog = ({
                 onSelect={onAddressSelect}
                 placeholder='Escribe la calle, circuito, pueblo...'
                 className='w-full'
-                inputClassName='w-full premium-input bg-white border-none shadow-1'
+                inputClassName='w-full premium-input surface-card border-none shadow-1'
                 panelClassName='shadow-4 border-round-2xl mt-2'
                 delay={500}
               />
             </div>
 
             <div className='flex align-items-center gap-3 mb-4 relative z-1'>
-              <div className='flex-1 border-top-1 border-300'></div>
+              <div className='flex-1 border-top-1 surface-border'></div>
               <span className='text-400 font-bold text-xs uppercase tracking-widest'>
                 O UBICA MANUALMENTE
               </span>
-              <div className='flex-1 border-top-1 border-300'></div>
+              <div className='flex-1 border-top-1 surface-border'></div>
             </div>
 
             <Button
               label='Abrir Mapa Interactivo'
               icon={<MapIcon size={20} className='mr-2' />}
-              className='w-full mb-4 border-round-2xl font-bold bg-white text-800 border-none shadow-1 hover:shadow-2 hover:text-blue-600 transition-all p-3 relative z-1'
+              className='w-full mb-4 border-round-2xl font-bold surface-card text-color border-none shadow-1 hover:shadow-2 hover:text-blue-600 transition-all p-3 relative z-1'
               onClick={() => setShowMapModal(true)}
             />
 
             <div className='grid m-0 gap-3 relative z-1'>
-              <div className='col p-0 bg-white border-round-xl shadow-1 p-3'>
+              <div className='col p-0 surface-card border-round-xl shadow-1 p-3'>
                 <div className='text-xs font-bold text-400 tracking-widest uppercase mb-1'>
                   Latitud
                 </div>
-                <div className='font-mono text-800 font-bold text-lg'>
+                <div className='font-mono text-color font-bold text-lg'>
                   {nuevoEvento.lat ? nuevoEvento.lat.toFixed(6) : '---'}
                 </div>
               </div>
-              <div className='col p-0 bg-white border-round-xl shadow-1 p-3'>
+              <div className='col p-0 surface-card border-round-xl shadow-1 p-3'>
                 <div className='text-xs font-bold text-400 tracking-widest uppercase mb-1'>
                   Longitud
                 </div>
-                <div className='font-mono text-800 font-bold text-lg'>
+                <div className='font-mono text-color font-bold text-lg'>
                   {nuevoEvento.lng ? nuevoEvento.lng.toFixed(6) : '---'}
                 </div>
               </div>
@@ -670,7 +670,7 @@ const AddEventDialog = ({
                   <div className='bg-green-100 text-green-600 border-circle p-3 mb-3 shadow-2'>
                     <i className='pi pi-check text-2xl font-bold'></i>
                   </div>
-                  <span className='text-lg text-900 font-black mb-1'>
+                  <span className='text-lg text-color font-black mb-1'>
                     {nuevoEvento.imagen.name}
                   </span>
                   <span className='text-blue-500 font-bold mt-2 hover:underline'>
@@ -679,13 +679,13 @@ const AddEventDialog = ({
                 </div>
               ) : (
                 <div className='flex flex-column align-items-center'>
-                  <div className='bg-white text-blue-500 border-circle p-4 mb-4 shadow-2'>
+                  <div className='surface-card text-blue-500 border-circle p-4 mb-4 shadow-2'>
                     <ImagePlus size={40} />
                   </div>
-                  <span className='text-xl text-900 font-black mb-2'>
+                  <span className='text-xl text-color font-black mb-2'>
                     Sube el cartel oficial
                   </span>
-                  <span className='text-sm text-500 font-medium'>
+                  <span className='text-sm text-color-secondary font-medium'>
                     Haz clic aquí. Recomendado: JPG o PNG (Max. 5MB)
                   </span>
                 </div>
@@ -713,7 +713,7 @@ const AddEventDialog = ({
               label='Cancelar'
               text
               onClick={onHide}
-              className='text-500 hover:text-700 hover:surface-100 font-bold px-4 border-round-3xl transition-colors'
+              className='text-color-secondary hover:text-color-secondary hover:surface-100 font-bold px-4 border-round-3xl transition-colors'
             />
             <Button
               label='Publicar Evento'

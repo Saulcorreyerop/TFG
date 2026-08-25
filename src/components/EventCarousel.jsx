@@ -18,7 +18,7 @@ import {
   Shield,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import './Home.css'
+
 
 const MotionDiv = motion.div
 
@@ -93,22 +93,22 @@ const CarouselItem = ({ event, session }) => {
 
           {/* Badge de Fecha Premium */}
           <div
-            className='absolute bottom-0 right-0 m-3 date-badge-premium p-2 flex flex-column z-2 bg-white-alpha-90 backdrop-blur-sm border-round-xl shadow-2 text-center'
+            className='absolute bottom-0 right-0 m-3 date-badge-premium p-2 flex flex-column z-2 surface-card-alpha-90 backdrop-blur-sm border-round-xl shadow-2 text-center'
             style={{ minWidth: '65px' }}
           >
             <span className='text-xs font-black text-blue-600 uppercase tracking-widest mb-1'>
               {monthShort}
             </span>
-            <span className='text-2xl font-black text-900 line-height-1'>
+            <span className='text-2xl font-black text-color line-height-1'>
               {dayNumber}
             </span>
           </div>
         </div>
 
         {/* SECCIÓN DE CONTENIDO */}
-        <div className='p-4 flex flex-column flex-grow-1 bg-white'>
+        <div className='p-4 flex flex-column flex-grow-1 surface-card'>
           <h4
-            className='text-2xl font-black text-900 mt-0 mb-3 line-height-2 tracking-tight'
+            className='text-2xl font-black text-color mt-0 mb-3 line-height-2 tracking-tight'
             style={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -119,7 +119,7 @@ const CarouselItem = ({ event, session }) => {
             {event.titulo}
           </h4>
 
-          <div className='flex align-items-center gap-2 text-600 font-medium mb-4 text-sm'>
+          <div className='flex align-items-center gap-2 text-color-secondary font-medium mb-4 text-sm'>
             <MapPin size={18} className='text-red-500 flex-shrink-0' />
             <span className='white-space-nowrap overflow-hidden text-overflow-ellipsis'>
               {event.ubicacion
@@ -133,7 +133,7 @@ const CarouselItem = ({ event, session }) => {
           {/* FOOTER (Organizador y Botón) */}
           <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
             <div
-              className='flex align-items-center gap-3 text-700 cursor-pointer hover:text-blue-600 transition-colors'
+              className='flex align-items-center gap-3 text-color-secondary cursor-pointer hover:text-blue-600 transition-colors'
               onClick={(e) => {
                 e.stopPropagation()
                 event.user_id && navigate(`/usuario/${event.user_id}`)
@@ -146,10 +146,10 @@ const CarouselItem = ({ event, session }) => {
                 }
                 shape='circle'
                 size='large'
-                className='bg-blue-50 text-blue-600 border-1 surface-border'
+                className='surface-hover text-blue-600 border-1 surface-border'
               />
               <div className='flex flex-column'>
-                <span className='text-xs text-500 font-black uppercase tracking-widest mb-1'>
+                <span className='text-xs text-color-secondary font-black uppercase tracking-widest mb-1'>
                   Organiza
                 </span>
                 <span
@@ -170,7 +170,7 @@ const CarouselItem = ({ event, session }) => {
               }
               rounded
               text={!isFavorite}
-              className={`w-3rem h-3rem transition-colors shadow-none ${isFavorite ? 'bg-pink-50 border-1 border-pink-200' : 'surface-100 text-600 hover:surface-200 border-none'}`}
+              className={`w-3rem h-3rem transition-colors shadow-none ${isFavorite ? 'bg-pink-50 border-1 border-pink-200' : 'surface-100 text-color-secondary hover:surface-200 border-none'}`}
               onClick={(e) => {
                 e.stopPropagation()
                 toggleFavorite()
@@ -304,11 +304,11 @@ const EventCarousel = () => {
               <span>Agenda del Motor</span>
             </div>
 
-            <h3 className='text-5xl md:text-7xl font-black text-900 m-0 tracking-tighter'>
+            <h3 className='text-5xl md:text-7xl font-black text-color m-0 tracking-tighter'>
               Próximos <span className='text-gradient-purple'>Eventos</span>
             </h3>
 
-            <p className='text-600 text-xl font-medium m-0 mt-3 max-w-2xl line-height-3'>
+            <p className='text-color-secondary text-xl font-medium m-0 mt-3 max-w-2xl line-height-3'>
               No te pierdas nada. Las mejores rutas, KDDs y concentraciones
               seleccionadas para ti.
             </p>
@@ -342,12 +342,12 @@ const EventCarousel = () => {
               }}
             />
           ) : (
-            <div className='text-center py-8 bg-white border-round-3xl border-2 border-dashed border-gray-200 shadow-1 mx-3'>
+            <div className='text-center py-8 surface-card border-round-3xl border-2 border-dashed surface-border shadow-1 mx-3'>
               <CalendarDays size={64} className='text-300 mb-4 mx-auto' />
-              <p className='text-900 text-3xl font-black m-0 mb-2'>
+              <p className='text-color text-3xl font-black m-0 mb-2'>
                 No hay eventos próximos.
               </p>
-              <p className='text-600 text-xl m-0'>
+              <p className='text-color-secondary text-xl m-0'>
                 ¡Sé el primero en crear una ruta épica!
               </p>
               <Button

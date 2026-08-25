@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTACIÓN AÑADIDA
+import CrewChat from '../components/CrewChat';
 
 const CrewDetailPage = ({ session }) => {
   const { crewName } = useParams()
@@ -191,7 +192,7 @@ const CrewDetailPage = ({ session }) => {
         url={window.location.href}
       />
       <PageTransition>
-        <div className='min-h-screen bg-gray-50 pb-8'>
+        <div className='min-h-screen surface-ground pb-8'>
           <Toast ref={toast} />
 
           <div className='relative w-full h-15rem md:h-20rem bg-gray-900 overflow-hidden'>
@@ -207,18 +208,18 @@ const CrewDetailPage = ({ session }) => {
             <div className='absolute top-0 left-0 p-4'>
               <button
                 type='button'
-                className='w-3rem h-3rem border-circle bg-white shadow-3 flex align-items-center justify-content-center border-none cursor-pointer hover:bg-gray-100 transition-colors'
+                className='w-3rem h-3rem border-circle surface-card shadow-3 flex align-items-center justify-content-center border-none cursor-pointer hover:surface-hover transition-colors'
                 onClick={() => navigate(-1)}
               >
-                <ArrowLeft size={20} className='text-900' />
+                <ArrowLeft size={20} className='text-color' />
               </button>
             </div>
           </div>
 
           <div className='max-w-7xl mx-auto px-4 -mt-6rem relative z-2'>
-            <div className='bg-white border-round-3xl shadow-3 p-4 md:p-6 border-1 border-100'>
+            <div className='surface-card border-round-3xl shadow-3 p-4 md:p-6 border-1 surface-border'>
               <div className='flex flex-column md:flex-row align-items-center gap-5 text-center md:text-left'>
-                <div className='bg-white p-2 border-round-2xl shadow-2 -mt-8rem md:mt-0 flex align-items-center justify-content-center overflow-hidden w-10rem h-10rem'>
+                <div className='surface-card p-2 border-round-2xl shadow-2 -mt-8rem md:mt-0 flex align-items-center justify-content-center overflow-hidden w-10rem h-10rem'>
                   {crew.profile_image_url ? (
                     <img
                       src={crew.profile_image_url}
@@ -232,7 +233,7 @@ const CrewDetailPage = ({ session }) => {
 
                 <div className='flex-1'>
                   <div className='flex align-items-center justify-content-center md:justify-content-start gap-3 flex-wrap'>
-                    <h1 className='text-4xl font-black text-900 m-0'>
+                    <h1 className='text-4xl font-black text-color m-0'>
                       {crew.name}
                     </h1>
                     {isAdmin && (
@@ -243,7 +244,7 @@ const CrewDetailPage = ({ session }) => {
                       />
                     )}
                   </div>
-                  <p className='text-600 text-lg font-medium mt-2 mb-4'>
+                  <p className='text-color-secondary text-lg font-medium mt-2 mb-4'>
                     {crew.description || 'Club de aficionados al motor.'}
                   </p>
 
@@ -267,12 +268,12 @@ const CrewDetailPage = ({ session }) => {
                   )}
                 </div>
 
-                <div className='flex gap-4 text-center border-left-1 border-100 pl-5 hidden md:flex'>
+                <div className='flex gap-4 text-center border-left-1 surface-border pl-5 hidden md:flex'>
                   <div>
-                    <div className='text-3xl font-black text-900'>
+                    <div className='text-3xl font-black text-color'>
                       {members.length}
                     </div>
-                    <div className='text-xs font-bold text-500 uppercase'>
+                    <div className='text-xs font-bold text-color-secondary uppercase'>
                       Miembros
                     </div>
                   </div>
@@ -280,7 +281,7 @@ const CrewDetailPage = ({ session }) => {
               </div>
 
               {isAdmin && pendingRequests.length > 0 && (
-                <div className='mt-8 p-5 bg-blue-50 border-round-3xl border-1 border-blue-100'>
+                <div className='mt-8 p-5 surface-hover border-round-3xl border-1 border-blue-100'>
                   <h3 className='text-blue-900 font-black text-xl mb-4 flex align-items-center gap-3'>
                     <UserPlus size={24} /> Peticiones pendientes (
                     {pendingRequests.length})
@@ -291,7 +292,7 @@ const CrewDetailPage = ({ session }) => {
                         key={req.id}
                         className='col-12 md:col-6 lg:col-4 p-2'
                       >
-                        <div className='bg-white p-3 border-round-2xl shadow-1 flex align-items-center justify-content-between border-1 border-blue-200'>
+                        <div className='surface-card p-3 border-round-2xl shadow-1 flex align-items-center justify-content-between border-1 border-blue-200'>
                           <div
                             className='flex align-items-center gap-3 cursor-pointer'
                             onClick={() =>
@@ -301,9 +302,9 @@ const CrewDetailPage = ({ session }) => {
                             <Avatar
                               image={req.profiles.avatar_url}
                               shape='circle'
-                              className='border-1 border-200'
+                              className='border-1 surface-border'
                             />
-                            <span className='font-bold text-900 hover:text-blue-600 transition-colors'>
+                            <span className='font-bold text-color hover:text-blue-600 transition-colors'>
                               {req.profiles.username}
                             </span>
                           </div>
@@ -319,7 +320,7 @@ const CrewDetailPage = ({ session }) => {
                               }
                               className='w-2rem h-2rem border-circle flex align-items-center justify-content-center cursor-pointer shadow-1 border-none transition-transform hover:scale-110 active:scale-95'
                               style={{
-                                backgroundColor: '#10b981',
+                                backgroundcolor: 'var(--text-color)',
                                 color: 'white',
                               }}
                             >
@@ -351,7 +352,7 @@ const CrewDetailPage = ({ session }) => {
               )}
 
               <div className='mt-8'>
-                <h2 className='text-2xl font-black text-900 mb-5 flex align-items-center gap-3'>
+                <h2 className='text-2xl font-black text-color mb-5 flex align-items-center gap-3'>
                   <Users className='text-blue-600' size={28} /> Miembros del
                   Club
                 </h2>
@@ -362,7 +363,7 @@ const CrewDetailPage = ({ session }) => {
                       className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'
                     >
                       <div
-                        className='bg-white border-1 border-100 p-3 border-round-2xl flex align-items-center gap-3 cursor-pointer hover:shadow-2 transition-all'
+                        className='surface-card border-1 surface-border p-3 border-round-2xl flex align-items-center gap-3 cursor-pointer hover:shadow-2 transition-all'
                         onClick={() =>
                           navigate(`/usuario/${m.profiles.username}`)
                         }
@@ -374,10 +375,10 @@ const CrewDetailPage = ({ session }) => {
                           className='shadow-1 flex-shrink-0'
                         />
                         <div className='overflow-hidden'>
-                          <div className='font-bold text-900 line-clamp-1'>
+                          <div className='font-bold text-color line-clamp-1'>
                             {m.profiles.username}
                           </div>
-                          <div className='text-xs text-500 font-bold uppercase'>
+                          <div className='text-xs text-color-secondary font-bold uppercase'>
                             {m.role === 'admin' ? 'Fundador' : 'Miembro'}
                           </div>
                         </div>
@@ -388,7 +389,7 @@ const CrewDetailPage = ({ session }) => {
               </div>
 
               <div className='mt-8'>
-                <h2 className='text-2xl font-black text-900 mb-5 flex align-items-center gap-3'>
+                <h2 className='text-2xl font-black text-color mb-5 flex align-items-center gap-3'>
                   <Car className='text-blue-600' size={28} /> Vehículos de
                   nuestra Crew
                 </h2>
@@ -400,11 +401,11 @@ const CrewDetailPage = ({ session }) => {
                         className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'
                       >
                         <div
-                          className='bg-white border-1 border-100 border-round-2xl overflow-hidden shadow-1 hover:shadow-3 transition-all cursor-pointer flex flex-column h-full'
+                          className='surface-card border-1 surface-border border-round-2xl overflow-hidden shadow-1 hover:shadow-3 transition-all cursor-pointer flex flex-column h-full'
                           onClick={() => navigate(`/usuario/${v.owner}`)}
                         >
                           <div
-                            className='w-full bg-gray-100 relative'
+                            className='w-full surface-hover relative'
                             style={{ height: '220px' }}
                           >
                             <img
@@ -420,11 +421,11 @@ const CrewDetailPage = ({ session }) => {
                               />
                             </div>
                           </div>
-                          <div className='p-4 text-center bg-white flex-1 flex flex-column justify-content-center'>
-                            <h3 className='font-black text-xl text-900 mb-1 m-0 line-clamp-1'>
+                          <div className='p-4 text-center surface-card flex-1 flex flex-column justify-content-center'>
+                            <h3 className='font-black text-xl text-color mb-1 m-0 line-clamp-1'>
                               {v.make} {v.model}
                             </h3>
-                            <div className='text-500 text-sm font-bold mt-2'>
+                            <div className='text-color-secondary text-sm font-bold mt-2'>
                               Propietario:{' '}
                               <span className='text-blue-600'>{v.owner}</span>
                             </div>
@@ -433,7 +434,7 @@ const CrewDetailPage = ({ session }) => {
                       </div>
                     ))
                   ) : (
-                    <div className='col-12 text-center p-5 text-500 font-bold border-2 border-dashed border-300 border-round-2xl bg-gray-50'>
+                    <div className='col-12 text-center p-5 text-color-secondary font-bold border-2 border-dashed surface-border border-round-2xl surface-ground'>
                       Aún no hay vehículos registrados en esta Crew.
                     </div>
                   )}
@@ -442,6 +443,19 @@ const CrewDetailPage = ({ session }) => {
             </div>
           </div>
         </div>
+        {/* --- SECCIÓN CHAT DE LA CREW --- */}
+<div className="mt-6 border-top-1 surface-border pt-5">
+  <div className="max-w-4xl mx-auto">
+    <h2 className="text-2xl font-black text-color mb-4 flex align-items-center gap-2">
+      <i className="pi pi-comments text-blue-600"></i>
+      Chat Oficial
+    </h2>
+    <div style={{ height: '500px', borderRadius: '1rem', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+      {/* CAMBIA 'crew.id' POR LA VARIABLE QUE TENGA EL ID DE LA CREW EN ESTE ARCHIVO */}
+      <CrewChat crewId={crew.id} session={session} />
+    </div>
+  </div>
+</div>
       </PageTransition>
     </>
   )

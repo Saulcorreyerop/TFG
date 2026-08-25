@@ -19,7 +19,7 @@ import {
   Send,
 } from 'lucide-react'
 import PageTransition from '../components/PageTransition'
-import './ContactPage.css'
+
 import SEO from '../components/SEO'
 
 const ContactPage = () => {
@@ -138,7 +138,7 @@ const ContactPage = () => {
                 </div>
               </div>
 
-              <div className='col-12 lg:col-8 p-5 md:p-6 bg-white'>
+              <div className='col-12 lg:col-8 p-5 md:p-6 surface-card'>
                 <form
                   ref={form}
                   onSubmit={sendEmail}

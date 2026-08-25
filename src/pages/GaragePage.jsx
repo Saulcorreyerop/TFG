@@ -12,7 +12,7 @@ import { Galleria } from 'primereact/galleria'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 
-import './GaragePage.css'
+
 
 import SEO from '../components/SEO'
 
@@ -492,10 +492,10 @@ const GaragePage = ({ session }) => {
 
           <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
             <div>
-              <h1 className='text-4xl font-extrabold m-0 text-900 flex align-items-center gap-3'>
+              <h1 className='text-4xl font-extrabold m-0 text-color flex align-items-center gap-3'>
                 Mi Garaje
               </h1>
-              <p className='text-500 mt-2 text-lg'>Tu colección personal</p>
+              <p className='text-color-secondary mt-2 text-lg'>Tu colección personal</p>
             </div>
             <Button
               label='Añadir Vehículo'
@@ -509,7 +509,7 @@ const GaragePage = ({ session }) => {
 
           {vehicles.length === 0 ? (
             <div className='garage-empty'>
-              <p className='text-center text-500'>No hay vehículos.</p>
+              <p className='text-center text-color-secondary'>No hay vehículos.</p>
             </div>
           ) : (
             <div className='garage-grid'>
@@ -629,13 +629,13 @@ const GaragePage = ({ session }) => {
                 <label htmlFor='desc'>Modificaciones / Descripción</label>
               </span>
 
-              <div className='border-top-1 border-300 pt-4 mt-2'>
-                <h3 className='text-xl font-bold text-800 m-0 mb-3'>
+              <div className='border-top-1 surface-border pt-4 mt-2'>
+                <h3 className='text-xl font-bold text-color m-0 mb-3'>
                   Imágenes del Vehículo
                 </h3>
 
                 {/* Foto Principal */}
-                <div className='surface-100 p-3 border-round border-1 border-300 border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative mb-4'>
+                <div className='surface-100 p-3 border-round border-1 surface-border border-dashed text-center hover:surface-200 transition-colors cursor-pointer relative mb-4'>
                   <input
                     type='file'
                     accept='image/*'
@@ -643,8 +643,8 @@ const GaragePage = ({ session }) => {
                     className='opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer z-2'
                   />
                   <div className='flex flex-column align-items-center gap-2 pointer-events-none'>
-                    <i className='pi pi-camera text-2xl text-600'></i>
-                    <span className='text-sm text-700 font-semibold'>
+                    <i className='pi pi-camera text-2xl text-color-secondary'></i>
+                    <span className='text-sm text-color-secondary font-semibold'>
                       {imageFile
                         ? imageFile.name
                         : form.image_url
@@ -654,7 +654,7 @@ const GaragePage = ({ session }) => {
                   </div>
                 </div>
 
-                <div className='bg-gray-50 border-round-xl p-3 border-1 border-200'>
+                <div className='surface-ground border-round-xl p-3 border-1 surface-border'>
                   <div className='gallery-upload-zone'>
                     <input
                       type='file'
@@ -665,10 +665,10 @@ const GaragePage = ({ session }) => {
                     />
                     <div className='flex flex-column align-items-center gap-1 pointer-events-none'>
                       <i className='pi pi-images text-xl text-blue-500'></i>
-                      <span className='text-sm font-bold text-700'>
+                      <span className='text-sm font-bold text-color-secondary'>
                         Añadir fotos a la galería
                       </span>
-                      <span className='text-xs text-500'>
+                      <span className='text-xs text-color-secondary'>
                         Selecciona varias imágenes a la vez
                       </span>
                     </div>

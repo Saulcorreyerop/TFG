@@ -4,27 +4,28 @@ export const sendPushNotification = async (
   message,
   urlPath = '/',
 ) => {
-  console.log(
-    '1. Entrando a sendPushNotification. Usuarios destino:',
-    targetUserIds,
-  )
-
   if (!targetUserIds || targetUserIds.length === 0) {
-    console.warn('2. Cancelado: No hay usuarios a los que enviar.')
+    console.warn('Push cancelado: no hay usuarios destino.')
     return
   }
 
   try {
-    console.log('3. Disparando fetch a Netlify...')
     const response = await fetch('/.netlify/functions/sendPush', {
       method: 'POST',
       body: JSON.stringify({ targetUserIds, title, message, urlPath }),
     })
 
-    // 🚀 AHORA LEEMOS EL JSON QUE NOS DEVUELVE NETLIFY
+    // Si no hay function (local) o falla, salimos limpio sin reventar
+    if (!response.ok) {
+      console.warn(
+        `Push no enviado (status ${response.status}). Normal en local sin "netlify dev".`,
+      )
+      return
+    }
+
     const data = await response.json()
-    console.log('4. Respuesta exacta de OneSignal:', data)
+    console.log('Respuesta de OneSignal:', data)
   } catch (error) {
-    console.error('❌ Error al contactar con Netlify:', error)
+    console.warn('Push no disponible en este entorno:', error.message)
   }
 }

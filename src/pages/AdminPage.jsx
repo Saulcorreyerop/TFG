@@ -298,7 +298,7 @@ const AdminPage = ({ session }) => {
 
   return (
     <PageTransition>
-      <div className='min-h-screen bg-gray-50 p-4 md:p-6'>
+      <div className='min-h-screen surface-ground p-4 md:p-6'>
         <Toast ref={toast} />
         {/* HEMOS ELIMINADO EL <ConfirmDialog /> de aquí para evitar que salga doble */}
 
@@ -306,7 +306,7 @@ const AdminPage = ({ session }) => {
           {/* BANNER DE ADMIN ARREGLADO */}
           <div
             className='flex align-items-center gap-3 mb-5 p-4 border-round-2xl shadow-4'
-            style={{ backgroundColor: '#0f172a' }}
+            style={{ backgroundcolor: 'var(--text-color)' }}
           >
             <div
               className='p-3 border-circle flex align-items-center justify-content-center shadow-2'
@@ -327,7 +327,7 @@ const AdminPage = ({ session }) => {
             </div>
           </div>
 
-          <div className='card bg-white p-4 border-round-2xl shadow-2'>
+          <div className='card surface-card p-4 border-round-2xl shadow-2'>
             <TabView>
               <TabPanel header='Eventos' leftIcon='pi pi-calendar mr-2'>
                 <DataTable

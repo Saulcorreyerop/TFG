@@ -17,7 +17,10 @@ import {
   LogOut,
   Menu,
   ShieldAlert,
+  Sun,
+  Moon
 } from 'lucide-react'
+import { useTheme } from '../hooks/ThemeContext'
 
 const timeAgo = (dateString) => {
   const date = new Date(dateString)
@@ -55,42 +58,38 @@ const Header = ({ session }) => {
   const [unreadCount, setUnreadCount] = useState(0)
 
   const [userProfile, setUserProfile] = useState(null)
+  const { theme, toggleTheme } = useTheme()
 
   const navItems = [
     {
       label: 'Mapa',
       path: '/mapa',
       icon: <MapPin size={20} />,
-      color: '#059669',
-      bgHover: '#d1fae5',
     },
     {
       label: 'Eventos',
       path: '/eventos',
       icon: <CalendarDays size={20} />,
-      color: '#2563eb',
-      bgHover: '#dbeafe',
     },
     {
       label: 'Garaje',
       path: '/garaje',
       icon: <Car size={20} />,
-      color: '#9333ea',
-      bgHover: '#f3e8ff',
     },
     {
       label: 'Comunidad',
       path: '/comunidad',
       icon: <Users size={20} />,
-      color: '#ea580c',
-      bgHover: '#ffedd5',
+    },
+    {
+      label: 'Chat Global',
+      path: '/chat-global',
+      icon: <i className="pi pi-globe" style={{ fontSize: '20px' }}></i>,
     },
     {
       label: 'Contacto',
       path: '/contacto',
       icon: <Mail size={20} />,
-      color: '#db2777',
-      bgHover: '#fce7f3',
     },
   ]
 
@@ -224,49 +223,37 @@ const Header = ({ session }) => {
       />
 
       <header
-        className='w-full shadow-1 border-bottom-1 border-gray-200'
+        className='w-full shadow-1 border-bottom-1 surface-border'
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 1000,
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(8px)',
+          background: 'var(--surface-card)',
+          backdropFilter: 'blur(12px)',
         }}
       >
-        <div className='max-w-8xl mx-auto px-3 md:px-5'>
-          <div className='flex align-items-center justify-content-between h-5rem w-full'>
+        <div className='w-full px-4 md:px-6'>
+          <div className='flex align-items-center h-5rem w-full'>
+            {/* LOGO - Izquierda */}
             <div
-              className='flex align-items-center cursor-pointer hover:opacity-80 transition-opacity'
+              className='flex-none w-10rem md:w-15rem flex align-items-center cursor-pointer hover:opacity-80 transition-opacity'
               onClick={() => navigate('/')}
             >
-              <h2 className='text-2xl md:text-3xl font-black text-900 m-0 tracking-tight'>
+              <h2 className='text-2xl md:text-3xl font-black text-color m-0 tracking-tight'>
                 CarMeet<span className='text-flag-esp'>ESP</span>
               </h2>
             </div>
 
-            <nav className='hidden lg:flex align-items-center gap-2'>
+            {/* NAVEGACIÓN - Centro */}
+            <nav className='hidden lg:flex flex-grow-1 justify-content-center align-items-center gap-2'>
               {navItems.map((item) => {
                 const isActive = location.pathname.startsWith(item.path)
                 return (
                   <div
                     key={item.label}
                     onClick={() => navigate(item.path)}
-                    className='flex align-items-center gap-2 px-3 py-2 border-round-2xl cursor-pointer transition-all duration-200 font-bold'
-                    style={{
-                      color: item.color,
-                      backgroundColor: isActive ? item.bgHover : 'transparent',
-                      border: isActive
-                        ? `1px solid ${item.color}`
-                        : '1px solid transparent',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive)
-                        e.currentTarget.style.backgroundColor = item.bgHover
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive)
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                    }}
+                    className={`flex align-items-center gap-2 px-3 py-2 border-round-3xl cursor-pointer transition-all duration-200 font-bold ${isActive ? 'bg-blue-50' : 'hover:bg-blue-50'}`}
+                    style={{ color: isActive ? '#2563eb' : '#3b82f6' }}
                   >
                     {item.icon}
                     <span>{item.label}</span>
@@ -275,7 +262,17 @@ const Header = ({ session }) => {
               })}
             </nav>
 
-            <div className='flex align-items-center gap-2 md:gap-3'>
+            {/* ACCIONES - Derecha */}
+            <div className='flex-none w-auto lg:w-15rem flex justify-content-end align-items-center gap-2 md:gap-3'>
+              
+              <Button
+                type='button'
+                icon={theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                className="p-button-rounded p-button-text p-0 w-3rem h-3rem transition-colors text-color-secondary hover:surface-hover"
+                onClick={toggleTheme}
+                aria-label="Toggle Theme"
+              />
+
               {session ? (
                 <>
                   <div className='relative flex align-items-center'>
@@ -285,13 +282,13 @@ const Header = ({ session }) => {
                         <Bell
                           size={22}
                           className={
-                            unreadCount > 0 ? 'text-blue-600' : 'text-600'
+                            unreadCount > 0 ? 'text-blue-600' : 'text-color-secondary'
                           }
                         />
                       }
                       className={`p-button-rounded p-button-text p-0 w-3rem h-3rem transition-colors ${
                         unreadCount > 0
-                          ? 'bg-blue-50 hover:bg-blue-100'
+                          ? 'surface-hover hover:bg-blue-100'
                           : 'hover:surface-200'
                       }`}
                       onClick={handleOpenNotifications}
@@ -305,9 +302,9 @@ const Header = ({ session }) => {
                     )}
                   </div>
 
-                  <div className='hidden md:flex align-items-center gap-2 pl-3 border-left-1 border-300'>
+                  <div className='hidden md:flex align-items-center gap-2 pl-3 border-left-1 surface-border'>
                     <div
-                      className='flex align-items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 pr-3 border-round-3xl transition-colors'
+                      className='flex align-items-center gap-2 cursor-pointer hover:surface-hover p-1 pr-3 border-round-3xl transition-colors'
                       onClick={() => navigate('/perfil')}
                     >
                       <Avatar
@@ -316,7 +313,7 @@ const Header = ({ session }) => {
                         shape='circle'
                         className='bg-blue-100 text-blue-600 border-1 border-blue-200 shadow-1'
                       />
-                      <span className='font-bold text-sm text-800'>
+                      <span className='font-bold text-sm text-color'>
                         {displayName}
                       </span>
                     </div>
@@ -349,7 +346,7 @@ const Header = ({ session }) => {
                   <Button
                     label='Entrar'
                     text
-                    className='font-bold text-700 hover:bg-gray-100 border-round-xl px-4'
+                    className='font-bold text-color-secondary hover:surface-hover border-round-xl px-4'
                     onClick={() =>
                       navigate('/login', { state: { activeIndex: 0 } })
                     }
@@ -370,8 +367,8 @@ const Header = ({ session }) => {
               )}
 
               <Button
-                icon={<Menu size={24} className='text-800' />}
-                className='lg:hidden w-3rem h-3rem bg-white shadow-1 border-1 border-200 border-round-xl ml-2 text-700 hover:bg-gray-50 p-button-text'
+                icon={<Menu size={24} className='text-color' />}
+                className='lg:hidden w-3rem h-3rem surface-card shadow-1 border-1 surface-border border-round-xl ml-2 text-color-secondary hover:surface-hover p-button-text'
                 onClick={() => setMobileMenuOpen(true)}
               />
             </div>
@@ -381,24 +378,24 @@ const Header = ({ session }) => {
 
       <OverlayPanel
         ref={op}
-        className='shadow-6 border-round-2xl overflow-hidden border-none'
+        className='shadow-6 border-round-2xl overflow-hidden border-none surface-card'
         style={{ width: '380px', padding: 0 }}
       >
-        <div className='bg-white border-bottom-1 border-100 p-4 flex justify-content-between align-items-center'>
-          <h3 className='m-0 text-lg font-black text-900 flex align-items-center gap-2'>
+        <div className='surface-card border-bottom-1 surface-border p-4 flex justify-content-between align-items-center'>
+          <h3 className='m-0 text-lg font-black text-color flex align-items-center gap-2'>
             Notificaciones
           </h3>
           {unreadCount > 0 && (
             <Badge value={`${unreadCount} nuevas`} severity='info' />
           )}
         </div>
-        <div className='max-h-25rem overflow-y-auto bg-gray-50'>
+        <div className='max-h-25rem overflow-y-auto surface-ground'>
           {notifications.length === 0 ? (
             <div className='p-5 text-center flex flex-column align-items-center gap-3'>
-              <div className='bg-gray-200 border-circle p-3 text-500'>
+              <div className='bg-gray-200 border-circle p-3 text-color-secondary'>
                 <Bell size={30} />
               </div>
-              <span className='text-600 font-medium'>
+              <span className='text-color-secondary font-medium'>
                 No tienes notificaciones nuevas.
               </span>
             </div>
@@ -406,7 +403,7 @@ const Header = ({ session }) => {
             notifications.map((notif) => (
               <div
                 key={notif.id}
-                className={`p-3 border-bottom-1 border-200 flex gap-3 cursor-pointer transition-colors ${!notif.leida ? 'bg-white hover:bg-blue-50' : 'bg-transparent hover:bg-gray-100'}`}
+                className={`p-3 border-bottom-1 surface-border flex gap-3 cursor-pointer transition-colors ${!notif.leida ? 'surface-card hover:surface-hover' : 'bg-transparent hover:surface-hover'}`}
                 onClick={() => handleNotificationClick(notif)}
               >
                 <Avatar
@@ -417,8 +414,8 @@ const Header = ({ session }) => {
                   className='flex-shrink-0 shadow-1'
                 />
                 <div className='flex-1'>
-                  <p className='m-0 text-sm text-700 line-height-2'>
-                    <span className='font-bold text-900'>
+                  <p className='m-0 text-sm text-color-secondary line-height-2'>
+                    <span className='font-bold text-color'>
                       {notif.profiles?.username || 'Alguien'}
                     </span>
 
@@ -444,14 +441,14 @@ const Header = ({ session }) => {
                         </span>
                       )}
                   </p>
-                  <span className='text-xs text-500 font-bold mt-2 flex align-items-center gap-1'>
+                  <span className='text-xs text-color-secondary font-bold mt-2 flex align-items-center gap-1'>
                     <i className='pi pi-clock text-xs'></i>{' '}
                     {timeAgo(notif.created_at)}
                   </span>
                 </div>
                 {!notif.leida && (
                   <div className='flex align-items-center justify-content-center'>
-                    <div className='w-1rem h-1rem bg-blue-500 border-circle shadow-1'></div>
+                    <div className='w-1rem h-1rem surface-hover0 border-circle shadow-1'></div>
                   </div>
                 )}
               </div>
@@ -464,17 +461,17 @@ const Header = ({ session }) => {
         visible={mobileMenuOpen}
         position='right'
         onHide={() => setMobileMenuOpen(false)}
-        className='w-full md:w-20rem p-0'
+        className='w-full md:w-20rem p-0 surface-card'
       >
-        <div className='flex flex-column h-full bg-white'>
-          <div className='p-3 border-bottom-1 border-100 bg-gray-50'>
+        <div className='flex flex-column h-full surface-card'>
+          <div className='p-3 border-bottom-1 surface-border surface-ground'>
             <div className='flex justify-content-between align-items-center mb-3'>
-              <h2 className='text-xl font-black text-900 m-0'>Menú</h2>
+              <h2 className='text-xl font-black text-color m-0'>Menú</h2>
             </div>
 
             {session ? (
               <div
-                className='flex align-items-center gap-3 bg-white p-2 border-round-xl shadow-1 border-1 border-200 cursor-pointer hover:border-blue-300 transition-colors'
+                className='flex align-items-center gap-3 surface-card p-2 border-round-xl shadow-1 border-1 surface-border cursor-pointer hover:border-blue-300 transition-colors'
                 onClick={() => {
                   setMobileMenuOpen(false)
                   navigate('/perfil')
@@ -488,7 +485,7 @@ const Header = ({ session }) => {
                   className='bg-blue-100 text-blue-600 border-1 border-blue-200'
                 />
                 <div>
-                  <div className='font-bold text-900 text-md'>
+                  <div className='font-bold text-color text-md'>
                     {displayName}
                   </div>
                   <div className='text-xs text-blue-600 font-bold mt-1'>
@@ -523,14 +520,8 @@ const Header = ({ session }) => {
                     setMobileMenuOpen(false)
                     navigate(item.path)
                   }}
-                  className='flex align-items-center gap-3 p-2 border-round-lg text-md transition-all font-bold cursor-pointer'
-                  style={{
-                    color: item.color,
-                    backgroundColor: isActive ? item.bgHover : 'transparent',
-                    border: isActive
-                      ? `1px solid ${item.color}`
-                      : '1px solid transparent',
-                  }}
+                  className={`flex align-items-center gap-3 p-2 border-round-lg text-md transition-all font-bold cursor-pointer ${isActive ? 'bg-blue-50 border-1 border-blue-200' : 'border-1 border-transparent hover:bg-blue-50'}`}
+                  style={{ color: isActive ? '#2563eb' : '#3b82f6' }}
                 >
                   {item.icon}
                   <span>{item.label}</span>
@@ -540,7 +531,7 @@ const Header = ({ session }) => {
           </div>
 
           {session && (
-            <div className='p-3 border-top-1 border-100 bg-gray-50 flex flex-column'>
+            <div className='p-3 border-top-1 surface-border surface-ground flex flex-column'>
               {userProfile?.is_admin && (
                 <Button
                   label='Panel de Moderación'

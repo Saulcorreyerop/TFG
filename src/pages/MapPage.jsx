@@ -16,7 +16,7 @@ import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import AddEventDialog from '../components/AddEventDialog'
 import 'leaflet/dist/leaflet.css'
-import './MapPage.css'
+
 import PageTransition from '../components/PageTransition'
 import SEO from '../components/SEO'
 
@@ -94,7 +94,7 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
     onClick={() => onClick(ev)}
     className={`surface-card p-3 shadow-1 border-round-xl cursor-pointer flex gap-3 align-items-center mb-2 mx-1 event-card ${isSelected ? 'selected' : ''}`}
   >
-    <div className='w-4rem h-4rem border-round-lg overflow-hidden flex-shrink-0 shadow-1 bg-gray-100 relative'>
+    <div className='w-4rem h-4rem border-round-lg overflow-hidden flex-shrink-0 shadow-1 surface-hover relative'>
       <img
         src={ev.image_url || 'https://via.placeholder.com/150'}
         alt={ev.titulo}
@@ -103,7 +103,7 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
       />
     </div>
     <div className='flex-grow-1 overflow-hidden min-w-0'>
-      <h4 className='m-0 text-900 font-bold text-sm md:text-base mb-1 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
+      <h4 className='m-0 text-color font-bold text-sm md:text-base mb-1 white-space-nowrap overflow-hidden text-overflow-ellipsis'>
         {ev.titulo}
       </h4>
       <div className='flex align-items-center gap-2 flex-wrap'>
@@ -120,7 +120,7 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
             <i className='pi pi-lock text-xs mr-1'></i>Crew
           </Tag>
         )}
-        <span className='text-600 text-xs font-semibold white-space-nowrap'>
+        <span className='text-color-secondary text-xs font-semibold white-space-nowrap'>
           <i className='pi pi-calendar mr-1 text-xs'></i> {ev.fechaCorta}
         </span>
       </div>
@@ -131,7 +131,7 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
         rounded
         text
         size='small'
-        className='text-400 hover:text-primary hover:bg-gray-100'
+        className='text-400 hover:text-primary hover:surface-hover'
         onClick={(e) => {
           e.stopPropagation()
           onNavigate()
@@ -370,7 +370,7 @@ const MapPage = ({ session }) => {
                       >
                         {ev.image_url && (
                           <div
-                            className='w-full relative bg-gray-100 mb-2 border-round overflow-hidden shadow-2'
+                            className='w-full relative surface-hover mb-2 border-round overflow-hidden shadow-2'
                             style={{ height: '120px' }}
                           >
                             <img
@@ -401,7 +401,7 @@ const MapPage = ({ session }) => {
                         <div className='flex justify-content-center my-2'>
                           <Tag value={ev.tipo} severity='info' />
                         </div>
-                        <div className='text-xs text-gray-600 border-top-1 border-200 pt-2 mt-1'>
+                        <div className='text-xs text-gray-600 border-top-1 surface-border pt-2 mt-1'>
                           <div className='font-semibold'>
                             {ev.fecha.toLocaleDateString('es-ES')}
                           </div>
@@ -427,7 +427,7 @@ const MapPage = ({ session }) => {
 
             <aside className='sidebar-section'>
               <div
-                className='sidebar-header p-3 md:p-4 border-bottom-1 border-100 flex justify-content-between align-items-center'
+                className='sidebar-header p-3 md:p-4 border-bottom-1 surface-border flex justify-content-between align-items-center'
                 onClick={scrollToTopList}
               >
                 <div className='mobile-drag-handle'>
@@ -437,10 +437,10 @@ const MapPage = ({ session }) => {
                   ></div>
                 </div>
                 <div className='mt-2 md:mt-0 text-center flex justify-content-center align-items-center flex-column w-full'>
-                  <h1 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center'>
+                  <h1 className='text-lg md:text-2xl font-extrabold m-0 text-color text-center'>
                     Eventos
                   </h1>
-                  <p className='text-500 m-0 text-xs md:text-sm mt-1 text-center'>
+                  <p className='text-color-secondary m-0 text-xs md:text-sm mt-1 text-center'>
                     {filteredEventos.length} disponibles
                   </p>
                 </div>
@@ -457,16 +457,16 @@ const MapPage = ({ session }) => {
                 />
               </div>
 
-              <div className='sidebar-content p-2 md:p-4 bg-gray-50 md:bg-white'>
+              <div className='sidebar-content p-2 md:p-4 surface-ground md:surface-card'>
                 <div className='flex flex-column gap-2'>
-                  <h2 className='text-lg md:text-2xl font-extrabold m-0 text-900 text-center mt-3'>
+                  <h2 className='text-lg md:text-2xl font-extrabold m-0 text-color text-center mt-3'>
                     {activeFilter === 'Todos'
                       ? 'Próximos Eventos'
                       : `Eventos de ${activeFilter}`}
                   </h2>
                   <hr className='event-separator' />
                   {filteredEventos.length === 0 && (
-                    <div className='text-center p-5 text-500'>
+                    <div className='text-center p-5 text-color-secondary'>
                       <i className='pi pi-filter-slash text-4xl mb-2 opacity-50' />
                       <p>No hay eventos disponibles para esta categoría.</p>
                     </div>

@@ -26,7 +26,7 @@ import {
   Instagram,
   Youtube,
 } from 'lucide-react'
-import './ProfilePage.css'
+
 import SEO from '../components/SEO'
 
 const ProfilePage = ({ session }) => {
@@ -309,11 +309,11 @@ const ProfilePage = ({ session }) => {
             value={event.tipo}
             className='w-min mb-3 bg-blue-50 text-blue-700 font-bold'
           />
-          <h4 className='m-0 mb-3 text-xl font-black text-900 line-clamp-1'>
+          <h4 className='m-0 mb-3 text-xl font-black text-color line-clamp-1'>
             {event.titulo}
           </h4>
           <div className='mt-auto flex flex-column gap-2'>
-            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
               <Calendar size={16} className='text-blue-500' />
               <span>
                 {new Date(event.fecha).toLocaleDateString('es-ES', {
@@ -323,7 +323,7 @@ const ProfilePage = ({ session }) => {
                 })}
               </span>
             </div>
-            <div className='flex align-items-center gap-2 text-sm text-500 font-medium'>
+            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
               <MapPin size={16} className='text-red-500' />
               <span className='line-clamp-1'>
                 {event.ubicacion || 'Ubicación en mapa'}
@@ -367,7 +367,7 @@ const ProfilePage = ({ session }) => {
             )}
           </Dialog>
 
-          <div className='bg-white shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 border-100'>
+          <div className='surface-card shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 surface-border'>
             <div className='relative'>
               <Avatar
                 icon='pi pi-user'
@@ -379,16 +379,16 @@ const ProfilePage = ({ session }) => {
             </div>
 
             <div className='text-center lg:text-left flex-1'>
-              <h1 className='text-3xl font-black m-0 text-900'>
+              <h1 className='text-3xl font-black m-0 text-color'>
                 {profile?.username || 'Usuario'}
               </h1>
 
               {profile?.bio ? (
-                <p className='text-600 mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto lg:mx-0'>
+                <p className='text-color-secondary mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto lg:mx-0'>
                   {profile.bio}
                 </p>
               ) : (
-                <p className='text-500 mt-1 mb-0 font-medium'>
+                <p className='text-color-secondary mt-1 mb-0 font-medium'>
                   {session.user.email}
                 </p>
               )}
@@ -463,7 +463,7 @@ const ProfilePage = ({ session }) => {
               <div className='mt-3'>
                 {myCrew ? (
                   <div
-                    className='inline-flex align-items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 border-300'
+                    className='inline-flex align-items-center gap-2 surface-hover hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 surface-border'
                     onClick={() => navigate(`/crew/${myCrew.name}`)}
                   >
                     <Avatar
@@ -472,7 +472,7 @@ const ProfilePage = ({ session }) => {
                       shape='circle'
                       className='w-2rem h-2rem shadow-1'
                     />
-                    <span className='font-bold text-sm text-900'>
+                    <span className='font-bold text-sm text-color'>
                       {myCrew.name}
                     </span>
                   </div>
@@ -521,28 +521,28 @@ const ProfilePage = ({ session }) => {
               </div>
             </div>
 
-            <div className='flex gap-4 md:gap-5 text-center border-top-1 lg:border-top-none lg:border-left-1 border-200 pt-4 lg:pt-0 lg:pl-5 w-full lg:w-auto justify-content-center'>
+            <div className='flex gap-4 md:gap-5 text-center border-top-1 lg:border-top-none lg:border-left-1 surface-border pt-4 lg:pt-0 lg:pl-5 w-full lg:w-auto justify-content-center'>
               <div>
-                <div className='text-2xl font-black text-900'>
+                <div className='text-2xl font-black text-color'>
                   {myVehicles.length}
                 </div>
-                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
                   Vehículos
                 </div>
               </div>
               <div>
-                <div className='text-2xl font-black text-900'>
+                <div className='text-2xl font-black text-color'>
                   {followersCount}
                 </div>
-                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
                   Seguidores
                 </div>
               </div>
               <div>
-                <div className='text-2xl font-black text-900'>
+                <div className='text-2xl font-black text-color'>
                   {followingCount}
                 </div>
-                <div className='text-xs font-bold text-500 uppercase tracking-widest'>
+                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
                   Seguidos
                 </div>
               </div>
@@ -583,10 +583,10 @@ const ProfilePage = ({ session }) => {
                         )}
                       </div>
                       <div className='p-3 text-center'>
-                        <div className='font-black text-lg text-900 mb-1 line-clamp-1'>
+                        <div className='font-black text-lg text-color mb-1 line-clamp-1'>
                           {v.marca}
                         </div>
-                        <div className='text-sm text-600 line-clamp-1 font-medium'>
+                        <div className='text-sm text-color-secondary line-clamp-1 font-medium'>
                           {v.modelo}
                         </div>
                       </div>
@@ -679,7 +679,7 @@ const ProfilePage = ({ session }) => {
                   }
                   size='xlarge'
                   shape='circle'
-                  className='w-8rem h-8rem text-5xl bg-gray-100 border-2 border-gray-200'
+                  className='w-8rem h-8rem text-5xl surface-hover border-2 surface-border'
                 />
                 <div className='relative'>
                   <input

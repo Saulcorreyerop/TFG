@@ -7,6 +7,7 @@ import { Zap, ArrowRight } from 'lucide-react'
 import Hero from '../components/Hero'
 import Features from '../components/Features'
 import HomeMap from '../components/HomeMap'
+import ActivityFeed from '../components/ActivityFeed'
 import EventCarousel from '../components/EventCarousel'
 import PageTransition from '../components/PageTransition'
 import SEO from '../components/SEO'
@@ -35,11 +36,12 @@ const HomePage = () => {
         url={window.location.href}
       />
       <PageTransition>
-        <div className='bg-white'>
+        <div className='surface-card'>
           {/* Componentes de la página */}
           <Hero session={session} />
           <Features />
           <HomeMap />
+          <ActivityFeed />
           <EventCarousel />
 
           {/* --- SECCIÓN CTA FINAL (Estilo Bento Premium) --- */}
@@ -53,7 +55,7 @@ const HomePage = () => {
 
                 {/* Textos */}
                 <div className='text-center md:text-left flex-1 relative z-1'>
-                  <div className='inline-flex align-items-center gap-2 bg-white-alpha-10 px-3 py-2 border-round-3xl border-1 border-white-alpha-20 mb-4 backdrop-blur-sm'>
+                  <div className='inline-flex align-items-center gap-2 surface-card-alpha-10 px-3 py-2 border-round-3xl border-1 border-white-alpha-20 mb-4 backdrop-blur-sm'>
                     <Zap size={16} className='text-yellow-400' />
                     <span className='text-white text-xs font-bold uppercase tracking-widest'>
                       La comunidad te espera

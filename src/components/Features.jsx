@@ -41,7 +41,7 @@ const Features = () => {
             <Zap size={16} className='text-blue-600' />
             <span>Funcionalidades TOP</span>
           </div>
-          <h3 className='text-5xl md:text-7xl font-black text-900 mb-4 tracking-tighter'>
+          <h3 className='text-5xl md:text-7xl font-black text-color mb-4 tracking-tighter'>
             Lleva tu pasión al <br className='hidden md:block' />
             <span
               style={{
@@ -53,7 +53,7 @@ const Features = () => {
               siguiente nivel
             </span>
           </h3>
-          <p className='text-600 text-xl md:text-2xl font-medium max-w-4xl mx-auto line-height-4'>
+          <p className='text-color-secondary text-xl md:text-2xl font-medium max-w-4xl mx-auto line-height-4'>
             Olvida los foros anticuados. Descubre rutas en un mapa interactivo,
             organiza quedadas épicas, crea tu club y presume de tu máquina.
           </p>
@@ -73,7 +73,7 @@ const Features = () => {
               className='bento-card bento-blue relative group cursor-pointer h-full'
               onClick={() => navigate('/mapa')}
             >
-              <div className='absolute top-0 right-0 -mr-8 -mt-8 w-20rem h-20rem bg-white border-circle opacity-10 blur-3xl group-hover:opacity-20 transition-opacity duration-500 pointer-events-none'></div>
+              <div className='absolute top-0 right-0 -mr-8 -mt-8 w-20rem h-20rem surface-card border-circle opacity-10 blur-3xl group-hover:opacity-20 transition-opacity duration-500 pointer-events-none'></div>
 
               <div className='relative z-1 p-5 md:p-6 flex flex-column h-full justify-content-between'>
                 <div>
@@ -107,7 +107,7 @@ const Features = () => {
           {/* Feature 2: Bento Naranja (Alertas) */}
           <MotionDiv variants={itemVars} className='col-12 lg:col-5 p-3'>
             <div className='bento-card bento-orange relative group flex flex-column h-full'>
-              <div className='absolute bottom-0 left-0 w-full h-20rem bg-white border-circle opacity-10 blur-3xl translate-y-50 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none'></div>
+              <div className='absolute bottom-0 left-0 w-full h-20rem surface-card border-circle opacity-10 blur-3xl translate-y-50 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none'></div>
 
               <div className='relative z-1 p-5 md:p-6 flex flex-column flex-1'>
                 <div className='glass-icon-box'>
@@ -148,7 +148,7 @@ const Features = () => {
                 navigate('/comunidad', { state: { tab: 'crews' } })
               }
             >
-              <div className='absolute top-0 right-0 w-20rem h-20rem bg-white border-circle opacity-10 blur-3xl translate-x-50 -translate-y-50 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none'></div>
+              <div className='absolute top-0 right-0 w-20rem h-20rem surface-card border-circle opacity-10 blur-3xl translate-x-50 -translate-y-50 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none'></div>
 
               <div className='relative z-1 p-5 md:p-6 flex flex-column flex-1'>
                 <div className='glass-icon-box'>
@@ -204,7 +204,7 @@ const Features = () => {
                   </p>
                 </div>
 
-                <div className='flex-1 w-full relative h-15rem md:h-20rem bg-white-alpha-10 border-round-3xl border-2 border-white-alpha-20 flex align-items-center justify-content-center overflow-hidden backdrop-blur-sm mt-5 xl:mt-0'>
+                <div className='flex-1 w-full relative h-15rem md:h-20rem surface-card-alpha-10 border-round-3xl border-2 border-white-alpha-20 flex align-items-center justify-content-center overflow-hidden backdrop-blur-sm mt-5 xl:mt-0'>
                   <div
                     className='mockup-img-card left-card absolute w-12rem md:w-16rem h-16rem md:h-20rem border-round-3xl overflow-hidden z-2 transform rotate-6 ml-4 left-0 md:left-auto md:ml-0'
                     style={{ transformOrigin: 'bottom left' }}

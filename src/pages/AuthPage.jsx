@@ -7,7 +7,7 @@ import { Button } from 'primereact/button'
 import { Toast } from 'primereact/toast'
 import PageTransition from '../components/PageTransition'
 import { Zap, ShieldCheck } from 'lucide-react'
-import './AuthPage.css'
+
 import SEO from '../components/SEO'
 
 const LOGIN_IMAGE =
@@ -190,13 +190,13 @@ const AuthPage = ({ session }) => {
           <div className='auth-form-side'>
             <div className='auth-form-container'>
               <div className='text-center mb-6'>
-                <div className='inline-flex align-items-center justify-content-center w-4rem h-4rem bg-blue-50 text-blue-600 border-circle mb-3'>
+                <div className='inline-flex align-items-center justify-content-center w-4rem h-4rem surface-hover text-blue-600 border-circle mb-3'>
                   {isLogin ? <ShieldCheck size={32} /> : <Zap size={32} />}
                 </div>
-                <h1 className='text-4xl font-black m-0 text-900 tracking-tight'>
+                <h1 className='text-4xl font-black m-0 text-color tracking-tight'>
                   {isLogin ? 'Bienvenido' : 'Crear Cuenta'}
                 </h1>
-                <p className='text-500 text-lg font-medium mt-2 mb-0'>
+                <p className='text-color-secondary text-lg font-medium mt-2 mb-0'>
                   {isLogin
                     ? 'Introduce tus credenciales para acceder'
                     : 'Regístrate en menos de 1 minuto'}

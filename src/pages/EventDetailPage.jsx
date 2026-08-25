@@ -32,7 +32,7 @@ import {
   Camera,
   X,
 } from 'lucide-react'
-import './EventDetailPage.css'
+
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 
@@ -511,9 +511,9 @@ const EventDetailPage = ({ session }) => {
     )
   if (!event)
     return (
-      <div className='flex flex-column justify-content-center align-items-center min-h-screen bg-gray-50 p-6'>
+      <div className='flex flex-column justify-content-center align-items-center min-h-screen surface-ground p-6'>
         <CalendarDays size={80} className='text-300 mb-5 pulse-soft' />
-        <h2 className='text-900 font-black text-4xl mb-5'>
+        <h2 className='text-color font-black text-4xl mb-5'>
           Evento no encontrado
         </h2>
         <Button
@@ -628,13 +628,13 @@ const EventDetailPage = ({ session }) => {
 
             <div className='absolute top-0 left-0 w-full p-4 flex justify-content-between z-3 max-w-7xl mx-auto right-0'>
               <Button
-                className='p-button-rounded p-button-text text-white hover:bg-white-alpha-20 transition-colors backdrop-blur-md'
+                className='p-button-rounded p-button-text text-white hover:surface-card-alpha-20 transition-colors backdrop-blur-md'
                 onClick={() => navigate(-1)}
               >
                 <ArrowLeft size={24} />
               </Button>
               <Button
-                className='p-button-rounded bg-white text-900 border-none shadow-3 hover:scale-110 transition-transform duration-300'
+                className='p-button-rounded surface-card text-color border-none shadow-3 hover:scale-110 transition-transform duration-300'
                 onClick={handleShare}
               >
                 <Share2 size={20} />
@@ -685,13 +685,13 @@ const EventDetailPage = ({ session }) => {
             >
               <div className='col-12 lg:col-8 lg:pr-6 flex-order-1 lg:flex-order-0'>
                 <MotionDiv variants={itemAnim} className='fichar-card'>
-                  <h2 className='text-2xl md:text-3xl font-black text-900 mb-4 flex align-items-center gap-4'>
+                  <h2 className='text-2xl md:text-3xl font-black text-color mb-4 flex align-items-center gap-4'>
                     <div className='icon-box'>
                       <AlignLeft size={28} />
                     </div>
                     Acerca del Evento
                   </h2>
-                  <p className='text-600 text-lg md:text-xl line-height-4 m-0 white-space-pre-wrap font-medium mt-4'>
+                  <p className='text-color-secondary text-lg md:text-xl line-height-4 m-0 white-space-pre-wrap font-medium mt-4'>
                     {event.description ||
                       'El organizador no ha proporcionado una descripción detallada para este evento.'}
                   </p>
@@ -713,7 +713,7 @@ const EventDetailPage = ({ session }) => {
                 </MotionDiv>
 
                 <MotionDiv variants={itemAnim} className='fichar-card'>
-                  <h2 className='text-2xl md:text-3xl font-black text-900 mb-4 flex align-items-center gap-4'>
+                  <h2 className='text-2xl md:text-3xl font-black text-color mb-4 flex align-items-center gap-4'>
                     <div className='icon-box bg-red-50 text-red-500'>
                       <MapPin size={28} />
                     </div>{' '}
@@ -721,10 +721,10 @@ const EventDetailPage = ({ session }) => {
                   </h2>
                   <div className='flex align-items-center gap-4 mb-5 p-2'>
                     <div className='flex flex-column'>
-                      <span className='font-black text-2xl text-900'>
+                      <span className='font-black text-2xl text-color'>
                         {locationName}
                       </span>
-                      <span className='text-500 text-md font-medium mt-1'>
+                      <span className='text-color-secondary text-md font-medium mt-1'>
                         Punto de encuentro aproximado
                       </span>
                     </div>
@@ -789,7 +789,7 @@ const EventDetailPage = ({ session }) => {
                 </MotionDiv>
 
                 <MotionDiv variants={itemAnim} className='fichar-card'>
-                  <h2 className='text-2xl md:text-3xl font-black text-900 mb-4 flex align-items-center gap-4'>
+                  <h2 className='text-2xl md:text-3xl font-black text-color mb-4 flex align-items-center gap-4'>
                     <div className='icon-box bg-purple-50 text-purple-500'>
                       <MessageSquare size={28} />
                     </div>{' '}
@@ -801,7 +801,7 @@ const EventDetailPage = ({ session }) => {
                       onChange={(e) => setNewComment(e.target.value)}
                       rows={3}
                       placeholder='¿Qué esperas de este evento? Escribe algo...'
-                      className='w-full border-round-3xl p-4 border-2 border-gray-100 hover:border-blue-400 focus:border-blue-500 transition-colors shadow-none bg-gray-50 text-lg'
+                      className='w-full border-round-3xl p-4 border-2 border-gray-100 hover:border-blue-400 focus:border-blue-500 transition-colors shadow-none surface-ground text-lg'
                       autoResize
                     />
                     <div className='flex justify-content-end mt-2'>
@@ -831,7 +831,7 @@ const EventDetailPage = ({ session }) => {
                             }
                             shape='circle'
                             size='xlarge'
-                            className='flex-shrink-0 bg-white text-blue-600 cursor-pointer shadow-2 border-2 border-white'
+                            className='flex-shrink-0 surface-card text-blue-600 cursor-pointer shadow-2 border-2 border-white'
                             onClick={() =>
                               navigate(`/usuario/${c.profiles?.username}`)
                             }
@@ -839,30 +839,30 @@ const EventDetailPage = ({ session }) => {
                           <div className='flex-1 comment-bubble'>
                             <div className='flex justify-content-between align-items-center mb-2'>
                               <span
-                                className='font-bold text-900 text-lg cursor-pointer hover:text-blue-600 transition-colors'
+                                className='font-bold text-color text-lg cursor-pointer hover:text-blue-600 transition-colors'
                                 onClick={() =>
                                   navigate(`/usuario/${c.profiles?.username}`)
                                 }
                               >
                                 {c.profiles?.username}
                               </span>
-                              <span className='text-xs text-500 font-bold bg-gray-100 px-3 py-1 border-round-2xl'>
+                              <span className='text-xs text-color-secondary font-bold surface-hover px-3 py-1 border-round-2xl'>
                                 {new Date(c.created_at).toLocaleDateString()}
                               </span>
                             </div>
-                            <p className='m-0 text-600 line-height-4 text-md'>
+                            <p className='m-0 text-color-secondary line-height-4 text-md'>
                               {c.content}
                             </p>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className='text-center py-7 bg-gray-50 border-round-3xl border-2 border-gray-100 border-dashed'>
+                      <div className='text-center py-7 surface-ground border-round-3xl border-2 border-gray-100 border-dashed'>
                         <MessageSquare
                           size={48}
                           className='text-300 mb-4 mx-auto'
                         />
-                        <div className='text-600 font-medium text-lg'>
+                        <div className='text-color-secondary font-medium text-lg'>
                           Aún no hay comentarios. ¡Anímate!
                         </div>
                       </div>
@@ -874,7 +874,7 @@ const EventDetailPage = ({ session }) => {
                   variants={itemAnim}
                   className='fichar-card block lg:hidden mt-4'
                 >
-                  <div className='text-900 font-bold mb-4 text-xs uppercase tracking-widest text-400'>
+                  <div className='text-color font-bold mb-4 text-xs uppercase tracking-widest text-400'>
                     Organizado por
                   </div>
                   <div
@@ -892,11 +892,11 @@ const EventDetailPage = ({ session }) => {
                       }
                       size='xlarge'
                       shape='circle'
-                      className='bg-blue-50 text-blue-600 shadow-2 border-2 border-white'
+                      className='surface-hover text-blue-600 shadow-2 border-2 border-white'
                       style={{ width: '4.5rem', height: '4.5rem' }}
                     />
                     <div className='flex flex-column'>
-                      <span className='font-black text-2xl text-900'>
+                      <span className='font-black text-2xl text-color'>
                         {event.profiles?.username || 'Anónimo'}
                       </span>
                       <span className='text-blue-600 text-md font-bold mt-1 flex align-items-center gap-1'>
@@ -916,7 +916,7 @@ const EventDetailPage = ({ session }) => {
                   <MotionDiv variants={itemAnim} className='fichar-card m-0'>
                     {!isPast && (
                       <div className='mb-6'>
-                        <div className='text-xs font-black text-500 uppercase tracking-widest mb-4 text-center'>
+                        <div className='text-xs font-black text-color-secondary uppercase tracking-widest mb-4 text-center'>
                           El evento comienza en
                         </div>
                         <div className='countdown-container'>
@@ -963,7 +963,7 @@ const EventDetailPage = ({ session }) => {
                     >
                       {!attendingLoading &&
                         (isAttending || isPast ? (
-                          <div className='mr-3 bg-white text-green-600 border-circle w-1.5rem h-1.5rem flex align-items-center justify-content-center'>
+                          <div className='mr-3 surface-card text-green-600 border-circle w-1.5rem h-1.5rem flex align-items-center justify-content-center'>
                             <i className='pi pi-check text-xs font-bold'></i>
                           </div>
                         ) : null)}
@@ -973,17 +973,17 @@ const EventDetailPage = ({ session }) => {
                       <Button
                         label='Añadir al Calendario'
                         icon={<CalendarPlus size={20} className='mr-2' />}
-                        className='w-full p-4 font-bold border-round-2xl bg-white text-700 border-2 border-gray-100 hover:border-gray-300 hover:bg-gray-50 transition-colors mb-5 justify-content-center text-md shadow-none'
+                        className='w-full p-4 font-bold border-round-2xl surface-card text-color-secondary border-2 border-gray-100 hover:surface-border hover:surface-ground transition-colors mb-5 justify-content-center text-md shadow-none'
                         onClick={handleAddToCalendar}
                       />
                     )}
 
                     <div
-                      className='bg-white border-round-3xl mb-5 border-2 border-gray-100 cursor-pointer hover:border-blue-300 hover:shadow-3 transition-all p-5 relative overflow-hidden group'
+                      className='surface-card border-round-3xl mb-5 border-2 border-gray-100 cursor-pointer hover:border-blue-300 hover:shadow-3 transition-all p-5 relative overflow-hidden group'
                       onClick={() => setShowAttendeesModal(true)}
                     >
                       <div className='flex justify-content-between align-items-center mb-4 relative z-1'>
-                        <span className='text-xs font-black text-600 uppercase tracking-widest'>
+                        <span className='text-xs font-black text-color-secondary uppercase tracking-widest'>
                           Asistentes
                         </span>
                         <Tag
@@ -1005,7 +1005,7 @@ const EventDetailPage = ({ session }) => {
                                 }
                                 size='xlarge'
                                 shape='circle'
-                                className='border-2 border-white bg-gray-100 text-gray-600 shadow-2'
+                                className='border-2 border-white surface-hover text-gray-600 shadow-2'
                               />
                             ))}
                             {attendees.length > 5 && (
@@ -1013,7 +1013,7 @@ const EventDetailPage = ({ session }) => {
                                 label={`+${attendees.length - 5}`}
                                 shape='circle'
                                 size='xlarge'
-                                className='bg-gray-100 text-600 font-bold border-2 border-white shadow-2'
+                                className='surface-hover text-color-secondary font-bold border-2 border-white shadow-2'
                               />
                             )}
                           </AvatarGroup>
@@ -1023,7 +1023,7 @@ const EventDetailPage = ({ session }) => {
                           </div>
                         )}
                       </div>
-                      <div className='text-900 text-xs font-black pt-4 border-top-1 surface-border flex align-items-center justify-content-between uppercase tracking-widest relative z-1'>
+                      <div className='text-color text-xs font-black pt-4 border-top-1 surface-border flex align-items-center justify-content-between uppercase tracking-widest relative z-1'>
                         <span>Ver lista completa</span>
                         <ChevronRight size={18} />
                       </div>
@@ -1041,7 +1041,7 @@ const EventDetailPage = ({ session }) => {
                           className={`mr-2 ${isFavorite ? 'fill-current text-pink-500' : ''}`}
                         />
                       }
-                      className={`w-full p-4 font-bold border-round-2xl transition-all text-md justify-content-center shadow-none ${isFavorite ? 'bg-pink-50 text-pink-700 border-2 border-pink-200' : 'bg-white text-700 border-2 border-gray-100 hover:bg-gray-50'}`}
+                      className={`w-full p-4 font-bold border-round-2xl transition-all text-md justify-content-center shadow-none ${isFavorite ? 'bg-pink-50 text-pink-700 border-2 border-pink-200' : 'surface-card text-color-secondary border-2 border-gray-100 hover:surface-ground'}`}
                       onClick={toggleFavorite}
                       loading={favLoading}
                       disabled={isPast}
@@ -1052,7 +1052,7 @@ const EventDetailPage = ({ session }) => {
                     variants={itemAnim}
                     className='fichar-card m-0 hidden lg:block'
                   >
-                    <div className='text-900 font-bold mb-4 text-xs uppercase tracking-widest text-400'>
+                    <div className='text-color font-bold mb-4 text-xs uppercase tracking-widest text-400'>
                       Organizado por
                     </div>
                     <div
@@ -1070,11 +1070,11 @@ const EventDetailPage = ({ session }) => {
                         }
                         size='xlarge'
                         shape='circle'
-                        className='bg-blue-50 text-blue-600 shadow-2 border-2 border-white'
+                        className='surface-hover text-blue-600 shadow-2 border-2 border-white'
                         style={{ width: '4.5rem', height: '4.5rem' }}
                       />
                       <div className='flex flex-column'>
-                        <span className='font-black text-xl text-900'>
+                        <span className='font-black text-xl text-color'>
                           {event.profiles?.username || 'Anónimo'}
                         </span>
                         <span className='text-blue-600 text-sm font-bold mt-1 flex align-items-center gap-1'>
@@ -1090,7 +1090,7 @@ const EventDetailPage = ({ session }) => {
 
             <Dialog
               header={
-                <span className='text-2xl font-black text-900'>Asistentes</span>
+                <span className='text-2xl font-black text-color'>Asistentes</span>
               }
               visible={showAttendeesModal}
               onHide={() => setShowAttendeesModal(false)}
@@ -1108,7 +1108,7 @@ const EventDetailPage = ({ session }) => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
                       key={i}
-                      className='flex align-items-center justify-content-between p-4 border-round-3xl hover:bg-gray-50 transition-colors cursor-pointer border-2 border-transparent hover:border-gray-100'
+                      className='flex align-items-center justify-content-between p-4 border-round-3xl hover:surface-ground transition-colors cursor-pointer border-2 border-transparent hover:border-gray-100'
                       onClick={() => {
                         setShowAttendeesModal(false)
                         navigate(`/usuario/${a.profiles?.username}`)
@@ -1124,9 +1124,9 @@ const EventDetailPage = ({ session }) => {
                           }
                           shape='circle'
                           size='xlarge'
-                          className='bg-white text-blue-600 shadow-2 border-2 border-white'
+                          className='surface-card text-blue-600 shadow-2 border-2 border-white'
                         />
-                        <span className='font-bold text-900 text-lg'>
+                        <span className='font-bold text-color text-lg'>
                           {a.profiles?.username || 'Usuario Anónimo'}
                         </span>
                       </div>
@@ -1135,7 +1135,7 @@ const EventDetailPage = ({ session }) => {
                   ))}
                 </AnimatePresence>
                 {attendees.length === 0 && (
-                  <div className='text-center text-500 py-8 flex flex-column align-items-center gap-4 bg-gray-50 border-round-3xl border-2 border-gray-100 border-dashed'>
+                  <div className='text-center text-color-secondary py-8 flex flex-column align-items-center gap-4 surface-ground border-round-3xl border-2 border-gray-100 border-dashed'>
                     <Users size={48} className='text-300' />
                     <span className='font-medium text-lg'>
                       Aún no hay asistentes confirmados.
@@ -1147,7 +1147,7 @@ const EventDetailPage = ({ session }) => {
 
             <Dialog
               header={
-                <span className='text-2xl font-black text-900'>
+                <span className='text-2xl font-black text-color'>
                   Editar Descripción y Fotos
                 </span>
               }
@@ -1161,7 +1161,7 @@ const EventDetailPage = ({ session }) => {
             >
               <div className='flex flex-column gap-4 pt-2'>
                 <div>
-                  <label className='block text-sm font-bold text-700 mb-2'>
+                  <label className='block text-sm font-bold text-color-secondary mb-2'>
                     Descripción del evento
                   </label>
                   <InputTextarea
@@ -1174,7 +1174,7 @@ const EventDetailPage = ({ session }) => {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-bold text-700 mb-2'>
+                  <label className='block text-sm font-bold text-color-secondary mb-2'>
                     Fotos Adicionales
                   </label>
                   <div className='grid gap-2 mb-3'>
@@ -1196,7 +1196,7 @@ const EventDetailPage = ({ session }) => {
                     ))}
                     <div className='col-4'>
                       <div
-                        className='border-dashed border-2 border-300 border-round-xl flex align-items-center justify-content-center relative hover:bg-gray-50 transition-colors'
+                        className='border-dashed border-2 surface-border border-round-xl flex align-items-center justify-content-center relative hover:surface-ground transition-colors'
                         style={{ height: '100px' }}
                       >
                         <input
@@ -1206,7 +1206,7 @@ const EventDetailPage = ({ session }) => {
                           className='absolute inset-0 w-full h-full opacity-0 cursor-pointer z-1'
                           disabled={uploadingExtra}
                         />
-                        <div className='text-center text-500'>
+                        <div className='text-center text-color-secondary'>
                           {uploadingExtra ? (
                             <i className='pi pi-spin pi-spinner text-xl'></i>
                           ) : (

@@ -9,7 +9,7 @@ import { MapPin, Navigation, Radio, Lock } from 'lucide-react'
 import icon from 'leaflet/dist/images/marker-icon.png'
 import iconShadow from 'leaflet/dist/images/marker-shadow.png'
 import 'leaflet/dist/leaflet.css'
-import './Home.css'
+
 
 const MotionDiv = motion.div
 
@@ -89,8 +89,8 @@ const HomeMap = () => {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEventos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const centerSpain = [40.4637, -3.7492]
@@ -118,16 +118,16 @@ const HomeMap = () => {
               <Radio size={18} className='pulse-soft' />
               <span>Radar en Vivo</span>
             </div>
-            <h2 className='text-5xl md:text-7xl font-black text-900 m-0 mb-4 tracking-tighter'>
+            <h2 className='text-5xl md:text-7xl font-black text-color m-0 mb-4 tracking-tighter'>
               Eventos en <span className='text-gradient'>Tiempo Real</span>
             </h2>
-            <p className='text-600 text-xl md:text-2xl font-medium m-0 max-w-4xl line-height-3'>
+            <p className='text-color-secondary text-xl md:text-2xl font-medium m-0 max-w-4xl line-height-3'>
               Descubre las rutas, KDDs y concentraciones que están ocurriendo
               ahora mismo en toda España. Únete a la acción.
             </p>
           </div>
 
-          <div className='bento-card bg-white p-2 md:p-3 relative overflow-hidden group mt-5'>
+          <div className='bento-card surface-card p-2 md:p-3 relative overflow-hidden group mt-5'>
             <div className='absolute top-50 left-50 translate-middle w-40rem h-40rem bg-blue-400 border-circle opacity-10 blur-3xl pointer-events-none z-0 transition-transform duration-1000 group-hover:scale-110'></div>
             <div
               className='relative z-1 border-round-3xl overflow-hidden shadow-2 border-2 border-gray-100'
@@ -135,7 +135,7 @@ const HomeMap = () => {
             >
               <div className='absolute top-0 left-0 p-4 z-5 pointer-events-none w-full flex justify-content-between'>
                 <div className='fichar-dark-badge font-bold border-round-2xl px-4 py-3 shadow-4 flex align-items-center gap-3'>
-                  <div className='w-2rem h-2rem bg-blue-500 border-circle flex align-items-center justify-content-center'>
+                  <div className='w-2rem h-2rem surface-hover0 border-circle flex align-items-center justify-content-center'>
                     <MapPin size={16} className='text-white' />
                   </div>
                   <span className='text-lg'>
@@ -200,10 +200,10 @@ const HomeMap = () => {
                         <h4 className='font-black m-0 text-gray-900 text-xl mb-2 line-height-2'>
                           {ev.titulo}
                         </h4>
-                        <span className='bg-blue-50 text-blue-600 px-3 py-1 border-round-2xl text-xs font-black uppercase tracking-widest inline-block mb-3 border-1 border-blue-100'>
+                        <span className='surface-hover text-blue-600 px-3 py-1 border-round-2xl text-xs font-black uppercase tracking-widest inline-block mb-3 border-1 border-blue-100'>
                           {ev.tipo}
                         </span>
-                        <div className='flex align-items-center justify-content-center gap-2 text-sm m-0 text-500 font-medium bg-gray-50 p-2 border-round-xl'>
+                        <div className='flex align-items-center justify-content-center gap-2 text-sm m-0 text-color-secondary font-medium surface-ground p-2 border-round-xl'>
                           <i className='pi pi-calendar'></i>
                           {ev.fecha.toLocaleDateString()}
                         </div>
