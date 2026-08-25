@@ -287,7 +287,7 @@ const CommunityPage = () => {
       <div key={user.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
         <div
           className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
-          style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
+          style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
           onClick={() => navigate(`/usuario/${user.username || user.id}`)}
         >
           <div
@@ -337,7 +337,7 @@ const CommunityPage = () => {
               {user.vehicles?.length > 0 ? (
                 <Tag
                   className='surface-hover text-blue-700 font-bold px-3 py-2'
-                  style={{ borderRadius: '1rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                 >
                   <i className='pi pi-car text-xs mr-2'></i>
                   {user.vehicles.length} Vehículos
@@ -345,7 +345,7 @@ const CommunityPage = () => {
               ) : (
                 <Tag
                   className='surface-hover text-color-secondary font-bold px-3 py-2'
-                  style={{ borderRadius: '1rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                 >
                   Nuevo Miembro
                 </Tag>
@@ -355,7 +355,7 @@ const CommunityPage = () => {
               label='Ver Perfil'
               outlined
               className='w-full mt-auto font-bold surface-border text-color-secondary hover:surface-ground'
-              style={{ borderRadius: '0.75rem' }}
+              style={{ borderRadius: 'var(--r)' }}
             />
           </div>
         </div>
@@ -368,7 +368,7 @@ const CommunityPage = () => {
       <div key={crew.id} className='col-12 sm:col-6 md:col-4 p-2'>
         <div
           className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
-          style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
+          style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
         >
           <div
             className='w-full bg-gray-800 relative'
@@ -391,7 +391,7 @@ const CommunityPage = () => {
                 height: '90px',
                 marginTop: '-45px',
                 padding: '4px',
-                borderRadius: '1rem',
+                borderRadius: 'var(--r)',
               }}
             >
               {crew.profile_image_url ? (
@@ -399,12 +399,12 @@ const CommunityPage = () => {
                   src={crew.profile_image_url}
                   alt={crew.name}
                   className='w-full h-full'
-                  style={{ objectFit: 'cover', borderRadius: '0.75rem' }}
+                  style={{ objectFit: 'cover', borderRadius: 'var(--r)' }}
                 />
               ) : (
                 <div
                   className='w-full h-full surface-hover flex align-items-center justify-content-center'
-                  style={{ borderRadius: '0.75rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                 >
                   <Shield size={36} className='text-400' />
                 </div>
@@ -421,7 +421,7 @@ const CommunityPage = () => {
             </p>
             <button
               className='w-full mt-auto font-bold border-none p-2 text-white cursor-pointer'
-              style={{ borderRadius: '0.5rem', backgroundColor: '#2563eb' }}
+              style={{ borderRadius: 'var(--r-media)', backgroundColor: 'var(--librea)' }}
               onClick={(e) => {
                 e.stopPropagation()
                 navigate(`/crew/${crew.name}`)
@@ -441,7 +441,7 @@ const CommunityPage = () => {
       <div key={v.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
         <div
           className='surface-card shadow-2 hover:shadow-4 transition-all flex flex-column relative overflow-hidden h-full'
-          style={{ borderRadius: '1.25rem', border: '1px solid #e2e8f0' }}
+          style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
         >
           {/* ÁREA CLICABLE: REDIRIGE AL PERFIL */}
           <div
@@ -471,7 +471,7 @@ const CommunityPage = () => {
               <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
                 <Heart
                   size={16}
-                  fill={v.likesCount > 0 ? '#ec4899' : 'none'}
+                  fill={v.likesCount > 0 ? 'var(--librea)' : 'none'}
                   className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
                 />
                 <span className='text-white font-bold text-sm'>
@@ -549,11 +549,11 @@ const CommunityPage = () => {
             <div className='flex justify-content-center mb-6'>
               <div
                 className='surface-card p-1 shadow-1 flex flex-wrap justify-content-center gap-1'
-                style={{ borderRadius: '2rem', border: '1px solid #e2e8f0' }}
+                style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
               >
                 <button
                   className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: '1.75rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                   onClick={() => setActiveTab('explorar')}
                 >
                   <Users size={18} /> Explorar
@@ -561,7 +561,7 @@ const CommunityPage = () => {
 
                 <button
                   className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: '1.75rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                   onClick={() => {
                     if (!session)
                       return toast.current.show({
@@ -577,7 +577,7 @@ const CommunityPage = () => {
 
                 <button
                   className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: '1.75rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                   onClick={() => setActiveTab('crews')}
                 >
                   <Shield size={18} /> Crews
@@ -586,7 +586,7 @@ const CommunityPage = () => {
                 {/* PESTAÑA: TOP COCHES */}
                 <button
                   className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: '1.75rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                   onClick={() => setActiveTab('vehiculos')}
                 >
                   <Car size={18} /> Top Coches
@@ -611,7 +611,7 @@ const CommunityPage = () => {
                   className='w-full surface-card border-none shadow-1 font-medium text-lg text-color'
                   style={{
                     padding: '1rem 1rem 1rem 3rem',
-                    borderRadius: '2rem',
+                    borderRadius: 'var(--r)',
                   }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -623,7 +623,7 @@ const CommunityPage = () => {
                   label='Crear Crew'
                   icon={<Plus size={20} className='mr-2' />}
                   className='bg-black border-none hover:bg-black shadow-2 font-bold w-full md:w-auto'
-                  style={{ padding: '1rem 1.5rem', borderRadius: '2rem' }}
+                  style={{ padding: '1rem 1.5rem', borderRadius: 'var(--r)' }}
                   onClick={() => setShowCreateCrew(true)}
                 />
               )}
@@ -703,11 +703,11 @@ const CommunityPage = () => {
 
               <div
                 className='w-full surface-card border-1 surface-border mb-5 relative'
-                style={{ borderRadius: '1rem', height: '180px' }}
+                style={{ borderRadius: 'var(--r)', height: '180px' }}
               >
                 <div
                   className='w-full surface-hover relative cursor-pointer hover:opacity-80 transition-opacity flex align-items-center justify-content-center overflow-hidden'
-                  style={{ height: '120px', borderRadius: '1rem 1rem 0 0' }}
+                  style={{ height: '120px', borderRadius: 'var(--r) var(--r) 0 0' }}
                 >
                   {crewBannerImg ? (
                     <img
@@ -736,19 +736,19 @@ const CommunityPage = () => {
                     height: '80px',
                     left: '24px',
                     bottom: '20px',
-                    borderRadius: '0.75rem',
+                    borderRadius: 'var(--r)',
                     padding: '4px',
                   }}
                 >
                   <div
                     className='w-full h-full surface-hover flex align-items-center justify-content-center text-color-secondary relative'
-                    style={{ borderRadius: '0.5rem' }}
+                    style={{ borderRadius: 'var(--r-media)' }}
                   >
                     {crewProfileImg ? (
                       <img
                         src={URL.createObjectURL(crewProfileImg)}
                         className='w-full h-full absolute top-0 left-0'
-                        style={{ objectFit: 'cover', borderRadius: '0.5rem' }}
+                        style={{ objectFit: 'cover', borderRadius: 'var(--r-media)' }}
                         alt='Logo'
                       />
                     ) : (
@@ -775,7 +775,7 @@ const CommunityPage = () => {
                       setNewCrew({ ...newCrew, name: e.target.value })
                     }
                     className='w-full font-bold text-lg'
-                    style={{ borderRadius: '1rem', padding: '1rem' }}
+                    style={{ borderRadius: 'var(--r)', padding: '1rem' }}
                   />
                   <label htmlFor='crewName'>Nombre de la Crew *</label>
                 </span>
@@ -789,7 +789,7 @@ const CommunityPage = () => {
                     }
                     rows={3}
                     className='w-full text-md'
-                    style={{ borderRadius: '1rem', padding: '1rem' }}
+                    style={{ borderRadius: 'var(--r)', padding: '1rem' }}
                     autoResize
                   />
                   <label htmlFor='crewDesc'>
@@ -800,7 +800,7 @@ const CommunityPage = () => {
                 <Button
                   label='Crear Crew'
                   className='w-full py-3 mt-2 font-bold text-lg bg-black border-none shadow-2 hover:bg-black'
-                  style={{ borderRadius: '1rem' }}
+                  style={{ borderRadius: 'var(--r)' }}
                   onClick={handleCreateCrew}
                   loading={creatingCrew}
                 />

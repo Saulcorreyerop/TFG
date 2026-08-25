@@ -102,7 +102,7 @@ const CrewChat = ({ crewId, session }) => {
   };
 
   return (
-    <div className="flex flex-column h-full w-full surface-card relative overflow-hidden" style={{ borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+    <div className="flex flex-column h-full w-full surface-card relative overflow-hidden" style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
       
       {/* HEADER DEL CHAT */}
       <div className="p-3 surface-card border-bottom-1 surface-border flex align-items-center gap-3 shadow-1 z-1 relative">
@@ -113,7 +113,7 @@ const CrewChat = ({ crewId, session }) => {
       </div>
 
       {/* ZONA DE LECTURA */}
-      <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto" style={{ backgroundColor: 'var(--surface-ground)', backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 0)', backgroundSize: '20px 20px' }}>
+      <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto" style={{ backgroundColor: 'var(--surface-ground)', backgroundImage: 'radial-gradient(var(--linea-viva) 1px, transparent 0)', backgroundSize: '20px 20px' }}>
         {messages.length === 0 ? (
           <div className="h-full flex flex-column align-items-center justify-content-center text-color-secondary">
             <i className="pi pi-inbox text-4xl mb-3 text-300"></i>
@@ -141,7 +141,7 @@ const CrewChat = ({ crewId, session }) => {
                     <div 
                       className={`p-3 shadow-1 ${isMe ? 'text-white' : 'surface-card text-color border-1 surface-border'}`}
                       style={{ 
-                        background: isMe ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : '#ffffff',
+                        background: isMe ? 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' : 'var(--surface-card)',
                         borderBottomLeftRadius: '1.25rem',
                         borderBottomRightRadius: '1.25rem',
                         borderTopRightRadius: isMe ? '4px' : '1.25rem', 
@@ -170,13 +170,13 @@ const CrewChat = ({ crewId, session }) => {
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Escribe un mensaje..."
           className="flex-1 surface-ground border-none px-4 py-3 text-color font-medium"
-          style={{ borderRadius: '24px' }}
+          style={{ borderRadius: 'var(--r)' }}
         />
         <Button 
           type="submit" 
           icon="pi pi-send" 
           className="shadow-2 border-none" 
-          style={{ borderRadius: '50%', width: '3rem', height: '3rem', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}
+          style={{ borderRadius: '50%', width: '3rem', height: '3rem', background: 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' }}
           disabled={!newMessage.trim()} 
           aria-label="Enviar"
         />

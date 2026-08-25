@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column; /* Móvil por defecto: en columna */
   min-height: calc(100vh - 64px);
-  background-color: #f8fafc; /* Fondo suave para la zona que sobre abajo */
+  background-color: var(--surface-50); /* Fondo suave para la zona que sobre abajo */
   overflow: hidden;
   position: relative;
   transition: all 0.5s ease;
@@ -16,7 +16,7 @@
   width: 100%;
   height: 280px; /* Altura de cabecera en móvil */
   flex-shrink: 0;
-  background-color: #0f172a;
+  background-color: var(--asfalto);
   z-index: 1;
 }
 
@@ -59,7 +59,7 @@
 
 .auth-overlay-text {
   font-size: 1rem;
-  color: #cbd5e1;
+  color: var(--linea-viva);
   margin: 0;
   display: none; /* Oculto en móvil para no saturar la pantalla pequeña */
 }
@@ -71,11 +71,11 @@
   align-items: flex-start; /* Que empiece arriba en móvil */
   justify-content: center;
   padding: 2.5rem 1.5rem;
-  background-color: #ffffff;
+  background-color: var(--surface-card);
   z-index: 10;
 
   /* 🔴 EL EFECTO SOLAPAMIENTO DE APP NATIVA 🔴 */
-  border-radius: 32px 32px 0 0;
+  border-radius: var(--r) 32px 0 0;
   margin-top: -40px;
   box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.1);
 }
@@ -89,24 +89,24 @@
 .auth-input-modern {
   width: 100% !important;
   padding: 1.2rem 1rem !important;
-  border-radius: 12px !important;
-  background-color: #f8fafc !important;
+  border-radius: var(--r) !important;
+  background-color: var(--surface-50) !important;
   border: 2px solid transparent !important;
   font-size: 1rem !important;
   font-weight: 600 !important;
-  color: #1e293b !important;
+  color: var(--linea) !important;
   transition: all 0.3s ease !important;
   box-shadow: none !important;
 }
 
 .auth-input-modern:hover {
-  background-color: #f1f5f9 !important;
+  background-color: var(--surface-100) !important;
 }
 
 .auth-input-modern:focus,
 .p-inputwrapper-focus > .auth-input-modern {
-  background-color: #ffffff !important;
-  border-color: #3b82f6 !important;
+  background-color: var(--surface-card) !important;
+  border-color: var(--librea) !important;
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
 }
 
@@ -124,7 +124,7 @@
 .p-input-icon-left > i {
   margin-top: -0.6rem;
   font-size: 1.2rem;
-  color: #94a3b8;
+  color: var(--texto-tenue);
   z-index: 5;
 }
 .p-input-icon-left > .p-inputtext {
@@ -135,11 +135,11 @@
 .auth-btn-primary {
   width: 100%;
   padding: 1.2rem !important;
-  border-radius: 12px !important;
+  border-radius: var(--r) !important;
   font-size: 1.1rem !important;
   font-weight: 800 !important;
   border: none !important;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+  background: linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%) !important;
   box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4) !important;
   transition: all 0.3s ease !important;
   text-transform: uppercase;
@@ -154,18 +154,18 @@
 .auth-switch-text {
   text-align: center;
   margin-top: 2rem;
-  color: #64748b;
+  color: var(--texto-medio);
   font-weight: 600;
 }
 .auth-switch-link {
-  color: #3b82f6;
+  color: var(--librea);
   font-weight: 800;
   cursor: pointer;
   transition: color 0.2s;
   margin-left: 0.5rem;
 }
 .auth-switch-link:hover {
-  color: #7c3aed;
+  color: var(--librea);
   text-decoration: underline;
 }
 

@@ -1,7 +1,7 @@
 /* AISLAMIENTO TOTAL BAJO .contact-premium-v3 */
 
 .contact-premium-v3 {
-  background: #ffffff;
+  background: var(--surface-card);
   min-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -26,10 +26,10 @@
   bottom: -40px;
   width: 12px;
   height: 28px;
-  background: linear-gradient(to top, #f59e0b, #ef4444);
+  background: linear-gradient(to top, var(--ambar), var(--librea));
   border-radius: 50% 50% 20% 20%;
   filter: blur(4px);
-  box-shadow: 0 0 20px #f97316;
+  box-shadow: 0 0 20px var(--ambar);
   animation: v3-pop 1.2s infinite ease-out;
   opacity: 0;
 }
@@ -81,7 +81,7 @@
   position: relative;
 }
 .contact-premium-v3 .v3-tag {
-  color: #1e40af;
+  color: var(--librea-alta);
   font-weight: 900;
   text-transform: uppercase;
   font-size: 0.7rem;
@@ -90,7 +90,7 @@
 .contact-premium-v3 .v3-aura-title {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 950;
-  background: linear-gradient(90deg, #1e40af, #7e22ce);
+  background: linear-gradient(90deg, var(--librea-alta), var(--librea));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 12px rgba(30, 64, 175, 0.3));
@@ -108,22 +108,22 @@
 
 .contact-premium-v3 .v3-card {
   background: white;
-  border-radius: 24px;
+  border-radius: var(--r);
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--surface-border);
 }
 
 .contact-premium-v3 .v3-sidebar {
-  background: #fbfcfd;
-  border-right: 1px solid #e2e8f0;
+  background: var(--surface-50);
+  border-right: 1px solid var(--surface-border);
 }
 
 .contact-premium-v3 .v3-icon-box {
-  background: linear-gradient(135deg, #1e40af, #7e22ce);
+  background: linear-gradient(135deg, var(--librea-alta), var(--librea));
   color: white;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--r);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,16 +139,16 @@
   display: block;
   font-size: 0.65rem;
   font-weight: 800;
-  color: #94a3b8;
+  color: var(--texto-tenue);
   text-transform: uppercase;
 }
 .contact-premium-v3 .v3-info-row span {
-  color: #1e293b;
+  color: var(--linea);
   font-weight: 700;
   font-size: 0.95rem;
 }
 .contact-premium-v3 .v3-socials {
-  color: #cbd5e1;
+  color: var(--linea-viva);
 }
 
 /* --- INPUTS --- */
@@ -157,31 +157,31 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 800;
-  color: #475569;
+  color: var(--texto-medio);
   font-size: 0.75rem;
   text-transform: uppercase;
   margin-bottom: 0.4rem;
 }
 
 .contact-premium-v3 .v3-input {
-  background: #ffffff !important;
-  border: 2px solid #f1f5f9 !important;
-  border-radius: 10px !important;
+  background: var(--surface-card) !important;
+  border: 2px solid var(--surface-100) !important;
+  border-radius: var(--r) !important;
   padding: 0.9rem !important;
   font-weight: 600 !important;
   width: 100% !important;
 }
 
 .contact-premium-v3 .v3-input:focus {
-  border-color: #1e40af !important;
+  border-color: var(--librea-alta) !important;
   box-shadow: 0 0 10px rgba(30, 64, 175, 0.1) !important;
 }
 
 .contact-premium-v3 .v3-nitro-btn {
-  background: linear-gradient(90deg, #1e40af, #7e22ce) !important;
+  background: linear-gradient(90deg, var(--librea-alta), var(--librea)) !important;
   border: none !important;
   padding: 1.2rem !important;
-  border-radius: 14px !important;
+  border-radius: var(--r) !important;
   font-weight: 900 !important;
   color: white !important;
   box-shadow: 0 10px 20px rgba(30, 64, 175, 0.2) !important;

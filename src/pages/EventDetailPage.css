@@ -1,7 +1,7 @@
 /* src/pages/EventDetailPage.css */
 
 .page-wrapper {
-  background-color: #f8fafc;
+  background-color: var(--surface-50);
   min-height: 100vh;
   position: relative;
   overflow-x: clip;
@@ -56,7 +56,7 @@
   width: 100%;
   height: 55vh;
   min-height: 480px;
-  background-color: #0f172a;
+  background-color: var(--asfalto);
   overflow: hidden;
   display: flex;
   align-items: flex-end;
@@ -112,7 +112,7 @@
   inset: 0;
   background: linear-gradient(
     to top,
-    #0f172a 0%,
+    var(--asfalto) 0%,
     rgba(15, 23, 42, 0.4) 60%,
     transparent 100%
   );
@@ -120,9 +120,9 @@
 }
 
 .fichar-card {
-  background: #ffffff;
-  border-radius: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: var(--surface-card);
+  border-radius: var(--r);
+  border: 1px solid var(--surface-border);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 20px 40px -10px rgba(0, 0, 0, 0.03);
@@ -162,9 +162,9 @@
 
 .countdown-box {
   flex: 1;
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border: 1px solid #f1f5f9;
-  border-radius: 20px;
+  background: linear-gradient(145deg, var(--surface-card), var(--surface-50));
+  border: 1px solid var(--surface-100);
+  border-radius: var(--r);
   text-align: center;
   padding: 1.25rem 0.5rem;
   display: flex;
@@ -177,7 +177,7 @@
 .countdown-number {
   font-size: 2rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #2563eb 0%, #6366f1 100%);
+  background: linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1;
@@ -185,7 +185,7 @@
 
 .countdown-label {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--texto-medio);
   text-transform: uppercase;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -193,11 +193,11 @@
 }
 
 .btn-fichar-primary {
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
+  background: linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%) !important;
   border: none !important;
   padding: 1.25rem !important;
   font-size: 1.15rem !important;
-  border-radius: 20px !important;
+  border-radius: var(--r) !important;
   font-weight: 800 !important;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
   box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5) !important;
@@ -210,7 +210,7 @@
 }
 
 .btn-fichar-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  background: linear-gradient(135deg, var(--verde) 0%, var(--verde) 100%) !important;
   box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5) !important;
 }
 
@@ -220,63 +220,63 @@
 }
 
 .btn-fichar-outline {
-  background: #ffffff !important;
-  border: 2px solid #e2e8f0 !important;
-  color: #334155 !important;
-  border-radius: 20px !important;
+  background: var(--surface-card) !important;
+  border: 2px solid var(--surface-border) !important;
+  color: var(--carbono-alto) !important;
+  border-radius: var(--r) !important;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
 .btn-fichar-outline:hover {
-  border-color: #cbd5e1 !important;
+  border-color: var(--linea-viva) !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
   transform: translateY(-4px);
 }
 
 .map-app-btn {
-  border-radius: 16px !important;
-  background-color: #ffffff !important;
-  border: 2px solid #f1f5f9 !important;
-  color: #475569 !important;
+  border-radius: var(--r) !important;
+  background-color: var(--surface-card) !important;
+  border: 2px solid var(--surface-100) !important;
+  color: var(--texto-medio) !important;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
   display: flex !important;
   justify-content: center !important;
 }
 
 .map-app-btn:hover {
-  border-color: #cbd5e1 !important;
+  border-color: var(--linea-viva) !important;
   transform: translateY(-3px);
   box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05) !important;
 }
 
 .map-app-btn.google-btn:hover {
-  color: #3b82f6 !important;
+  color: var(--librea) !important;
 }
 .map-app-btn.waze-btn:hover {
-  color: #06b6d4 !important;
+  color: var(--librea-alta) !important;
 }
 .map-app-btn.apple-btn:hover {
-  color: #0f172a !important;
+  color: var(--asfalto) !important;
 }
 
 .comment-bubble {
-  background-color: #f8fafc;
+  background-color: var(--surface-50);
   border-radius: 0 24px 24px 24px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--surface-100);
   padding: 1.5rem;
   transition: all 0.3s ease;
 }
 
 .comment-bubble:hover {
-  background-color: #ffffff;
-  border-color: #e2e8f0;
+  background-color: var(--surface-card);
+  border-color: var(--surface-border);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
 }
 
 .leaflet-container {
   z-index: 1 !important;
-  border-radius: 24px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--r);
+  border: 1px solid var(--surface-border);
 }
 
 .icon-box {
@@ -285,9 +285,9 @@
   justify-content: center;
   width: 54px;
   height: 54px;
-  background: #eff6ff;
-  border-radius: 18px;
-  color: #3b82f6;
+  background: var(--librea-baja);
+  border-radius: var(--r);
+  color: var(--librea);
 }
 
 .glass-tag {

@@ -68,7 +68,7 @@ const HomePage = () => {
                     <span
                       style={{
                         background:
-                          'linear-gradient(135deg, #60a5fa 0%, #c084fc 100%)',
+                          'linear-gradient(135deg, var(--librea-alta) 0%, var(--librea-alta) 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                       }}
@@ -96,7 +96,7 @@ const HomePage = () => {
                     className='flex align-items-center justify-content-center gap-3 px-6 py-4 border-none font-black text-xl text-white border-round-2xl cursor-pointer shadow-6 transition-transform hover:scale-105 w-full md:w-auto'
                     style={{
                       background:
-                        'linear-gradient(135deg, #2563eb 0%, #9333ea 100%)',
+                        'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)',
                     }}
                   >
                     {session ? 'Explorar Eventos' : 'Crear cuenta gratis'}{' '}

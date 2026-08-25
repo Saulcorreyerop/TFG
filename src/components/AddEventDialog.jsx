@@ -361,27 +361,27 @@ const AddEventDialog = ({
           }
           .premium-input {
             border: 2px solid transparent !important;
-            background-color: #f1f5f9 !important;
+            background-color: var(--surface-100) !important;
             border-radius: 20px !important;
             padding: 1rem 1.25rem !important;
             font-size: 1rem !important;
             font-weight: 600 !important;
-            color: #1e293b !important;
+            color: var(--linea) !important;
             transition: all 0.3s ease !important;
             box-shadow: none !important;
           }
           .premium-input:hover {
-            background-color: #e2e8f0 !important;
+            background-color: var(--surface-border) !important;
           }
           .premium-input:focus, .p-inputwrapper-focus > .premium-input {
-            background-color: #ffffff !important;
-            border-color: #3b82f6 !important;
+            background-color: var(--surface-card) !important;
+            border-color: var(--librea) !important;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
           }
           .premium-label {
             font-size: 0.85rem;
             font-weight: 800;
-            color: #64748b;
+            color: var(--texto-medio);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 0.75rem;
@@ -390,8 +390,8 @@ const AddEventDialog = ({
             gap: 0.5rem;
           }
           .premium-dropzone {
-            background-color: #f8fafc;
-            border: 2px dashed #cbd5e1;
+            background-color: var(--surface-50);
+            border: 2px dashed var(--linea-viva);
             border-radius: 24px;
             padding: 3rem 2rem;
             text-align: center;
@@ -399,12 +399,12 @@ const AddEventDialog = ({
             transition: all 0.3s ease;
           }
           .premium-dropzone:hover {
-            background-color: #eff6ff;
-            border-color: #93c5fd;
+            background-color: var(--librea-baja);
+            border-color: var(--librea-baja);
             transform: translateY(-2px);
           }
           .premium-btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+            background: linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%) !important;
             border: none !important;
             border-radius: 100px !important;
             padding: 1rem 2rem !important;
@@ -438,7 +438,7 @@ const AddEventDialog = ({
               style={{
                 width: '60px',
                 height: '60px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                background: 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)',
                 color: 'white',
               }}
             >
@@ -457,7 +457,7 @@ const AddEventDialog = ({
         visible={visible}
         draggable={false}
         className='w-11 md:w-8 lg:w-6 premium-dialog shadow-8'
-        style={{ borderRadius: '32px' }}
+        style={{ borderRadius: 'var(--r)' }}
         onHide={onHide}
         breakpoints={{ '960px': '85vw', '641px': '100vw' }}
       >
@@ -480,7 +480,7 @@ const AddEventDialog = ({
             <div
               className='field m-0 p-4 border-round-3xl border-1 border-blue-200 relative overflow-hidden'
               style={{
-                background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                background: 'linear-gradient(135deg, var(--librea-baja) 0%, var(--librea-baja) 100%)',
               }}
             >
               <div className='flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between gap-3 relative z-1'>
@@ -750,7 +750,7 @@ const AddEventDialog = ({
             zoom={nuevoEvento.lat ? 15 : 5}
             minZoom={5}
             maxZoom={18}
-            style={{ height: '100%', width: '100%', background: '#e9ecef' }}
+            style={{ height: '100%', width: '100%', background: 'var(--surface-100)' }}
           >
             <TileLayer
               url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'

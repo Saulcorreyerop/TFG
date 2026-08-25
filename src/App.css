@@ -1,27 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-
-:root {
-  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --surface-ground: #f5f5f7; /* Apple style light gray */
-  --text-color: #1d1d1f; /* Apple text color */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.04);
-}
-
-body {
-  font-family: var(--font-family);
-  margin: 0;
-  padding: 0;
-  background-color: var(--surface-ground);
-  color: var(--text-color);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/*
+ * Los colores, la tipografía y el espaciado viven en styles/tokens.css.
+ *
+ * Antes había aquí un bloque :root que redefinía --surface-ground y
+ * --text-color con valores claros fijos. Como se cargaba después del tema
+ * de PrimeReact, lo pisaba: por eso el modo oscuro no podía funcionar
+ * aunque se cambiara el tema. Ya no está.
+ *
+ * Cristal esmerilado, derivado de los tokens para que sirva en los dos temas.
+ */
+:root:root {
+  --glass-bg: color-mix(in srgb, var(--surface-card) 72%, transparent);
+  --glass-border: var(--surface-border);
+  --shadow-soft: var(--sombra-2);
 }
 
 .p-menubar {
   border: none !important;
-  background-color: rgba(255, 255, 255, 0.85) !important;
+  background-color: color-mix(in srgb, var(--surface-card) 85%, transparent) !important;
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 1rem 2rem;
@@ -34,7 +29,7 @@ body {
   width: 100% !important;
   height: 100% !important;
   min-height: 400px;
-  background-color: #e9ecef;
+  background-color: var(--surface-100);
   z-index: 1;
   display: block;
 }
@@ -71,12 +66,12 @@ body {
 .text-flag-esp {
   background: linear-gradient(
     to bottom,
-    #ad1519 0%,
-    #ad1519 30%,
-    #fabd00 30%,
-    #fabd00 70%,
-    #ad1519 70%,
-    #ad1519 100%
+    var(--librea-alta) 0%,
+    var(--librea-alta) 30%,
+    var(--ambar) 30%,
+    var(--ambar) 70%,
+    var(--librea-alta) 70%,
+    var(--librea-alta) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -98,14 +93,17 @@ body {
   font-display: swap;
 }
 
-/* --- FOOTER PREMIUM REDESIGN --- */
+/* --- FOOTER --- */
 .footer-premium {
-  background-color: #0f172a !important;
-  color: #ffffff !important;
+  /* Carbono en vez de asfalto: se separa del fondo de la página en los dos
+     temas. El redondeo de 40px desaparece — es de lo que más contribuía al
+     aspecto de plantilla. La separación la marca ahora la franja de librea. */
+  background-color: var(--carbono) !important;
+  color: var(--text-color) !important;
   margin-top: auto;
-  border-top-left-radius: 40px;
-  border-top-right-radius: 40px;
-  padding: 3rem 1rem 1.5rem 1rem;
+  border-radius: 0;
+  border-top: 2px solid var(--librea);
+  padding: var(--e8) var(--e4) var(--e5);
   position: relative;
   z-index: 10;
 }
@@ -144,10 +142,10 @@ body {
 }
 
 .logo-icon-container {
-  background: rgba(96, 165, 250, 0.2);
-  color: #60a5fa;
+  background: var(--librea-baja);
+  color: var(--librea-alta);
   padding: 0.5rem;
-  border-radius: 12px;
+  border-radius: var(--r);
 }
 
 .logo-text {
@@ -155,11 +153,11 @@ body {
   font-weight: 900;
 }
 .logo-highlight {
-  color: #60a5fa;
+  color: var(--librea-alta);
 }
 
 .brand-description {
-  color: #94a3b8;
+  color: var(--texto-tenue);
   line-height: 1.6;
   max-width: 350px;
   margin-bottom: 1.5rem;
@@ -170,19 +168,19 @@ body {
   gap: 1rem;
 }
 .social-btn {
-  background: #1e293b;
-  color: #94a3b8;
+  background: var(--linea);
+  color: var(--texto-tenue);
   padding: 0.6rem;
   border-radius: 50%;
   transition: 0.3s;
 }
 .social-btn:hover {
-  background: #3b82f6;
+  background: var(--librea);
   color: white;
 }
 
 .nav-title {
-  color: #ffffff;
+  color: var(--text-color);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.85rem;
@@ -197,7 +195,7 @@ body {
 .footer-link-btn {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--texto-tenue);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -207,23 +205,23 @@ body {
   width: 100%;
 }
 .footer-link-btn:hover {
-  color: #ffffff;
+  color: var(--text-color);
   transform: translateX(5px);
 }
 .link-arrow {
-  color: #334155;
+  color: var(--carbono-alto);
 }
 .footer-link-btn:hover .link-arrow {
-  color: #60a5fa;
+  color: var(--librea-alta);
 }
 
 .footer-bottom {
   margin-top: 3rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #1e293b;
+  border-top: 1px solid var(--linea);
   display: flex;
   justify-content: space-between;
-  color: #64748b;
+  color: var(--texto-medio);
   font-size: 0.85rem;
 }
 
@@ -234,11 +232,11 @@ body {
 }
 
 .copyright {
-  color: #64748b;
+  color: var(--texto-medio);
 }
 
 .version {
-  color: #64748b;
+  color: var(--texto-medio);
   font-weight: 600;
 }
 

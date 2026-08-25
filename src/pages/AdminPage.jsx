@@ -281,7 +281,7 @@ const AdminPage = ({ session }) => {
           width: '50px',
           height: '50px',
           objectFit: 'cover',
-          borderRadius: '8px',
+          borderRadius: 'var(--r-media)',
         }}
       />
     ) : (
@@ -310,18 +310,18 @@ const AdminPage = ({ session }) => {
           >
             <div
               className='p-3 border-circle flex align-items-center justify-content-center shadow-2'
-              style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
+              style={{ backgroundColor: 'var(--librea)', color: 'var(--surface-card)' }}
             >
               <ShieldAlert size={32} />
             </div>
             <div>
               <h1
                 className='m-0 text-3xl font-black'
-                style={{ color: '#ffffff' }}
+                style={{ color: 'var(--surface-card)' }}
               >
                 Panel de Moderación
               </h1>
-              <p className='m-0 font-medium mt-1' style={{ color: '#94a3b8' }}>
+              <p className='m-0 font-medium mt-1' style={{ color: 'var(--texto-tenue)' }}>
                 Modo Administrador activado. Ten cuidado con lo que borras.
               </p>
             </div>

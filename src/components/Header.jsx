@@ -20,7 +20,7 @@ import {
   Sun,
   Moon
 } from 'lucide-react'
-import { useTheme } from '../hooks/ThemeContext'
+import { useTheme } from '../hooks/useTheme'
 
 const timeAgo = (dateString) => {
   const date = new Date(dateString)
@@ -253,7 +253,7 @@ const Header = ({ session }) => {
                     key={item.label}
                     onClick={() => navigate(item.path)}
                     className={`flex align-items-center gap-2 px-3 py-2 border-round-3xl cursor-pointer transition-all duration-200 font-bold ${isActive ? 'bg-blue-50' : 'hover:bg-blue-50'}`}
-                    style={{ color: isActive ? '#2563eb' : '#3b82f6' }}
+                    style={{ color: isActive ? 'var(--librea)' : 'var(--librea)' }}
                   >
                     {item.icon}
                     <span>{item.label}</span>
@@ -267,7 +267,7 @@ const Header = ({ session }) => {
               
               <Button
                 type='button'
-                icon={theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                icon={theme === 'oscuro' ? <Sun size={20} /> : <Moon size={20} />}
                 className="p-button-rounded p-button-text p-0 w-3rem h-3rem transition-colors text-color-secondary hover:surface-hover"
                 onClick={toggleTheme}
                 aria-label="Toggle Theme"
@@ -355,8 +355,8 @@ const Header = ({ session }) => {
                     label='Únete'
                     className='font-bold border-round-xl px-4 shadow-2 transition-all'
                     style={{
-                      backgroundColor: '#2563eb',
-                      color: '#ffffff',
+                      backgroundColor: 'var(--librea)',
+                      color: 'var(--surface-card)',
                       border: 'none',
                     }}
                     onClick={() =>
@@ -498,8 +498,8 @@ const Header = ({ session }) => {
                 label='Iniciar Sesión'
                 className='w-full font-bold border-round-xl shadow-2 py-2'
                 style={{
-                  backgroundColor: '#2563eb',
-                  color: '#ffffff',
+                  backgroundColor: 'var(--librea)',
+                  color: 'var(--surface-card)',
                   border: 'none',
                 }}
                 onClick={() => {
@@ -521,7 +521,7 @@ const Header = ({ session }) => {
                     navigate(item.path)
                   }}
                   className={`flex align-items-center gap-3 p-2 border-round-lg text-md transition-all font-bold cursor-pointer ${isActive ? 'bg-blue-50 border-1 border-blue-200' : 'border-1 border-transparent hover:bg-blue-50'}`}
-                  style={{ color: isActive ? '#2563eb' : '#3b82f6' }}
+                  style={{ color: isActive ? 'var(--librea)' : 'var(--librea)' }}
                 >
                   {item.icon}
                   <span>{item.label}</span>

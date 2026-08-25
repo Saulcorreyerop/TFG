@@ -91,7 +91,7 @@ const ActivityFeed = () => {
               <div 
                 className='surface-card hover:shadow-4 transition-all cursor-pointer overflow-hidden h-full flex flex-column'
                 style={{ 
-                  borderRadius: '24px', 
+                  borderRadius: 'var(--r)', 
                   border: '1px solid rgba(226, 232, 240, 0.8)',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.04)' 
                 }}

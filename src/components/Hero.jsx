@@ -52,7 +52,7 @@ const Hero = () => {
           className='absolute inset-0'
           style={{
             background:
-              'linear-gradient(to bottom, rgba(15, 23, 42, 0.4) 0%, #0f172a 100%)',
+              'linear-gradient(to bottom, rgba(15, 23, 42, 0.4) 0%, var(--asfalto) 100%)',
           }}
         ></div>
       </div>
@@ -80,7 +80,7 @@ const Hero = () => {
           className='text-6xl md:text-8xl font-black mb-4 text-white tracking-tighter line-height-1'
           style={{ textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}
         >
-          Encuentra tu próxima <span style={{ color: '#60a5fa' }}>ruta.</span>
+          Encuentra tu próxima <span style={{ color: 'var(--librea-alta)' }}>ruta.</span>
         </MotionH1>
 
         <MotionP

@@ -1,7 +1,7 @@
 /* src/pages/EventsPage.css */
 
 .technical-page-wrapper {
-  background-color: #ffffff;
+  background-color: var(--surface-card);
   min-height: 100vh;
   font-family:
     'Inter',
@@ -34,11 +34,11 @@
 
 /* --- BOTÓN CREAR EVENTO MODERNIZADO --- */
 .btn-create-modern {
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+  background: linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%) !important;
   color: white !important;
   border: none !important;
   padding: 1.2rem !important;
-  border-radius: 12px !important;
+  border-radius: var(--r) !important;
   font-weight: 800 !important;
   letter-spacing: 0.5px;
   box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4) !important;
@@ -56,18 +56,18 @@
 }
 .technical-search input {
   width: 100%;
-  background: #f4f4f5;
+  background: var(--surface-50);
   border: 1px solid transparent;
   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-  border-radius: 8px;
+  border-radius: var(--r-media);
   font-weight: 600;
-  color: #18181b;
+  color: var(--asfalto);
   outline: none;
   transition: all 0.2s;
 }
 .technical-search input:focus {
   background: white;
-  border-color: #3b82f6;
+  border-color: var(--librea);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .technical-search .search-icon {
@@ -75,7 +75,7 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #71717a;
+  color: var(--texto-medio);
 }
 
 /* ITEMS DE CATEGORÍA SIDEBAR */
@@ -83,20 +83,20 @@
   display: flex;
   align-items: center;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--r-media);
   cursor: pointer;
   transition: all 0.2s;
-  color: #52525b;
+  color: var(--texto-medio);
   border: 1px solid transparent;
 }
 .category-item:hover {
-  background: #f4f4f5;
-  color: #000;
+  background: var(--surface-50);
+  color: var(--asfalto);
 }
 .category-item.active {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  background: var(--librea-baja);
+  color: var(--librea-alta);
+  border-color: var(--librea-baja);
   font-weight: 700;
 }
 
@@ -104,9 +104,9 @@
 .technical-cover {
   position: relative;
   height: 450px;
-  border-radius: 16px;
+  border-radius: var(--r);
   overflow: hidden;
-  background: #000;
+  background: var(--asfalto);
 }
 .cover-image-wrapper {
   position: absolute;
@@ -142,7 +142,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  border-radius: var(--r-media);
   display: flex;
   align-items: center;
 }
@@ -153,7 +153,7 @@
   border: none;
   font-size: 0.9rem;
   font-weight: 800;
-  color: #a1a1aa;
+  color: var(--texto-tenue);
   cursor: pointer;
   padding: 0 0 0.75rem 0;
   position: relative;
@@ -161,10 +161,10 @@
   letter-spacing: 0.05em;
 }
 .tech-tab-btn:hover {
-  color: #52525b;
+  color: var(--texto-medio);
 }
 .tech-tab-btn.active {
-  color: #000000;
+  color: var(--asfalto);
 }
 .tech-tab-btn.active::after {
   content: '';
@@ -173,21 +173,21 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background-color: #3b82f6; /* Toque de color en el tab activo */
+  background-color: var(--librea); /* Toque de color en el tab activo */
 }
 
 /* --- TARJETA TIMELINE (Fila) --- */
 .timeline-card {
   display: flex;
   background: white;
-  border: 1px solid #e4e4e7;
-  border-radius: 16px;
+  border: 1px solid var(--surface-100);
+  border-radius: var(--r);
   overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
 }
 .timeline-card:hover {
-  border-color: #cbd5e1;
+  border-color: var(--linea-viva);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
@@ -198,28 +198,28 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: #f8fafc;
+  background: var(--surface-50);
   min-width: 95px;
-  border-right: 1px solid #e4e4e7;
+  border-right: 1px solid var(--surface-100);
 }
 .timeline-date .day {
   font-size: 2.2rem;
   font-weight: 900;
   line-height: 1;
-  color: #0f172a;
+  color: var(--asfalto);
 }
 .timeline-date .month {
   font-size: 0.85rem;
   font-weight: 800;
   text-transform: uppercase;
-  color: #ef4444;
+  color: var(--librea);
   margin-top: 0.25rem;
 }
 
 .timeline-image-wrapper {
   width: 220px;
   position: relative;
-  border-right: 1px solid #e4e4e7;
+  border-right: 1px solid var(--surface-100);
 }
 .timeline-image-wrapper img {
   width: 100%;
@@ -253,18 +253,18 @@
 /* --- BOTÓN "VER" CORREGIDO --- */
 .btn-timeline-ver {
   background-color: transparent !important;
-  border: 2px solid #e4e4e7 !important;
-  color: #18181b !important;
-  border-radius: 8px !important;
+  border: 2px solid var(--surface-100) !important;
+  color: var(--asfalto) !important;
+  border-radius: var(--r-media) !important;
   font-weight: 800 !important;
   transition: all 0.2s ease !important;
 }
 
 /* Forzamos colores explícitos en hover para que no se quede blanco sobre blanco */
 .btn-timeline-ver:hover {
-  background-color: #18181b !important;
-  border-color: #18181b !important;
-  color: #ffffff !important;
+  background-color: var(--asfalto) !important;
+  border-color: var(--asfalto) !important;
+  color: var(--text-color) !important;
 }
 
 /* Adaptación a móviles para la lista */
@@ -286,7 +286,7 @@
     padding: 1rem;
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #e4e4e7;
+    border-bottom: 1px solid var(--surface-100);
   }
   .timeline-date .day {
     font-size: 1.5rem;
@@ -295,7 +295,7 @@
     width: 100%;
     height: 180px;
     border-right: none;
-    border-bottom: 1px solid #e4e4e7;
+    border-bottom: 1px solid var(--surface-100);
   }
 }
 /* =========================================
@@ -304,60 +304,60 @@
 
 /* Tema por defecto (Azul - Todos los tipos) */
 .category-item.active.theme-blue {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  background: var(--librea-baja);
+  color: var(--librea-alta);
+  border-color: var(--librea-baja);
 }
 .category-item.active.theme-blue .indicator {
-  background-color: #2563eb;
+  background-color: var(--librea);
 }
 
 /* Tema Stance (Morado) */
 .category-item.active.theme-purple {
-  background: #faf5ff;
-  color: #7e22ce;
-  border-color: #e9d5ff;
+  background: var(--librea-baja);
+  color: var(--librea);
+  border-color: var(--librea-baja);
 }
 .category-item.active.theme-purple .indicator {
-  background-color: #9333ea;
+  background-color: var(--librea);
 }
 
 /* Tema Ruta (Verde Esmeralda) */
 .category-item.active.theme-emerald {
-  background: #ecfdf5;
-  color: #047857;
-  border-color: #a7f3d0;
+  background: var(--verde-baja);
+  color: var(--verde);
+  border-color: var(--verde-baja);
 }
 .category-item.active.theme-emerald .indicator {
-  background-color: #10b981;
+  background-color: var(--verde);
 }
 
 /* Tema Circuito (Rojo Racing) */
 .category-item.active.theme-red {
-  background: #fef2f2;
-  color: #b91c1c;
-  border-color: #fecaca;
+  background: var(--librea-baja);
+  color: var(--librea-alta);
+  border-color: var(--librea-baja);
 }
 .category-item.active.theme-red .indicator {
-  background-color: #ef4444;
+  background-color: var(--librea);
 }
 
 /* Tema Clásicos (Ámbar / Dorado) */
 .category-item.active.theme-amber {
-  background: #fffbeb;
-  color: #b45309;
-  border-color: #fde68a;
+  background: var(--ambar-baja);
+  color: var(--ambar);
+  border-color: var(--ambar-baja);
 }
 .category-item.active.theme-amber .indicator {
-  background-color: #f59e0b;
+  background-color: var(--ambar);
 }
 
 /* Tema Off-road (Naranja / Tierra) */
 .category-item.active.theme-orange {
-  background: #fff7ed;
-  color: #c2410c;
-  border-color: #fed7aa;
+  background: var(--ambar-baja);
+  color: var(--ambar);
+  border-color: var(--ambar-baja);
 }
 .category-item.active.theme-orange .indicator {
-  background-color: #ea580c;
+  background-color: var(--ambar);
 }

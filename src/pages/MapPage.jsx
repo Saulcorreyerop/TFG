@@ -23,7 +23,7 @@ import SEO from '../components/SEO'
 
 // --- CREADOR DE PINES PERSONALIZADOS ---
 const getCustomIcon = (isPrivate) => {
-  const bgColor = isPrivate ? '#eab308' : '#3b82f6'
+  const bgColor = isPrivate ? 'var(--ambar)' : 'var(--librea)'
   const iconClass = isPrivate ? 'pi-lock' : 'pi-map-marker'
 
   return L.divIcon({
@@ -333,7 +333,7 @@ const MapPage = ({ session }) => {
                 maxBoundsViscosity={1.0}
                 zoomControl={false}
                 className='h-full w-full'
-                style={{ background: '#e9ecef' }}
+                style={{ background: 'var(--surface-100)' }}
                 zoomAnimation={true}
                 markerZoomAnimation={true}
                 trackResize={true}
@@ -434,7 +434,7 @@ const MapPage = ({ session }) => {
                 <div className='mobile-drag-handle'>
                   <div
                     className='w-3rem h-1 border-round opacity-50'
-                    style={{ backgroundColor: '#d1d5db' }}
+                    style={{ backgroundColor: 'var(--linea-viva)' }}
                   ></div>
                 </div>
                 <div className='mt-2 md:mt-0 text-center flex justify-content-center align-items-center flex-column w-full'>

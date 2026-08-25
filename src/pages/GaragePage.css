@@ -26,8 +26,8 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-radius: 16px;
+  background: var(--surface-card);
+  border-radius: var(--r);
   overflow: hidden;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -35,7 +35,7 @@
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--surface-50);
 }
 
 /* Reset de PrimeReact */
@@ -53,7 +53,7 @@
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border-color: #a855f7;
+  border-color: var(--librea);
 }
 
 /* --- IMAGEN --- */
@@ -61,7 +61,7 @@
   width: 100%;
   height: 240px;
   position: relative;
-  background-color: #f3f4f6;
+  background-color: var(--surface-50);
   overflow: hidden;
 }
 
@@ -83,8 +83,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #e5e7eb;
-  color: #9ca3af;
+  background-color: var(--surface-border);
+  color: var(--texto-tenue);
 }
 
 /* --- BADGE --- */
@@ -92,12 +92,12 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(255, 255, 255, 0.95);
+  background: color-mix(in srgb, var(--surface-card) 95%, transparent);
   padding: 6px 12px;
-  border-radius: 99px;
+  border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 800;
-  color: #111827;
+  color: var(--asfalto);
   text-transform: uppercase;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   z-index: 10;
@@ -115,7 +115,7 @@
 .garage-title {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #111827;
+  color: var(--asfalto);
   margin: 0 0 0.5rem 0;
   line-height: 1.2;
 }
@@ -125,21 +125,21 @@
   align-items: center;
   gap: 0.75rem;
   font-size: 0.95rem;
-  color: #4b5563;
+  color: var(--texto-medio);
   font-weight: 500;
   margin-bottom: 1rem;
 }
 
 .garage-divider {
   height: 1px;
-  background-color: #e5e7eb;
+  background-color: var(--surface-border);
   width: 100%;
   margin-bottom: 1rem;
 }
 
 .garage-desc {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--texto-medio);
   line-height: 1.5;
   margin: 0;
   min-height: 3rem;
@@ -162,22 +162,22 @@
 }
 
 .garage-btn.edit {
-  background-color: #eff6ff !important;
-  color: #3b82f6 !important;
+  background-color: var(--librea-baja) !important;
+  color: var(--librea) !important;
 }
 
 .garage-btn.edit:hover {
-  background-color: #dbeafe !important;
+  background-color: var(--librea-baja) !important;
   transform: scale(1.1);
 }
 
 .garage-btn.delete {
-  background-color: #fee2e2 !important;
-  color: #ef4444 !important;
+  background-color: var(--librea-baja) !important;
+  color: var(--librea) !important;
 }
 
 .garage-btn.delete:hover {
-  background-color: #fecaca !important;
+  background-color: var(--librea-baja) !important;
   transform: scale(1.1);
 }
 
@@ -186,15 +186,15 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 4rem 2rem;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 2px dashed #e5e7eb;
+  background: var(--surface-card);
+  border-radius: var(--r);
+  border: 2px dashed var(--surface-border);
 }
 /* --- GALERÍA DE IMÁGENES (SUBIDA Y PREVIEWS) --- */
 .gallery-upload-zone {
-  background-color: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  border-radius: 0.75rem;
+  background-color: var(--surface-50);
+  border: 2px dashed var(--linea-viva);
+  border-radius: var(--r);
   padding: 1.5rem;
   text-align: center;
   cursor: pointer;
@@ -203,8 +203,8 @@
 }
 
 .gallery-upload-zone:hover {
-  background-color: #eff6ff;
-  border-color: #60a5fa;
+  background-color: var(--librea-baja);
+  border-color: var(--librea-alta);
 }
 
 .gallery-preview-grid {
@@ -216,10 +216,10 @@
 
 .gallery-preview-item {
   position: relative;
-  border-radius: 0.5rem;
+  border-radius: var(--r-media);
   overflow: hidden;
   aspect-ratio: 1;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -250,7 +250,7 @@
 
 .remove-preview-btn:hover {
   transform: scale(1.1);
-  background: #dc2626;
+  background: var(--librea);
 }
 
 /* Indicador de fotos en la tarjeta principal */
@@ -262,7 +262,7 @@
   backdrop-filter: blur(4px);
   color: white;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--r-media);
   font-size: 0.75rem;
   font-weight: 700;
   display: flex;

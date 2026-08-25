@@ -781,7 +781,7 @@ const ProfilePage = ({ session }) => {
                 onClick={handleSaveProfile}
                 loading={loading}
                 className='w-full border-round-xl py-3 font-bold mt-2'
-                style={{ backgroundColor: '#2563eb' }}
+                style={{ backgroundColor: 'var(--librea)' }}
               />
             </div>
           </Dialog>

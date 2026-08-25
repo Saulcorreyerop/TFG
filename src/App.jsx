@@ -187,7 +187,7 @@ function App() {
       <h1 style={{ fontSize: '3rem', color: 'var(--text-color)', margin: '0 0 10px 0' }}>
         🛠️ En Desarrollo
       </h1>
-      <p style={{ fontSize: '1.5rem', color: '#64748b', margin: '0' }}>
+      <p style={{ fontSize: '1.5rem', color: 'var(--texto-medio)', margin: '0' }}>
         CarMeet ESP - Proyecto de Saúl Correyero Pañero.
       </p>
     </div>

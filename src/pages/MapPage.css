@@ -8,7 +8,7 @@
   height: calc(100vh - 64px);
   height: calc(100dvh - 64px);
   overflow: hidden;
-  background-color: var(--surface-ground, #f8f9fa);
+  background-color: var(--surface-ground, var(--surface-50));
   position: relative;
 }
 
@@ -48,31 +48,31 @@
 /* --- ESTILOS TARJETAS E INSTRUCCIONES --- */
 .instruction-card {
   background-color: white;
-  border-left: 4px solid #a855f7; /* Morado Intenso */
+  border-left: 4px solid var(--librea); /* Morado Intenso */
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .note-box {
-  background-color: #faf5ff; /* Morado muy suave */
-  border: 1px solid #e9d5ff;
-  color: #4b5563;
+  background-color: var(--librea-baja); /* Morado muy suave */
+  border: 1px solid var(--librea-baja);
+  color: var(--texto-medio);
 }
 
 /* Clases de utilidad de color manuales para asegurar que se vean */
 .text-purple {
-  color: #9333ea !important;
+  color: var(--librea) !important;
 }
 .text-purple-dark {
-  color: #7e22ce !important;
+  color: var(--librea) !important;
 }
 
 /* ESTILO PARA LA LÍNEA SEPARADORA */
 .event-separator {
   border: 0;
   height: 2px; /* Grosor */
-  background-color: #a855f7; /* Color Morado */
+  background-color: var(--librea); /* Color Morado */
   margin: 1rem 0;
   opacity: 0.3; /* Un poco transparente para que no sea muy agresiva */
 }
@@ -82,8 +82,8 @@
   transition: all 0.2s ease;
 }
 .event-card.selected {
-  border-left-color: #a855f7;
-  background-color: #faf5ff;
+  border-left-color: var(--librea);
+  background-color: var(--librea-baja);
 }
 
 /* =========================================
@@ -109,7 +109,7 @@
     height: auto;
     min-height: calc(100dvh - 100px);
     background-color: white;
-    border-radius: 24px 24px 0 0;
+    border-radius: var(--r) 24px 0 0;
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
     position: relative;
     z-index: 10;
@@ -120,7 +120,7 @@
   .sidebar-header {
     position: sticky;
     top: 0;
-    border-radius: 24px 24px 0 0;
+    border-radius: var(--r) 24px 0 0;
     padding-top: 0.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
@@ -165,7 +165,7 @@
     position: static;
     border-radius: 0;
     box-shadow: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--surface-border);
   }
   .mobile-drag-handle {
     display: none;
@@ -180,17 +180,17 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.85);
+  background: color-mix(in srgb, var(--surface-card) 85%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-radius: 2rem;
+  border-radius: var(--r);
   padding: 0.35rem;
   display: flex;
   gap: 0.25rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   max-width: 90%;
   overflow-x: auto;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--surface-border);
   scroll-behavior: smooth;
 }
 
@@ -208,8 +208,8 @@
   position: absolute;
   top: 0.35rem;
   bottom: 0.35rem;
-  background-color: #3b82f6; /* Azul premium */
-  border-radius: 1.5rem;
+  background-color: var(--librea); /* Azul premium */
+  border-radius: var(--r);
   transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Animación "muelle" suave */
   z-index: 0;
   box-shadow: 0 4px 10px -2px rgba(59, 130, 246, 0.5);
@@ -221,7 +221,7 @@
   z-index: 1; /* Por encima del indicador animado */
   border: none;
   padding: 0.6rem 1.2rem;
-  border-radius: 1.5rem;
+  border-radius: var(--r);
   font-weight: 800;
   font-size: 0.85rem;
   cursor: pointer;
@@ -229,12 +229,12 @@
   white-space: nowrap;
   flex-shrink: 0;
   background: transparent;
-  color: #4b5563;
+  color: var(--texto-medio);
   text-transform: capitalize;
 }
 
 .map-filter-btn:hover {
-  color: #1e293b;
+  color: var(--linea);
 }
 
 .map-filter-btn.active {

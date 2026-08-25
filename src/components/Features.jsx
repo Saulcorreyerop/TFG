@@ -45,7 +45,7 @@ const Features = () => {
             Lleva tu pasión al <br className='hidden md:block' />
             <span
               style={{
-                background: 'linear-gradient(135deg, #2563eb 0%, #ec4899 100%)',
+                background: 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}

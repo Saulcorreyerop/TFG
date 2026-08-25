@@ -560,8 +560,8 @@ const PublicProfile = () => {
                     style={
                       !isFollowing
                         ? {
-                            backgroundColor: '#2563eb',
-                            color: '#ffffff',
+                            backgroundColor: 'var(--librea)',
+                            color: 'var(--surface-card)',
                             border: 'none',
                           }
                         : {}
@@ -652,7 +652,7 @@ const PublicProfile = () => {
                             <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
                               <Heart
                                 size={16}
-                                fill={v.likesCount > 0 ? '#ec4899' : 'none'}
+                                fill={v.likesCount > 0 ? 'var(--librea)' : 'none'}
                                 className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
                               />
                               <span className='text-white font-bold text-sm'>

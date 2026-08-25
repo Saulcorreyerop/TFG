@@ -1,7 +1,7 @@
 /* Contenedores de cada sección en cascada */
 .profile-section {
-  background: #ffffff;
-  border-radius: 1.5rem;
+  background: var(--surface-card);
+  border-radius: var(--r);
   padding: 2rem;
   margin-bottom: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
@@ -12,22 +12,22 @@
 .profile-section-title {
   font-size: 1.5rem;
   font-weight: 900;
-  color: #1e293b;
+  color: var(--linea);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: 2px solid var(--surface-100);
 }
 
 /* Tarjetas de los Vehículos */
 .vehicle-card {
-  border-radius: 1rem;
+  border-radius: var(--r);
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-50);
   cursor: pointer;
   height: 100%;
 }
@@ -35,13 +35,13 @@
 .vehicle-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  border-color: #cbd5e1;
+  border-color: var(--linea-viva);
 }
 
 .vehicle-img-wrapper {
   height: 160px;
   overflow: hidden;
-  background: #e2e8f0;
+  background: var(--surface-border);
   position: relative;
 }
 
@@ -58,8 +58,8 @@
 
 /* Tarjeta para Añadir Vehículo */
 .add-vehicle-card {
-  border-radius: 1rem;
-  border: 2px dashed #cbd5e1;
+  border-radius: var(--r);
+  border: 2px dashed var(--linea-viva);
   background: transparent;
   display: flex;
   flex-direction: column;
@@ -69,22 +69,22 @@
   min-height: 230px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #64748b;
+  color: var(--texto-medio);
 }
 
 .add-vehicle-card:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  color: #3b82f6;
+  border-color: var(--librea);
+  background: var(--librea-baja);
+  color: var(--librea);
   transform: translateY(-5px);
 }
 
 /* Tarjetas de los Eventos Modernas */
 .event-card-modern {
-  border-radius: 1.25rem;
+  border-radius: var(--r);
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--surface-border);
   background: white;
   height: 100%;
   display: flex;
@@ -95,7 +95,7 @@
 .event-card-modern:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  border-color: #bfdbfe;
+  border-color: var(--librea-baja);
 }
 
 .event-card-body {
@@ -109,10 +109,10 @@
 .empty-state-box {
   text-align: center;
   padding: 3rem 1rem;
-  background: #f8fafc;
-  border-radius: 1rem;
-  border: 2px dashed #e2e8f0;
-  color: #64748b;
+  background: var(--surface-50);
+  border-radius: var(--r);
+  border: 2px dashed var(--surface-border);
+  color: var(--texto-medio);
 }
 
 /* Indicador de fotos en la tarjeta del vehículo */
@@ -124,7 +124,7 @@
   backdrop-filter: blur(4px);
   color: white;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--r-media);
   font-size: 0.75rem;
   font-weight: 700;
   display: flex;
@@ -167,13 +167,13 @@
 }
 
 .social-icon-btn.twitter {
-  background: #000000; /* Color oficial de X / Twitter */
+  background: var(--asfalto); /* Color oficial de X / Twitter */
 }
 
 .social-icon-btn.tiktok {
-  background: #000000; /* TikTok usa fondo negro con su logo blanco */
+  background: var(--asfalto); /* TikTok usa fondo negro con su logo blanco */
 }
 
 .social-icon-btn.youtube {
-  background: #ff0000; /* El rojo inconfundible de YouTube */
+  background: var(--librea); /* El rojo inconfundible de YouTube */
 }

@@ -252,7 +252,7 @@ const CrewDetailPage = ({ session }) => {
                     <button
                       type='button'
                       className='px-6 py-3 border-none font-bold text-white border-round-xl cursor-pointer shadow-2 transition-all hover:scale-105'
-                      style={{ backgroundColor: '#2563eb' }}
+                      style={{ backgroundColor: 'var(--librea)' }}
                       onClick={handleJoinRequest}
                     >
                       Solicitar unirme
@@ -337,7 +337,7 @@ const CrewDetailPage = ({ session }) => {
                               }
                               className='w-2rem h-2rem border-circle flex align-items-center justify-content-center cursor-pointer shadow-1 border-none transition-transform hover:scale-110 active:scale-95'
                               style={{
-                                backgroundColor: '#ef4444',
+                                backgroundColor: 'var(--librea)',
                                 color: 'white',
                               }}
                             >
@@ -450,7 +450,7 @@ const CrewDetailPage = ({ session }) => {
       <i className="pi pi-comments text-blue-600"></i>
       Chat Oficial
     </h2>
-    <div style={{ height: '500px', borderRadius: '1rem', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+    <div style={{ height: '500px', borderRadius: 'var(--r)', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
       {/* CAMBIA 'crew.id' POR LA VARIABLE QUE TENGA EL ID DE LA CREW EN ESTE ARCHIVO */}
       <CrewChat crewId={crew.id} session={session} />
     </div>

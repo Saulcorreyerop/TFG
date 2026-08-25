@@ -2,7 +2,34 @@
 <html lang="es">
   <head>
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#0E0E10" />
+
+    <!--
+      Tema de PrimeReact. Va aquí y no importado desde JS por dos motivos:
+      se puede cambiar en caliente sustituyendo el href (lo hace
+      ThemeContext), y al estar en el HTML inicial no hay parpadeo.
+      El script de debajo aplica la preferencia guardada antes de pintar.
+    -->
+    <link
+      id="tema-primereact"
+      rel="stylesheet"
+      href="/themes/lara-dark-blue/theme.css"
+    />
+    <script>
+      ;(function () {
+        try {
+          var t = localStorage.getItem('tema') || 'oscuro'
+          document.documentElement.setAttribute('data-tema', t)
+          if (t === 'claro') {
+            document
+              .getElementById('tema-primereact')
+              .setAttribute('href', '/themes/lara-light-blue/theme.css')
+          }
+        } catch (e) {
+          document.documentElement.setAttribute('data-tema', 'oscuro')
+        }
+      })()
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"

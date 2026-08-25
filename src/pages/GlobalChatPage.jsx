@@ -123,7 +123,7 @@ const GlobalChatPage = ({ session }) => {
       <SEO title='Chat Global' description='Habla en tiempo real con toda la comunidad de CarMeet.' url={window.location.href} />
       <PageTransition>
         <div className="min-h-screen surface-ground p-4 md:p-6 pb-8 flex flex-column align-items-center">
-          <div className="w-full max-w-5xl h-full flex flex-column surface-card relative overflow-hidden" style={{ borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 10px 40px rgba(0,0,0,0.08)', height: '80vh' }}>
+          <div className="w-full max-w-5xl h-full flex flex-column surface-card relative overflow-hidden" style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)', boxShadow: '0 10px 40px rgba(0,0,0,0.08)', height: '80vh' }}>
             
             {/* HEADER DEL CHAT */}
             <div className="p-4 surface-card border-bottom-1 surface-border flex justify-content-between align-items-center shadow-1 z-1 relative">
@@ -139,7 +139,7 @@ const GlobalChatPage = ({ session }) => {
             </div>
 
             {/* ZONA DE LECTURA */}
-            <div ref={scrollRef} className="flex-1 p-4 md:p-6 overflow-y-auto" style={{ backgroundColor: 'var(--surface-ground)', backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 0)', backgroundSize: '20px 20px' }}>
+            <div ref={scrollRef} className="flex-1 p-4 md:p-6 overflow-y-auto" style={{ backgroundColor: 'var(--surface-ground)', backgroundImage: 'radial-gradient(var(--linea-viva) 1px, transparent 0)', backgroundSize: '20px 20px' }}>
               {messages.length === 0 ? (
                 <div className="h-full flex flex-column align-items-center justify-content-center text-color-secondary">
                   <i className="pi pi-comments text-6xl mb-3 text-300"></i>
@@ -175,7 +175,7 @@ const GlobalChatPage = ({ session }) => {
                           <div 
                             className={`p-3 shadow-2 ${isMe ? 'text-white' : 'surface-card text-color border-1 surface-border'}`}
                             style={{ 
-                              background: isMe ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : '#ffffff',
+                              background: isMe ? 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' : 'var(--surface-card)',
                               borderBottomLeftRadius: '1.5rem',
                               borderBottomRightRadius: '1.5rem',
                               borderTopRightRadius: isMe ? '4px' : '1.5rem', 
@@ -204,13 +204,13 @@ const GlobalChatPage = ({ session }) => {
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Escribe un mensaje para todos..."
                 className="flex-1 surface-ground border-none px-4 py-3 text-color font-medium text-lg"
-                style={{ borderRadius: '30px' }}
+                style={{ borderRadius: 'var(--r)' }}
               />
               <Button 
                 type="submit" 
                 icon="pi pi-send" 
                 className="shadow-3 border-none" 
-                style={{ borderRadius: '50%', width: '3.5rem', height: '3.5rem', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}
+                style={{ borderRadius: '50%', width: '3.5rem', height: '3.5rem', background: 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' }}
                 disabled={!newMessage.trim()} 
                 aria-label="Enviar"
               />

@@ -22,7 +22,7 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon
 
 const getCustomIcon = (isPrivate) => {
-  const bgColor = isPrivate ? '#eab308' : '#3b82f6' // Dorado para Crew, Azul para públicos
+  const bgColor = isPrivate ? 'var(--ambar)' : 'var(--librea)' // Dorado para Crew, Azul para públicos
   const iconClass = isPrivate ? 'pi-lock' : 'pi-map-marker' // Candado vs Pin normal
 
   return L.divIcon({

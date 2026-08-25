@@ -1,0 +1,271 @@
+/* =========================================================================
+   tokens.css — sistema de diseño "Librea"
+
+   Único lugar donde viven colores, tipografía, espaciado y geometría.
+   Todo lo demás del proyecto los consume; nada define un color por su
+   cuenta.
+
+   Además de los tokens propios, este archivo REDEFINE las variables de
+   PrimeReact (--surface-*, --text-color, --primary-color...). Eso es lo
+   que hace que el cambio alcance a toda la web de una vez, porque de esas
+   variables beben tres cosas a la vez:
+     · los componentes de PrimeReact (Button, Dialog, DataTable...)
+     · las utilidades de PrimeFlex (surface-card, text-color-secondary...)
+     · el CSS propio del proyecto
+
+   Se usa el selector :root:root a propósito. Sube la especificidad por
+   encima del :root del tema de PrimeReact, de modo que estas variables
+   ganan sin depender del orden en que se carguen las hojas de estilo.
+
+   Dirección: competición. El oscuro es el aspecto principal; el claro es
+   una variante que respeta los mismos nombres de token.
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+
+/* -------------------------------------------------------------------------
+   Tokens que no dependen del tema
+   ------------------------------------------------------------------------- */
+
+:root:root {
+  /* Tipografía */
+  --display: "Barlow Condensed", "Arial Narrow", ui-sans-serif, sans-serif;
+  --datos:   "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --font-family: "Barlow", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Escala de espaciado. Nueve valores y ninguno más:
+     relleno de tarjeta 24, hueco entre tarjetas 16/24,
+     separación de bloques 48, de secciones 64/96. */
+  --e1:  4px;
+  --e2:  8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 24px;
+  --e6: 32px;
+  --e7: 48px;
+  --e8: 64px;
+  --e9: 96px;
+
+  /* Geometría: esquinas casi rectas.
+     El chaflán se aplica con .chaflan, solo en momentos puntuales. */
+  --r:       2px;
+  --r-media: 4px;
+  --chaflan: 14px;
+
+  /* Señales — mismo significado en ambos temas */
+  --verde: #3FB984;
+  --ambar: #E0A93B;
+  --verde-baja: rgba(63, 185, 132, 0.12);
+  --ambar-baja: rgba(224, 169, 59, 0.12);
+}
+
+
+/* -------------------------------------------------------------------------
+   Tema oscuro — el principal
+   ------------------------------------------------------------------------- */
+
+:root:root,
+:root:root[data-tema='oscuro'] {
+  color-scheme: dark;
+
+  /* Librea */
+  --librea:      #E4322B;
+  --librea-alta: #FF5347;
+  --librea-baja: rgba(228, 50, 43, 0.12);
+
+  /* Superficies propias */
+  --asfalto:      #0E0E10;
+  --carbono:      #16171A;
+  --carbono-alto: #1D1F23;
+  --linea:        #2B2D33;
+  --linea-viva:   #3A3D45;
+
+  /* Texto propio */
+  --texto-medio: #A2A5AD;
+  --texto-tenue: #71757E;
+
+  /* --- Variables de PrimeReact / PrimeFlex --- */
+  --surface-ground:  #0E0E10;
+  --surface-section: #0E0E10;
+  --surface-card:    #16171A;
+  --surface-overlay: #1D1F23;
+  --surface-hover:   #1D1F23;
+  --surface-border:  #2B2D33;
+
+  --text-color:           #F4F4F3;
+  --text-color-secondary: #A2A5AD;
+
+  --primary-color:      #E4322B;
+  --primary-color-text: #FFFFFF;
+
+  --surface-0:   #0E0E10;
+  --surface-50:  #16171A;
+  --surface-100: #1D1F23;
+  --surface-200: #24272C;
+  --surface-300: #2B2D33;
+  --surface-400: #3A3D45;
+  --surface-500: #4C505A;
+  --surface-600: #71757E;
+  --surface-700: #A2A5AD;
+  --surface-800: #CFD1D6;
+  --surface-900: #F4F4F3;
+
+  --surface-a: #0E0E10;
+  --surface-b: #16171A;
+  --surface-c: #1D1F23;
+  --surface-d: #2B2D33;
+  --surface-e: #16171A;
+  --surface-f: #1D1F23;
+
+  /* Sombras: en oscuro apenas se ven, la profundidad la da el borde */
+  --sombra-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --sombra-2: 0 4px 12px rgba(0, 0, 0, 0.55);
+  --sombra-3: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+
+/* -------------------------------------------------------------------------
+   Tema claro — variante secundaria, mismos nombres de token
+   ------------------------------------------------------------------------- */
+
+:root:root[data-tema='claro'] {
+  color-scheme: light;
+
+  /* El rojo se oscurece: sobre blanco, el #E4322B no llega a contraste AA */
+  --librea:      #C42A24;
+  --librea-alta: #A82019;
+  --librea-baja: rgba(196, 42, 36, 0.10);
+
+  --asfalto:      #F2F2F0;
+  --carbono:      #FFFFFF;
+  --carbono-alto: #F7F7F5;
+  --linea:        #DEDEDA;
+  --linea-viva:   #C4C4BE;
+
+  --texto-medio: #5F636B;
+  --texto-tenue: #8A8E96;
+
+  --surface-ground:  #F2F2F0;
+  --surface-section: #F2F2F0;
+  --surface-card:    #FFFFFF;
+  --surface-overlay: #FFFFFF;
+  --surface-hover:   #F7F7F5;
+  --surface-border:  #DEDEDA;
+
+  --text-color:           #16171A;
+  --text-color-secondary: #5F636B;
+
+  --primary-color:      #C42A24;
+  --primary-color-text: #FFFFFF;
+
+  --surface-0:   #FFFFFF;
+  --surface-50:  #F7F7F5;
+  --surface-100: #F2F2F0;
+  --surface-200: #E7E7E3;
+  --surface-300: #DEDEDA;
+  --surface-400: #C4C4BE;
+  --surface-500: #A0A099;
+  --surface-600: #8A8E96;
+  --surface-700: #5F636B;
+  --surface-800: #33363B;
+  --surface-900: #16171A;
+
+  --surface-a: #FFFFFF;
+  --surface-b: #F2F2F0;
+  --surface-c: #F7F7F5;
+  --surface-d: #DEDEDA;
+  --surface-e: #FFFFFF;
+  --surface-f: #F7F7F5;
+
+  --sombra-1: 0 1px 2px rgba(20, 20, 22, 0.06);
+  --sombra-2: 0 4px 12px rgba(20, 20, 22, 0.08);
+  --sombra-3: 0 12px 32px rgba(20, 20, 22, 0.10);
+}
+
+
+/* -------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------- */
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--surface-ground);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Titulares en condensada. Las mayúsculas NO se fuerzan aquí: se aplican
+   con .rotulo o .display, porque muchos titulares son contenido de usuario
+   (nombres de coche, títulos de evento) y gritarlos siempre queda mal. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+}
+
+
+/* -------------------------------------------------------------------------
+   Utilidades del sistema
+   ------------------------------------------------------------------------- */
+
+/* Etiqueta técnica: metadatos, cabeceras de columna, estados */
+.rotulo {
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+/* Cifras: siempre de ancho fijo para que alineen en columna */
+.datos {
+  font-family: var(--datos);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Titular en mayúsculas, para cabeceras de sección */
+.display {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Chaflán de esquina. Uso puntual: tarjeta destacada, evento del día. */
+.chaflan {
+  border-radius: 0;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--chaflan)) 0,
+    100% var(--chaflan),
+    100% 100%,
+    var(--chaflan) 100%,
+    0 calc(100% - var(--chaflan))
+  );
+}
+
+/* Franja diagonal de librea. Se pone sobre un contenedor con position
+   relative y overflow hidden. Es el motivo de identidad: usar poco. */
+.franja-librea { position: relative; }
+
+.franja-librea::before {
+  content: '';
+  position: absolute;
+  inset: 0 -10% 0 auto;
+  width: 45%;
+  background: repeating-linear-gradient(
+    -68deg,
+    var(--librea) 0 3px,
+    transparent 3px 22px
+  );
+  opacity: 0.14;
+  pointer-events: none;
+}
