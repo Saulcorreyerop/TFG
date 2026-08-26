@@ -1,0 +1,329 @@
+/* =========================================================================
+   Selector de provincia — sistema Librea
+
+   La rejilla imita un panel de resultados: cifra grande arriba, nombre
+   debajo y separadores de un píxel en vez de tarjetas sueltas con sombra.
+   ========================================================================= */
+
+.sr-solo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.zonas {
+  padding: var(--e9) var(--e5);
+  background: var(--surface-ground);
+}
+
+.zonas-caja {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Cabecera --- */
+
+.zonas-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--e5);
+  margin-bottom: var(--e6);
+}
+
+.zonas-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 0.95;
+  color: var(--text-color);
+  margin: var(--e2) 0 0;
+}
+
+/* --- Buscador --- */
+
+.zonas-buscador {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  padding: var(--e1) var(--e1) var(--e1) var(--e3);
+  min-width: min(22rem, 100%);
+  flex: 0 1 22rem;
+  transition: border-color 140ms ease;
+}
+
+.zonas-buscador:focus-within {
+  border-color: var(--librea);
+}
+
+.zonas-lupa {
+  color: var(--texto-tenue);
+  flex-shrink: 0;
+}
+
+.zonas-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  padding: var(--e2) 0;
+}
+
+.zonas-input::placeholder {
+  color: var(--texto-tenue);
+}
+
+.zonas-input:focus {
+  outline: none;
+}
+
+.zonas-ir {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--librea);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.zonas-ir:hover {
+  background: var(--librea-alta);
+}
+
+.zonas-ir:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+/* --- Rejilla --- */
+
+.zonas-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 1px;
+  background: var(--surface-border);
+  border: 1px solid var(--surface-border);
+}
+
+.zona {
+  position: relative;
+  background: var(--carbono);
+  border: none;
+  border-left: 2px solid transparent;
+  padding: var(--e5);
+  min-height: 8.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 2px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.zona:hover {
+  background: var(--carbono-alto);
+  border-left-color: var(--librea);
+}
+
+.zona:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: -2px;
+}
+
+.zona-total {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-color);
+  margin-bottom: var(--e2);
+}
+
+.zona:hover .zona-total {
+  color: var(--librea);
+}
+
+.zona-nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-color);
+  line-height: 1.1;
+}
+
+.zona-pie {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+.zona-pin {
+  position: absolute;
+  top: var(--e4);
+  right: var(--e4);
+  color: var(--texto-tenue);
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.zona:hover .zona-pin {
+  opacity: 1;
+}
+
+/* Celda de "ver todas" */
+.zona-todas {
+  justify-content: center;
+  align-items: flex-start;
+  background: var(--asfalto);
+}
+
+.zona-todas .zona-nombre {
+  color: var(--texto-medio);
+}
+
+.zona-todas:hover .zona-nombre {
+  color: var(--text-color);
+}
+
+.zona-flecha {
+  color: var(--librea);
+  margin-top: var(--e2);
+  transition: transform 160ms ease;
+}
+
+.zona-todas:hover .zona-flecha {
+  transform: translateX(4px);
+}
+
+/* Huecos mientras carga */
+.zona-hueco {
+  background: var(--carbono);
+  min-height: 8.5rem;
+  animation: zona-latido 1.4s ease-in-out infinite;
+}
+
+@keyframes zona-latido {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* --- Pie --- */
+
+.zonas-nota {
+  margin: var(--e5) 0 0;
+  color: var(--texto-medio);
+  font-size: 0.9375rem;
+}
+
+.zonas-enlace {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--librea);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.zonas-enlace:hover {
+  color: var(--librea-alta);
+}
+
+/* --- Sin eventos --- */
+
+.zonas-vacio {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--librea);
+  padding: var(--e8) var(--e6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e3);
+}
+
+.zonas-vacio-icono {
+  color: var(--librea);
+}
+
+.zonas-vacio-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.75rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.zonas-vacio-texto {
+  color: var(--texto-medio);
+  max-width: 46ch;
+  margin: 0 0 var(--e3);
+  line-height: 1.55;
+}
+
+/* --- Móvil --- */
+
+@media (max-width: 768px) {
+  .zonas {
+    padding: var(--e7) var(--e4);
+  }
+  .zonas-cabecera {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--e4);
+    margin-bottom: var(--e5);
+  }
+  .zonas-buscador {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .zonas-rejilla {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  }
+  .zona {
+    padding: var(--e4);
+    min-height: 7rem;
+  }
+  .zona-total {
+    font-size: 1.75rem;
+  }
+  .zona-nombre {
+    font-size: 1.0625rem;
+  }
+  .zonas-vacio {
+    padding: var(--e6) var(--e5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zona-hueco { animation: none; }
+  .zona-flecha { transition: none; }
+}

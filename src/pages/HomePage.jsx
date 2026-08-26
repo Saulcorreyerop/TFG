@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient'
 import { ArrowRight } from 'lucide-react'
 
 import Hero from '../components/Hero'
-import Features from '../components/Features'
+import ZonaProvincias from '../components/ZonaProvincias'
 import HomeMap from '../components/HomeMap'
 import ActivityFeed from '../components/ActivityFeed'
 import EventCarousel from '../components/EventCarousel'
@@ -65,7 +65,7 @@ const HomePage = ({ session }) => {
       <PageTransition>
         <div className='portada'>
           <Hero session={session} estadisticas={estadisticas} />
-          <Features />
+          <ZonaProvincias />
           <HomeMap />
           <ActivityFeed />
           <EventCarousel />
