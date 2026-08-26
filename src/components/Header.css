@@ -1,0 +1,414 @@
+/* =========================================================================
+   Cabecera y menú móvil — sistema Librea
+
+   La disposición no cambia (logo a la izquierda, navegación al centro,
+   acciones a la derecha): solo el acabado.
+
+   La referencia es un panel de cronometraje: rótulos en condensada, el
+   elemento activo marcado con una barra de librea abajo en vez de una
+   píldora de color, y el rojo reservado a lo que está activo.
+   ========================================================================= */
+
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  background: var(--carbono);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+/* Filo de librea: dos píxeles que separan la cabecera del contenido y dan
+   identidad sin ocupar espacio. */
+.cabecera::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--librea) 0%,
+    var(--librea) 22%,
+    transparent 22%
+  );
+}
+
+/* --- Logo --- */
+
+.cabecera-logo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.75rem;
+  letter-spacing: 0.01em;
+  color: var(--text-color);
+  margin: 0;
+  line-height: 1;
+  transition: opacity 140ms ease;
+}
+
+.cabecera-logo:hover {
+  opacity: 0.75;
+}
+
+.cabecera-logo .esp {
+  color: var(--librea);
+}
+
+/* --- Navegación de escritorio --- */
+
+.nav-enlace {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e3) var(--e3);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-medio);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 0;
+  transition: color 140ms ease;
+}
+
+.nav-enlace:hover {
+  color: var(--text-color);
+}
+
+.nav-enlace::after {
+  content: '';
+  position: absolute;
+  left: var(--e3);
+  right: var(--e3);
+  bottom: 6px;
+  height: 2px;
+  background: var(--librea);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms ease;
+}
+
+.nav-enlace.activo {
+  color: var(--text-color);
+}
+
+.nav-enlace.activo::after {
+  transform: scaleX(1);
+}
+
+.nav-enlace:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: -2px;
+}
+
+/* --- Botones de acción de la cabecera --- */
+
+.cabecera-icono.p-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border-radius: var(--r);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--texto-medio);
+  transition: color 140ms ease, background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.cabecera-icono.p-button:hover {
+  background: var(--carbono-alto);
+  border-color: var(--surface-border);
+  color: var(--text-color);
+}
+
+.cabecera-icono.p-button.peligro:hover {
+  color: var(--librea);
+  border-color: var(--librea);
+}
+
+.cabecera-icono.p-button.aviso:hover {
+  color: var(--ambar);
+  border-color: var(--ambar);
+}
+
+.cabecera-icono.p-button.hamburguesa {
+  border-color: var(--surface-border);
+  color: var(--text-color);
+}
+
+/* --- Bloque de usuario --- */
+
+.cabecera-usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e1) var(--e3) var(--e1) var(--e1);
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.cabecera-usuario:hover {
+  background: var(--carbono-alto);
+  border-color: var(--surface-border);
+}
+
+.cabecera-usuario .nombre {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-color);
+}
+
+.cabecera-avatar.p-avatar {
+  background: var(--carbono-alto);
+  color: var(--librea);
+  border: 1px solid var(--surface-border);
+  border-radius: 50%;
+}
+
+/* --- Botones entrar / únete --- */
+
+.btn-cabecera {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 9px var(--e5);
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease,
+    color 140ms ease;
+}
+
+.btn-cabecera.plano {
+  background: transparent;
+  color: var(--texto-medio);
+}
+.btn-cabecera.plano:hover {
+  color: var(--text-color);
+}
+
+.btn-cabecera.solido {
+  background: var(--librea);
+  /* Blanco explícito: el texto va sobre el rojo, no sobre una superficie
+     del tema, así que no puede salir de --surface-card. */
+  color: #fff;
+}
+.btn-cabecera.solido:hover {
+  background: var(--librea-alta);
+}
+
+.btn-cabecera:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+/* =========================================================================
+   MENÚ MÓVIL
+
+   El fondo se pinta aquí a mano y con !important porque ninguna regla lo
+   pintaba: el tema de PrimeReact va dentro de @layer primereact, que pierde
+   frente a cualquier hoja sin capa, y la utilidad surface-card que llevaba
+   el componente no llegaba a aplicarse. El resultado era un panel
+   transparente con el contenido flotando sobre la página.
+   ========================================================================= */
+
+.menu-lateral.p-sidebar {
+  background: var(--carbono) !important;
+  color: var(--text-color);
+  border: none !important;
+  border-left: 2px solid var(--librea) !important;
+  border-radius: 0 !important;
+  box-shadow: -24px 0 48px rgba(0, 0, 0, 0.55) !important;
+}
+
+.menu-lateral .p-sidebar-header {
+  padding: var(--e4) var(--e4) 0;
+}
+
+.menu-lateral .p-sidebar-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--carbono);
+}
+
+.menu-lateral .p-sidebar-close {
+  color: var(--texto-medio);
+  border-radius: var(--r);
+}
+
+.menu-lateral .p-sidebar-close:hover {
+  background: var(--carbono-alto) !important;
+  color: var(--text-color) !important;
+}
+
+/* El velo de detrás, más oscuro de lo que trae el tema */
+.p-sidebar-mask {
+  background: rgba(0, 0, 0, 0.72) !important;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* --- Secciones del menú --- */
+
+.menu-cabeza {
+  padding: var(--e4);
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--asfalto);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.menu-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.375rem;
+  letter-spacing: 0.04em;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.menu-usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+.menu-usuario:hover {
+  border-color: var(--librea);
+}
+
+.menu-usuario .nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-color);
+  line-height: 1.1;
+}
+
+.menu-usuario .pie {
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--librea);
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.menu-lista {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--e3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.menu-enlace {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-medio);
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: color 140ms ease, background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.menu-enlace:hover {
+  background: var(--carbono-alto);
+  color: var(--text-color);
+}
+
+.menu-enlace.activo {
+  color: var(--text-color);
+  background: var(--carbono-alto);
+  border-left-color: var(--librea);
+}
+
+.menu-pie {
+  padding: var(--e3);
+  border-top: 1px solid var(--surface-border);
+  background: var(--asfalto);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.menu-boton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 11px var(--e4);
+  border-radius: var(--r);
+  border: 1px solid var(--surface-border);
+  background: transparent;
+  color: var(--texto-medio);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.menu-boton.entrar {
+  background: var(--librea);
+  border-color: var(--librea);
+  color: #fff;
+}
+.menu-boton.entrar:hover {
+  background: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+.menu-boton.aviso:hover {
+  color: var(--ambar);
+  border-color: var(--ambar);
+}
+
+.menu-boton.peligro:hover {
+  color: var(--librea);
+  border-color: var(--librea);
+}

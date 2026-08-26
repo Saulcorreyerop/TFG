@@ -21,6 +21,7 @@ import {
   Moon
 } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
+import './Header.css'
 
 const timeAgo = (dateString) => {
   const date = new Date(dateString)
@@ -223,14 +224,7 @@ const Header = ({ session }) => {
       />
 
       <header
-        className='w-full shadow-1 border-bottom-1 surface-border'
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 1000,
-          background: 'var(--surface-card)',
-          backdropFilter: 'blur(12px)',
-        }}
+        className='cabecera'
       >
         <div className='w-full px-4 md:px-6'>
           <div className='flex align-items-center h-5rem w-full'>
@@ -239,8 +233,8 @@ const Header = ({ session }) => {
               className='flex-none w-10rem md:w-15rem flex align-items-center cursor-pointer hover:opacity-80 transition-opacity'
               onClick={() => navigate('/')}
             >
-              <h2 className='text-2xl md:text-3xl font-black text-color m-0 tracking-tight'>
-                CarMeet<span className='text-flag-esp'>ESP</span>
+              <h2 className='cabecera-logo'>
+                CarMeet<span className='esp'>ESP</span>
               </h2>
             </div>
 
@@ -252,8 +246,7 @@ const Header = ({ session }) => {
                   <div
                     key={item.label}
                     onClick={() => navigate(item.path)}
-                    className={`flex align-items-center gap-2 px-3 py-2 border-round-3xl cursor-pointer transition-all duration-200 font-bold ${isActive ? 'bg-blue-50' : 'hover:bg-blue-50'}`}
-                    style={{ color: isActive ? 'var(--librea)' : 'var(--librea)' }}
+                    className={`nav-enlace ${isActive ? 'activo' : ''}`}
                   >
                     {item.icon}
                     <span>{item.label}</span>
@@ -268,7 +261,7 @@ const Header = ({ session }) => {
               <Button
                 type='button'
                 icon={theme === 'oscuro' ? <Sun size={20} /> : <Moon size={20} />}
-                className="p-button-rounded p-button-text p-0 w-3rem h-3rem transition-colors text-color-secondary hover:surface-hover"
+                className='cabecera-icono p-button-text'
                 onClick={toggleTheme}
                 aria-label="Toggle Theme"
               />
@@ -304,16 +297,16 @@ const Header = ({ session }) => {
 
                   <div className='hidden md:flex align-items-center gap-2 pl-3 border-left-1 surface-border'>
                     <div
-                      className='flex align-items-center gap-2 cursor-pointer hover:surface-hover p-1 pr-3 border-round-3xl transition-colors'
+                      className='cabecera-usuario'
                       onClick={() => navigate('/perfil')}
                     >
                       <Avatar
                         image={displayAvatar}
                         icon={!displayAvatar ? 'pi pi-user' : null}
                         shape='circle'
-                        className='bg-blue-100 text-blue-600 border-1 border-blue-200 shadow-1'
+                        className='cabecera-avatar'
                       />
-                      <span className='font-bold text-sm text-color'>
+                      <span className='nombre'>
                         {displayName}
                       </span>
                     </div>
@@ -322,7 +315,7 @@ const Header = ({ session }) => {
                       rounded
                       text
                       severity='danger'
-                      className='w-2rem h-2rem hover:bg-red-50 p-0'
+                      className='cabecera-icono peligro p-button-text'
                       onClick={handleLogoutConfirmation}
                       tooltip='Salir'
                       tooltipOptions={{ position: 'bottom' }}
@@ -333,7 +326,7 @@ const Header = ({ session }) => {
                         rounded
                         text
                         severity='warning'
-                        className='w-2rem h-2rem hover:bg-yellow-50 p-0 mr-1'
+                        className='cabecera-icono aviso p-button-text'
                         onClick={() => navigate('/admin')}
                         tooltip='Panel Admin'
                         tooltipOptions={{ position: 'bottom' }}
@@ -342,33 +335,31 @@ const Header = ({ session }) => {
                   </div>
                 </>
               ) : (
-                <div className='hidden md:flex align-items-center gap-3'>
-                  <Button
-                    label='Entrar'
-                    text
-                    className='font-bold text-color-secondary hover:surface-hover border-round-xl px-4'
+                <div className='hidden md:flex align-items-center gap-2'>
+                  <button
+                    type='button'
+                    className='btn-cabecera plano'
                     onClick={() =>
                       navigate('/login', { state: { activeIndex: 0 } })
                     }
-                  />
-                  <Button
-                    label='Únete'
-                    className='font-bold border-round-xl px-4 shadow-2 transition-all'
-                    style={{
-                      backgroundColor: 'var(--librea)',
-                      color: 'var(--surface-card)',
-                      border: 'none',
-                    }}
+                  >
+                    Entrar
+                  </button>
+                  <button
+                    type='button'
+                    className='btn-cabecera solido'
                     onClick={() =>
                       navigate('/login', { state: { activeIndex: 1 } })
                     }
-                  />
+                  >
+                    Únete
+                  </button>
                 </div>
               )}
 
               <Button
                 icon={<Menu size={24} className='text-color' />}
-                className='lg:hidden w-3rem h-3rem surface-card shadow-1 border-1 surface-border border-round-xl ml-2 text-color-secondary hover:surface-hover p-button-text'
+                className='cabecera-icono hamburguesa lg:hidden ml-2 p-button-text'
                 onClick={() => setMobileMenuOpen(true)}
               />
             </div>
@@ -461,17 +452,15 @@ const Header = ({ session }) => {
         visible={mobileMenuOpen}
         position='right'
         onHide={() => setMobileMenuOpen(false)}
-        className='w-full md:w-20rem p-0 surface-card'
+        className='menu-lateral w-full md:w-22rem'
       >
         <div className='flex flex-column h-full surface-card'>
-          <div className='p-3 border-bottom-1 surface-border surface-ground'>
-            <div className='flex justify-content-between align-items-center mb-3'>
-              <h2 className='text-xl font-black text-color m-0'>Menú</h2>
-            </div>
+          <div className='menu-cabeza'>
+            <h2 className='menu-titulo'>Menú</h2>
 
             {session ? (
               <div
-                className='flex align-items-center gap-3 surface-card p-2 border-round-xl shadow-1 border-1 surface-border cursor-pointer hover:border-blue-300 transition-colors'
+                className='menu-usuario'
                 onClick={() => {
                   setMobileMenuOpen(false)
                   navigate('/perfil')
@@ -482,35 +471,30 @@ const Header = ({ session }) => {
                   icon={!displayAvatar ? 'pi pi-user' : null}
                   shape='circle'
                   size='large'
-                  className='bg-blue-100 text-blue-600 border-1 border-blue-200'
+                  className='cabecera-avatar'
                 />
                 <div>
-                  <div className='font-bold text-color text-md'>
-                    {displayName}
-                  </div>
-                  <div className='text-xs text-blue-600 font-bold mt-1'>
-                    Ver mi perfil <i className='pi pi-arrow-right text-xs'></i>
+                  <div className='nombre'>{displayName}</div>
+                  <div className='pie'>
+                    Ver mi perfil <i className='pi pi-arrow-right'></i>
                   </div>
                 </div>
               </div>
             ) : (
-              <Button
-                label='Iniciar Sesión'
-                className='w-full font-bold border-round-xl shadow-2 py-2'
-                style={{
-                  backgroundColor: 'var(--librea)',
-                  color: 'var(--surface-card)',
-                  border: 'none',
-                }}
+              <button
+                type='button'
+                className='menu-boton entrar'
                 onClick={() => {
                   setMobileMenuOpen(false)
                   navigate('/login', { state: { activeIndex: 0 } })
                 }}
-              />
+              >
+                Iniciar sesión
+              </button>
             )}
           </div>
 
-          <div className='flex-1 overflow-y-auto p-3 flex flex-column gap-1'>
+          <div className='menu-lista'>
             {navItems.map((item) => {
               const isActive = location.pathname.startsWith(item.path)
               return (
@@ -520,8 +504,7 @@ const Header = ({ session }) => {
                     setMobileMenuOpen(false)
                     navigate(item.path)
                   }}
-                  className={`flex align-items-center gap-3 p-2 border-round-lg text-md transition-all font-bold cursor-pointer ${isActive ? 'bg-blue-50 border-1 border-blue-200' : 'border-1 border-transparent hover:bg-blue-50'}`}
-                  style={{ color: isActive ? 'var(--librea)' : 'var(--librea)' }}
+                  className={`menu-enlace ${isActive ? 'activo' : ''}`}
                 >
                   {item.icon}
                   <span>{item.label}</span>
@@ -531,32 +514,32 @@ const Header = ({ session }) => {
           </div>
 
           {session && (
-            <div className='p-3 border-top-1 surface-border surface-ground flex flex-column'>
+            <div className='menu-pie'>
               {userProfile?.is_admin && (
-                <Button
-                  label='Panel de Moderación'
-                  icon={<ShieldAlert size={18} className='mr-2' />}
-                  severity='warning'
-                  text
-                  className='w-full font-bold border-round-xl bg-yellow-50 hover:bg-yellow-100 text-yellow-700 py-2 p-button-text mb-2'
+                <button
+                  type='button'
+                  className='menu-boton aviso'
                   onClick={() => {
                     setMobileMenuOpen(false)
                     navigate('/admin')
                   }}
-                />
+                >
+                  <ShieldAlert size={18} />
+                  Panel de moderación
+                </button>
               )}
 
-              <Button
-                label='Cerrar Sesión'
-                icon={<LogOut size={18} className='mr-2' />}
-                severity='danger'
-                text
-                className='w-full font-bold border-round-xl bg-red-50 hover:bg-red-100 text-red-600 py-2 p-button-text'
+              <button
+                type='button'
+                className='menu-boton peligro'
                 onClick={() => {
                   setMobileMenuOpen(false)
                   handleLogoutConfirmation()
                 }}
-              />
+              >
+                <LogOut size={18} />
+                Cerrar sesión
+              </button>
             </div>
           )}
         </div>
