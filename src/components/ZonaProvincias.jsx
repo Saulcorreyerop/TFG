@@ -5,6 +5,8 @@ import { Search, MapPin, ArrowRight, CalendarPlus } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import './ZonaProvincias.css'
 
+const MotionButton = motion.button
+
 /*
  * Selector de provincia.
  *
@@ -123,7 +125,7 @@ const ZonaProvincias = () => {
           <>
             <div className='zonas-rejilla'>
               {zonas.slice(0, 11).map((z, i) => (
-                <motion.button
+                <MotionButton
                   key={z.nombre}
                   type='button'
                   className='zona'
@@ -139,7 +141,7 @@ const ZonaProvincias = () => {
                     {z.total === 1 ? 'evento' : 'eventos'}
                   </span>
                   <MapPin size={16} className='zona-pin' aria-hidden='true' />
-                </motion.button>
+                </MotionButton>
               ))}
 
               <button
