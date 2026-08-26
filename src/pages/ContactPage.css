@@ -93,7 +93,7 @@
   background: linear-gradient(90deg, var(--librea-alta), var(--librea));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 12px rgba(30, 64, 175, 0.3));
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--librea-alta) 30%, transparent));
   margin: 0;
 }
 
@@ -127,7 +127,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 15px rgba(30, 64, 175, 0.2);
+  box-shadow: 0 8px 15px color-mix(in srgb, var(--librea-alta) 20%, transparent);
 }
 
 .contact-premium-v3 .v3-info-row {
@@ -174,7 +174,7 @@
 
 .contact-premium-v3 .v3-input:focus {
   border-color: var(--librea-alta) !important;
-  box-shadow: 0 0 10px rgba(30, 64, 175, 0.1) !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--librea-alta) 10%, transparent) !important;
 }
 
 .contact-premium-v3 .v3-nitro-btn {
@@ -184,7 +184,7 @@
   border-radius: var(--r) !important;
   font-weight: 900 !important;
   color: white !important;
-  box-shadow: 0 10px 20px rgba(30, 64, 175, 0.2) !important;
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--librea-alta) 20%, transparent) !important;
   transition: transform 0.2s ease;
 }
 

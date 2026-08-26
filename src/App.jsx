@@ -60,7 +60,7 @@ const AnimatedRoutes = ({ session }) => {
     <AnimatePresence mode='wait'>
       <Suspense fallback={<div className='flex align-items-center justify-content-center min-h-screen surface-ground'><ProgressSpinner strokeWidth='4' /></div>}>
         <Routes location={location} key={location.pathname}>
-          <Route path='/' element={<HomePage />} />
+          <Route path='/' element={<HomePage session={session} />} />
           <Route path='/mapa' element={<MapPage session={session} />} />
           <Route path='/eventos' element={<EventsPage session={session} />} />
           <Route path='/eventos/:provincia' element={<EventsPage session={session} />} />

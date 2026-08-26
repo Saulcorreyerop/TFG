@@ -142,8 +142,8 @@ const CrewChat = ({ crewId, session }) => {
                       className={`p-3 shadow-1 ${isMe ? 'text-white' : 'surface-card text-color border-1 surface-border'}`}
                       style={{ 
                         background: isMe ? 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' : 'var(--surface-card)',
-                        borderBottomLeftRadius: '1.25rem',
-                        borderBottomRightRadius: '1.25rem',
+                        borderBottomLeftRadius: 'var(--r-media)',
+                        borderBottomRightRadius: 'var(--r-media)',
                         borderTopRightRadius: isMe ? '4px' : '1.25rem', 
                         borderTopLeftRadius: !isMe ? '4px' : '1.25rem',
                         fontSize: '0.95rem',

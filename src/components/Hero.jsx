@@ -1,127 +1,135 @@
-import React, { useState, useEffect } from 'react'
-import { Button } from 'primereact/button'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabaseClient'
 import { motion } from 'framer-motion'
-import { Rocket, Map, CalendarPlus } from 'lucide-react'
-import './Home.css' // <-- Importamos los nuevos estilos
+import { Map, CalendarPlus, ArrowRight } from 'lucide-react'
+import { useTheme } from '../hooks/useTheme'
+import './Home.css'
 
 const MotionDiv = motion.div
-const MotionH1 = motion.h1
-const MotionP = motion.p
 
-const Hero = () => {
+/*
+ * Portada.
+ *
+ * Cambios respecto a la versión anterior:
+ *   · Sin redondeo de 48px abajo. La foto llega al borde.
+ *   · Sin suscripción propia a Supabase: la sesión llega por props desde
+ *     HomePage, que ya la tiene. Antes había tres componentes pidiendo la
+ *     sesión por su cuenta en la misma página.
+ *   · El titular va en condensada y el rojo se reserva a una palabra.
+ *   · Debajo, una franja de datos con cifras tabulares: es lo que da el
+ *     aire de telemetría sin necesidad de adornos.
+ */
+
+const Hero = ({ session, estadisticas }) => {
   const navigate = useNavigate()
-  const [session, setSession] = useState(null)
+  const { theme } = useTheme()
 
-  useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => setSession(session))
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+  const cifras = [
+    { valor: estadisticas?.eventos, etiqueta: 'Eventos activos' },
+    { valor: estadisticas?.vehiculos, etiqueta: 'Coches en garaje' },
+    { valor: estadisticas?.pilotos, etiqueta: 'Pilotos' },
+  ]
 
   return (
-    <main
-      className='flex flex-column align-items-center justify-content-center text-center relative overflow-hidden'
-      style={{
-        minHeight: '85vh',
-        borderBottomLeftRadius: '48px',
-        borderBottomRightRadius: '48px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-      }}
-    >
-      {/* IMAGEN DE FONDO RESPONSIVE CON MÁSCARA */}
-      <div className='absolute top-0 left-0 w-full h-full z-0'>
+    <section className='hero'>
+      {/* Fondo */}
+      <div className='hero-fondo'>
         <img
           src='https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'
-          alt='Fondo CarMeet'
-          className='w-full h-full'
-          style={{ objectFit: 'cover', filter: 'brightness(0.7)' }}
+          alt=''
+          aria-hidden='true'
+          className='hero-foto'
           fetchPriority='high'
           loading='eager'
           decoding='async'
         />
-        {/* Degradado oscuro inferior para integrar mejor con la página */}
-        <div
-          className='absolute inset-0'
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(15, 23, 42, 0.4) 0%, var(--asfalto) 100%)',
-          }}
-        ></div>
+        <div className='hero-velo' />
+        <div className='hero-rayas' aria-hidden='true' />
       </div>
 
-      {/* CONTENIDO FLOTANTE */}
-      <div
-        className='hero-content z-1 p-4 w-full relative flex flex-column align-items-center'
-        style={{ maxWidth: '1000px' }}
-      >
+      {/* Contenido */}
+      <div className='hero-content'>
         <MotionDiv
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className='hero-badge'>
-            <Rocket size={18} />
-            <span>La plataforma Nº1 en España</span>
-          </div>
+          <span className='hero-rotulo'>
+            <span className='hero-punto' aria-hidden='true' />
+            La comunidad del motor en España
+          </span>
         </MotionDiv>
 
-        <MotionH1
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className='text-6xl md:text-8xl font-black mb-4 text-white tracking-tighter line-height-1'
-          style={{ textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}
+          transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+          className='hero-titular'
         >
-          Encuentra tu próxima <span style={{ color: 'var(--librea-alta)' }}>ruta.</span>
-        </MotionH1>
+          Encuentra tu próxima
+          <br />
+          <span className='hero-acento'>ruta</span>
+        </motion.h1>
 
-        <MotionP
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.8 }}
-          className='text-xl md:text-2xl text-white-alpha-90 mb-6 line-height-3 font-medium max-w-4xl mx-auto'
+          transition={{ delay: 0.24, duration: 0.6 }}
+          className='hero-entradilla'
         >
-          Únete a la mayor comunidad de motor. Localiza concentraciones,
-          gestiona tu proyecto en el garaje virtual y conecta con miles de
-          apasionados.
-        </MotionP>
+          Localiza concentraciones cerca de ti, monta tu garaje virtual y
+          conecta con gente que lleva el motor igual de dentro que tú.
+        </motion.p>
 
         <MotionDiv
-          className='flex flex-column md:flex-row justify-content-center gap-4 w-full md:w-auto px-4'
-          initial={{ opacity: 0, y: 20 }}
+          className='hero-acciones'
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.36, duration: 0.6 }}
         >
-          <Button
-            label={session ? 'Explorar Mapa' : 'Unirse a la Comunidad'}
-            icon={
-              session ? (
-                <Map size={20} className='mr-2' />
-              ) : (
-                <Rocket size={20} className='mr-2' />
-              )
-            }
-            className='btn-fichar-primary w-full md:w-auto'
+          <button
+            type='button'
+            className='btn-librea'
             onClick={() => navigate(session ? '/mapa' : '/login')}
-          />
+          >
+            {session ? <Map size={18} /> : <ArrowRight size={18} />}
+            {session ? 'Ver el mapa' : 'Unirme gratis'}
+          </button>
 
-          <Button
-            label='Crear Evento'
-            icon={<CalendarPlus size={20} className='mr-2' />}
-            className='btn-fichar-outline w-full md:w-auto'
+          <button
+            type='button'
+            className='btn-contorno'
             onClick={() => navigate(session ? '/eventos' : '/login')}
-          />
+          >
+            <CalendarPlus size={18} />
+            Crear evento
+          </button>
         </MotionDiv>
       </div>
-    </main>
+
+      {/* Franja de datos */}
+      <MotionDiv
+        className='hero-datos'
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.6 }}
+      >
+        {cifras.map((c) => (
+          <div className='hero-dato' key={c.etiqueta}>
+            <span className='hero-dato-valor datos'>
+              {typeof c.valor === 'number' ? c.valor : '—'}
+            </span>
+            <span className='hero-dato-etiqueta'>{c.etiqueta}</span>
+          </div>
+        ))}
+        <div className='hero-dato hero-dato-tema'>
+          <span className='hero-dato-valor datos'>
+            {theme === 'oscuro' ? 'ASFALTO' : 'DÍA'}
+          </span>
+          <span className='hero-dato-etiqueta'>Modo</span>
+        </div>
+      </MotionDiv>
+    </section>
   )
 }
 

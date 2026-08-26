@@ -376,7 +376,7 @@ const AddEventDialog = ({
           .premium-input:focus, .p-inputwrapper-focus > .premium-input {
             background-color: var(--surface-card) !important;
             border-color: var(--librea) !important;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--librea) 10%, transparent) !important;
           }
           .premium-label {
             font-size: 0.85rem;
@@ -410,12 +410,12 @@ const AddEventDialog = ({
             padding: 1rem 2rem !important;
             font-weight: 800 !important;
             letter-spacing: 0.5px !important;
-            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4) !important;
+            box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--librea) 40%, transparent) !important;
             transition: all 0.3s ease !important;
           }
           .premium-btn-primary:hover {
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 15px 25px -5px rgba(59, 130, 246, 0.5) !important;
+            box-shadow: 0 15px 25px -5px color-mix(in srgb, var(--librea) 50%, transparent) !important;
           }
           .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
             font-weight: 600;

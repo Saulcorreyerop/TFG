@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { Zap, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
-// Importamos los componentes
 import Hero from '../components/Hero'
 import Features from '../components/Features'
 import HomeMap from '../components/HomeMap'
@@ -12,98 +11,91 @@ import EventCarousel from '../components/EventCarousel'
 import PageTransition from '../components/PageTransition'
 import SEO from '../components/SEO'
 
-const HomePage = () => {
+/*
+ * Portada.
+ *
+ * La sesión llega por props desde App, que ya la tiene y la mantiene
+ * actualizada. Antes esta página abría su propia suscripción a
+ * onAuthStateChange y Hero abría otra, con lo que había tres escuchas
+ * distintas de lo mismo en la misma pantalla.
+ */
+
+const HomePage = ({ session }) => {
   const navigate = useNavigate()
-  const [session, setSession] = useState(null)
+  const [estadisticas, setEstadisticas] = useState(null)
 
   useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => setSession(session))
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) =>
-      setSession(session),
-    )
-    return () => subscription.unsubscribe()
+    let activo = true
+
+    const cargarEstadisticas = async () => {
+      const ahora = new Date().toISOString()
+
+      // head: true trae solo el recuento, sin ninguna fila
+      const [eventos, vehiculos, pilotos] = await Promise.all([
+        supabase
+          .from('events')
+          .select('id', { count: 'exact', head: true })
+          .gte('fecha', ahora),
+        supabase.from('vehicles').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      ])
+
+      if (!activo) return
+
+      setEstadisticas({
+        eventos: eventos.count ?? 0,
+        vehiculos: vehiculos.count ?? 0,
+        pilotos: pilotos.count ?? 0,
+      })
+    }
+
+    cargarEstadisticas()
+    return () => {
+      activo = false
+    }
   }, [])
 
   return (
     <>
       <SEO
         title='Inicio'
-        description='La plataforma Nº1 en España para entusiastas del motor. Encuentra concentraciones, rutas, gestiona tu garaje virtual y conecta con miles de apasionados.'
+        description='La comunidad del motor en España. Encuentra concentraciones y rutas cerca de ti, monta tu garaje virtual y conecta con miles de aficionados.'
         url={window.location.href}
       />
       <PageTransition>
-        <div className='surface-card'>
-          {/* Componentes de la página */}
-          <Hero session={session} />
+        <div className='portada'>
+          <Hero session={session} estadisticas={estadisticas} />
           <Features />
           <HomeMap />
           <ActivityFeed />
           <EventCarousel />
 
-          {/* --- SECCIÓN CTA FINAL (Estilo Bento Premium) --- */}
-          <section className='py-8 md:py-12 px-4 relative z-10 mb-6'>
-            <div className='max-w-7xl mx-auto'>
-              {/* Reutilizamos la clase bento-dark que sabemos que queda espectacular */}
-              <div className='bento-card bento-dark p-6 md:p-8 flex flex-column md:flex-row align-items-center justify-content-between gap-6 relative overflow-hidden'>
-                {/* Brillos decorativos abstractos (Cero imágenes externas, puro CSS) */}
-                <div className='absolute top-50 left-50 translate-middle w-40rem h-40rem bg-blue-600 border-circle opacity-20 blur-3xl pointer-events-none z-0'></div>
-                <div className='absolute top-0 right-0 w-20rem h-20rem bg-purple-600 border-circle opacity-20 blur-3xl pointer-events-none z-0'></div>
-
-                {/* Textos */}
-                <div className='text-center md:text-left flex-1 relative z-1'>
-                  <div className='inline-flex align-items-center gap-2 surface-card-alpha-10 px-3 py-2 border-round-3xl border-1 border-white-alpha-20 mb-4 backdrop-blur-sm'>
-                    <Zap size={16} className='text-yellow-400' />
-                    <span className='text-white text-xs font-bold uppercase tracking-widest'>
-                      La comunidad te espera
-                    </span>
-                  </div>
-
-                  <h2 className='text-4xl md:text-6xl font-black text-white m-0 tracking-tighter line-height-1 mb-4'>
-                    ¿Estás listo para <br className='hidden lg:block' />
-                    {/* Texto con degradado espectacular azul a morado */}
-                    <span
-                      style={{
-                        background:
-                          'linear-gradient(135deg, var(--librea-alta) 0%, var(--librea-alta) 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                      }}
-                    >
-                      rodar con nosotros?
-                    </span>
-                  </h2>
-
-                  {/* Usamos text-400 de PrimeFlex para asegurar que sea un gris clarito y legible */}
-                  <p className='text-400 text-lg md:text-xl font-medium m-0 max-w-30rem mx-auto md:mx-0 line-height-3'>
-                    Únete a miles de conductores. Crea tu perfil, sube tu
-                    proyecto al garaje virtual y encuentra la próxima KDD en tu
-                    ciudad.
-                  </p>
-                </div>
-
-                {/* Botón Dinámico: Cambia si el usuario está logueado o no */}
-                <div className='flex-shrink-0 mt-5 md:mt-0 relative z-1'>
-                  <button
-                    onClick={() =>
-                      session
-                        ? navigate('/eventos')
-                        : navigate('/login', { state: { activeIndex: 1 } })
-                    }
-                    className='flex align-items-center justify-content-center gap-3 px-6 py-4 border-none font-black text-xl text-white border-round-2xl cursor-pointer shadow-6 transition-transform hover:scale-105 w-full md:w-auto'
-                    style={{
-                      background:
-                        'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)',
-                    }}
-                  >
-                    {session ? 'Explorar Eventos' : 'Crear cuenta gratis'}{' '}
-                    <ArrowRight size={24} />
-                  </button>
-                </div>
+          {/* Llamada final */}
+          <section className='cta-final'>
+            <div className='cta-caja franja-librea'>
+              <div className='cta-texto'>
+                <span className='rotulo'>La parrilla te espera</span>
+                <h2 className='cta-titular'>
+                  ¿Listo para <span className='cta-acento'>rodar</span>?
+                </h2>
+                <p className='cta-entradilla'>
+                  Crea tu perfil, sube tu proyecto al garaje y encuentra la
+                  próxima quedada en tu provincia.
+                </p>
               </div>
+
+              <button
+                type='button'
+                className='btn-librea cta-boton'
+                onClick={() =>
+                  session
+                    ? navigate('/eventos')
+                    : navigate('/login', { state: { activeIndex: 1 } })
+                }
+              >
+                {session ? 'Explorar eventos' : 'Crear cuenta gratis'}
+                <ArrowRight size={20} />
+              </button>
             </div>
           </section>
         </div>

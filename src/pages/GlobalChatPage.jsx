@@ -176,10 +176,10 @@ const GlobalChatPage = ({ session }) => {
                             className={`p-3 shadow-2 ${isMe ? 'text-white' : 'surface-card text-color border-1 surface-border'}`}
                             style={{ 
                               background: isMe ? 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' : 'var(--surface-card)',
-                              borderBottomLeftRadius: '1.5rem',
-                              borderBottomRightRadius: '1.5rem',
-                              borderTopRightRadius: isMe ? '4px' : '1.5rem', 
-                              borderTopLeftRadius: !isMe ? '4px' : '1.5rem',
+                              borderBottomLeftRadius: 'var(--r-media)',
+                              borderBottomRightRadius: 'var(--r-media)',
+                              borderTopRightRadius: isMe ? '0' : 'var(--r-media)', 
+                              borderTopLeftRadius: !isMe ? '0' : 'var(--r-media)',
                               fontSize: '1rem',
                               lineHeight: '1.5'
                             }}

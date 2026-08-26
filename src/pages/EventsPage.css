@@ -41,13 +41,13 @@
   border-radius: var(--r) !important;
   font-weight: 800 !important;
   letter-spacing: 0.5px;
-  box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--librea) 40%, transparent) !important;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
 .btn-create-modern:hover {
   transform: translateY(-3px);
-  box-shadow: 0 15px 25px -5px rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 15px 25px -5px color-mix(in srgb, var(--librea) 50%, transparent) !important;
 }
 
 /* BUSCADOR TÉCNICO */
@@ -68,7 +68,7 @@
 .technical-search input:focus {
   background: white;
   border-color: var(--librea);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--librea) 10%, transparent);
 }
 .technical-search .search-icon {
   position: absolute;

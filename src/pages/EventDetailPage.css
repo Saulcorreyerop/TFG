@@ -26,7 +26,7 @@
   height: 60vw;
   background: radial-gradient(
     circle,
-    rgba(59, 130, 246, 0.08) 0%,
+    color-mix(in srgb, var(--librea) 8%, transparent) 0%,
     transparent 60%
   );
   border-radius: 50%;
@@ -43,7 +43,7 @@
   height: 50vw;
   background: radial-gradient(
     circle,
-    rgba(139, 92, 246, 0.05) 0%,
+    color-mix(in srgb, var(--librea) 5%, transparent) 0%,
     transparent 60%
   );
   border-radius: 50%;
@@ -60,8 +60,8 @@
   overflow: hidden;
   display: flex;
   align-items: flex-end;
-  border-bottom-left-radius: 48px;
-  border-bottom-right-radius: 48px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   z-index: 10;
 }
@@ -113,7 +113,7 @@
   background: linear-gradient(
     to top,
     var(--asfalto) 0%,
-    rgba(15, 23, 42, 0.4) 60%,
+    color-mix(in srgb, var(--asfalto) 40%, transparent) 60%,
     transparent 100%
   );
   z-index: 2;
@@ -143,7 +143,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(59, 130, 246, 0.1),
+    color-mix(in srgb, var(--librea) 10%, transparent),
     transparent
   );
   opacity: 0;
@@ -200,22 +200,22 @@
   border-radius: var(--r) !important;
   font-weight: 800 !important;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--librea) 50%, transparent) !important;
   color: white !important;
 }
 
 .btn-fichar-primary:hover:not(:disabled) {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 20px 35px -5px rgba(59, 130, 246, 0.6) !important;
+  box-shadow: 0 20px 35px -5px color-mix(in srgb, var(--librea) 60%, transparent) !important;
 }
 
 .btn-fichar-success {
   background: linear-gradient(135deg, var(--verde) 0%, var(--verde) 100%) !important;
-  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5) !important;
+  box-shadow: 0 10px 25px -5px color-mix(in srgb, var(--verde) 50%, transparent) !important;
 }
 
 .btn-fichar-success:hover:not(:disabled) {
-  box-shadow: 0 20px 35px -5px rgba(16, 185, 129, 0.6) !important;
+  box-shadow: 0 20px 35px -5px color-mix(in srgb, var(--verde) 60%, transparent) !important;
   transform: translateY(-4px) scale(1.02);
 }
 
@@ -313,5 +313,5 @@
 .creator-controls .p-button:hover {
   transform: translateY(-4px) scale(1.02);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  box-shadow: 0 20px 35px -5px rgba(59, 130, 246, 0.6) !important;
+  box-shadow: 0 20px 35px -5px color-mix(in srgb, var(--librea) 60%, transparent) !important;
 }
