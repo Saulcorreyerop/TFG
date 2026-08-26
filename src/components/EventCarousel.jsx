@@ -1,371 +1,323 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { supabase } from '../supabaseClient'
-import { Carousel } from 'primereact/carousel'
-import { Button } from 'primereact/button'
-import { Toast } from 'primereact/toast'
-import { Tag } from 'primereact/tag'
-import { Avatar } from 'primereact/avatar'
-import AddEventDialog from './AddEventDialog'
-import { useFavorites } from '../hooks/useFavorites'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Toast } from 'primereact/toast'
+import { Avatar } from 'primereact/avatar'
 import {
   CalendarDays,
   MapPin,
   Plus,
   Heart,
-  Sparkles,
-  User,
-  Shield,
+  Lock,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { supabase } from '../supabaseClient'
+import { useFavorites } from '../hooks/useFavorites'
+import AddEventDialog from './AddEventDialog'
+import './EventCarousel.css'
 
+const MotionArticle = motion.article
 
-const MotionDiv = motion.div
+/*
+ * Próximas quedadas.
+ *
+ * Cambios respecto a la versión anterior:
+ *   · Fuera el Carousel de PrimeReact. Ahora es una tira con scroll-snap
+ *     nativo: se arrastra con el dedo como se espera en un móvil, no
+ *     depende de un componente pesado y las flechas son un extra para
+ *     ratón, no el único modo de moverse.
+ *   · La foto crece y el texto va encima, no debajo en una caja aparte.
+ *   · La fecha se presenta como un taco de día y mes, que se lee de un
+ *     vistazo mejor que "14 mar, 10:00" en una línea de texto.
+ *   · La sesión llega por props; antes pedía la suya con getSession.
+ */
 
-const RESPONSIVE_OPTIONS = [
-  { breakpoint: '1400px', numVisible: 3, numScroll: 1 },
-  { breakpoint: '1199px', numVisible: 2, numScroll: 1 },
-  { breakpoint: '767px', numVisible: 1, numScroll: 1 },
-]
+const FOTO_RESERVA =
+  'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
 
-const FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+/* --- Tarjeta --- */
 
-// --- TARJETA DE EVENTO PREMIUM ---
-const CarouselItem = ({ event, session }) => {
+const TarjetaEvento = ({ evento, session, alAvisar }) => {
+  const navigate = useNavigate()
   const { isFavorite, toggleFavorite, loading } = useFavorites(
-    event.id,
+    evento.id,
     session,
   )
-  const navigate = useNavigate()
 
-  // Extraemos datos de la fecha para el Badge Flotante
-  const eventDateObj = new Date(event.fecha)
-  const dayNumber = eventDateObj.getDate()
-  const monthShort = eventDateObj
+  const fecha = new Date(evento.fecha)
+  const dia = fecha.getDate()
+  const mes = fecha
     .toLocaleDateString('es-ES', { month: 'short' })
-    .toUpperCase()
     .replace('.', '')
+    .toUpperCase()
+  const hora = fecha.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  const guardar = (e) => {
+    e.stopPropagation()
+    if (!session) {
+      alAvisar()
+      return
+    }
+    toggleFavorite(e)
+  }
 
   return (
-    <div className='p-3 h-full'>
-      <div
-        className='premium-event-card cursor-pointer'
-        onClick={() => navigate(`/evento/${event.id}`)}
-      >
-        {/* SECCIÓN DE IMAGEN */}
-        <div
-          className='premium-card-img-container flex-shrink-0'
-          style={{ height: '220px', minHeight: '220px' }}
-        >
-          <img
-            src={event.image}
-            alt={event.titulo}
-            className='premium-card-img w-full h-full object-cover'
-            loading='lazy'
-            onError={(e) => {
-              e.target.onerror = null
-              e.target.src = FALLBACK_IMAGE
-            }}
-          />
+    <MotionArticle
+      className='ev-tarjeta'
+      onClick={() => navigate(`/evento/${evento.id}`)}
+      role='link'
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') navigate(`/evento/${evento.id}`)
+      }}
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.35 }}
+    >
+      <div className='ev-foto'>
+        <img
+          src={evento.imagen}
+          alt={evento.titulo}
+          loading='lazy'
+          decoding='async'
+        />
 
-          {/* Overlay oscuro sutil para proteger los textos blancos */}
-          <div
-            className='absolute top-0 left-0 w-full h-full'
-            style={{
-              background:
-                'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 40%, transparent 100%)',
-            }}
-          ></div>
-
-          {/* Etiquetas (Categoría y Privacidad) */}
-          <div className='absolute top-0 left-0 m-3 z-2 flex flex-column gap-2 items-start'>
-            <Tag
-              value={event.tipo}
-              className='bg-blue-600 text-white font-black border-round-xl px-3 py-2 uppercase tracking-widest text-xs shadow-2'
-            />
-            {event.is_private && (
-              <Tag className='bg-yellow-500 text-black font-black border-round-xl px-3 py-2 uppercase tracking-widest text-xs shadow-2 border-none flex align-items-center'>
-                <Shield size={14} className='mr-1' /> SECRETO
-              </Tag>
-            )}
-          </div>
-
-          {/* Badge de Fecha Premium */}
-          <div
-            className='absolute bottom-0 right-0 m-3 date-badge-premium p-2 flex flex-column z-2 surface-card-alpha-90 backdrop-blur-sm border-round-xl shadow-2 text-center'
-            style={{ minWidth: '65px' }}
-          >
-            <span className='text-xs font-black text-blue-600 uppercase tracking-widest mb-1'>
-              {monthShort}
-            </span>
-            <span className='text-2xl font-black text-color line-height-1'>
-              {dayNumber}
-            </span>
-          </div>
+        <div className='ev-fecha'>
+          <span className='ev-fecha-dia datos'>{dia}</span>
+          <span className='ev-fecha-mes'>{mes}</span>
         </div>
 
-        {/* SECCIÓN DE CONTENIDO */}
-        <div className='p-4 flex flex-column flex-grow-1 surface-card'>
-          <h4
-            className='text-2xl font-black text-color mt-0 mb-3 line-height-2 tracking-tight'
-            style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {event.titulo}
-          </h4>
+        {evento.is_private && (
+          <span className='ev-crew'>
+            <Lock size={11} /> Crew
+          </span>
+        )}
 
-          <div className='flex align-items-center gap-2 text-color-secondary font-medium mb-4 text-sm'>
-            <MapPin size={18} className='text-red-500 flex-shrink-0' />
-            <span className='white-space-nowrap overflow-hidden text-overflow-ellipsis'>
-              {event.ubicacion
-                ? event.ubicacion
-                : event.lat && event.lng
-                  ? 'Ubicación en el mapa'
-                  : 'Por determinar'}
+        <button
+          type='button'
+          className={`ev-guardar ${isFavorite ? 'activo' : ''}`}
+          onClick={guardar}
+          disabled={loading}
+          aria-pressed={isFavorite}
+          aria-label={isFavorite ? 'Quitar de guardados' : 'Guardar evento'}
+        >
+          <Heart size={17} fill={isFavorite ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+
+      <div className='ev-cuerpo'>
+        {evento.tipo && <span className='ev-tipo'>{evento.tipo}</span>}
+
+        <h3 className='ev-titulo'>{evento.titulo}</h3>
+
+        <div className='ev-datos datos'>
+          <span className='ev-dato'>
+            <CalendarDays size={13} aria-hidden='true' />
+            {hora}
+          </span>
+          {evento.ubicacion && (
+            <span className='ev-dato'>
+              <MapPin size={13} aria-hidden='true' />
+              {evento.ubicacion.split(',')[0].trim()}
             </span>
-          </div>
+          )}
+        </div>
 
-          {/* FOOTER (Organizador y Botón) */}
-          <div className='pt-3 border-top-1 surface-border flex align-items-center justify-content-between mt-auto'>
-            <div
-              className='flex align-items-center gap-3 text-color-secondary cursor-pointer hover:text-blue-600 transition-colors'
-              onClick={(e) => {
-                e.stopPropagation()
-                event.user_id && navigate(`/usuario/${event.user_id}`)
-              }}
-            >
-              <Avatar
-                image={event.profiles?.avatar_url || undefined}
-                icon={
-                  !event.profiles?.avatar_url ? <User size={20} /> : undefined
-                }
-                shape='circle'
-                size='large'
-                className='surface-hover text-blue-600 border-1 surface-border'
-              />
-              <div className='flex flex-column'>
-                <span className='text-xs text-color-secondary font-black uppercase tracking-widest mb-1'>
-                  Organiza
-                </span>
-                <span
-                  className='font-bold text-sm text-overflow-ellipsis white-space-nowrap overflow-hidden'
-                  style={{ maxWidth: '120px' }}
-                >
-                  {event.profiles?.username || 'Anónimo'}
-                </span>
-              </div>
-            </div>
-
-            <Button
-              icon={
-                <Heart
-                  size={20}
-                  className={isFavorite ? 'fill-current text-pink-500' : ''}
-                />
-              }
-              rounded
-              text={!isFavorite}
-              className={`w-3rem h-3rem transition-colors shadow-none ${isFavorite ? 'bg-pink-50 border-1 border-pink-200' : 'surface-100 text-color-secondary hover:surface-200 border-none'}`}
-              onClick={(e) => {
-                e.stopPropagation()
-                toggleFavorite()
-              }}
-              loading={loading}
-              tooltip={isFavorite ? 'Quitar de favoritos' : 'Guardar evento'}
-              tooltipOptions={{ position: 'top' }}
-            />
-          </div>
+        <div className='ev-pie'>
+          <Avatar
+            image={evento.profiles?.avatar_url}
+            icon={!evento.profiles?.avatar_url ? 'pi pi-user' : null}
+            shape='circle'
+            className='ev-avatar'
+          />
+          <span className='ev-autor'>
+            {evento.profiles?.username || 'Piloto'}
+          </span>
         </div>
       </div>
-    </div>
+    </MotionArticle>
   )
 }
 
-// --- COMPONENTE PRINCIPAL CARRUSEL ---
-const EventCarousel = () => {
-  const [events, setEvents] = useState([])
-  const [showModal, setShowModal] = useState(false)
-  const [currentUserSession, setCurrentUserSession] = useState(null)
-  const [loadingState, setLoadingState] = useState(true)
+/* --- Sección --- */
+
+const EventCarousel = ({ session }) => {
+  const navigate = useNavigate()
   const toast = useRef(null)
+  const tira = useRef(null)
+  const [eventos, setEventos] = useState(null)
+  const [dialogo, setDialogo] = useState(false)
+  /* Se incrementa al crear un evento para que el efecto vuelva a cargar,
+     en vez de llamar a la carga desde fuera del efecto. */
+  const [refresco, setRefresco] = useState(0)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUserSession(session)
-    })
-  }, [])
+    let activo = true
 
-  const fetchEvents = async () => {
-    setLoadingState(true)
+    const cargar = async () => {
+      let misCrews = []
+      if (session?.user?.id) {
+        const { data } = await supabase
+          .from('crew_members')
+          .select('crew_id')
+          .eq('user_id', session.user.id)
+          .eq('status', 'approved')
+        if (data) misCrews = data.map((c) => c.crew_id)
+      }
 
-    // 1. Averiguamos las Crews
-    let userCrews = []
-    if (currentUserSession) {
-      const { data: crewData } = await supabase
-        .from('crew_members')
-        .select('crew_id')
-        .eq('user_id', currentUserSession.user.id)
-        .eq('status', 'approved')
-      if (crewData) userCrews = crewData.map((c) => c.crew_id)
-    }
+      let consulta = supabase
+        .from('events')
+        .select(
+          'id, titulo, tipo, fecha, ubicacion, image_url, is_private, profiles(username, avatar_url)',
+        )
+        .gte('fecha', new Date().toISOString())
+        .order('fecha', { ascending: true })
 
-    // 2. Consulta y Filtro
-    let query = supabase
-      .from('events')
-      .select('*, profiles(username, avatar_url)')
-      .gte('fecha', new Date().toISOString())
-      .order('fecha', { ascending: true })
+      consulta =
+        misCrews.length > 0
+          ? consulta.or(
+              `is_private.is.null,is_private.eq.false,crew_id.in.(${misCrews.join(',')})`,
+            )
+          : consulta.or('is_private.is.null,is_private.eq.false')
 
-    if (userCrews.length > 0) {
-      query = query.or(
-        `is_private.is.null,is_private.eq.false,crew_id.in.(${userCrews.join(',')})`,
-      )
-    } else {
-      query = query.or('is_private.is.null,is_private.eq.false')
-    }
+      const { data, error } = await consulta.limit(9)
+      if (!activo) return
 
-    const { data, error } = await query.limit(9)
+      if (error) {
+        setEventos([])
+        return
+      }
 
-    if (!error && data) {
-      const processedEvents = data.map((ev) => {
-        const isValidUrl =
-          ev.image_url &&
-          typeof ev.image_url === 'string' &&
-          ev.image_url.trim().startsWith('http')
-        const validImage = isValidUrl ? ev.image_url.trim() : FALLBACK_IMAGE
-
-        return {
+      setEventos(
+        (data || []).map((ev) => ({
           ...ev,
-          image: validImage,
-          formattedDate: new Date(ev.fecha).toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-        }
-      })
-      setEvents(processedEvents)
+          imagen:
+            typeof ev.image_url === 'string' &&
+            ev.image_url.trim().startsWith('http')
+              ? ev.image_url.trim()
+              : FOTO_RESERVA,
+        })),
+      )
     }
-    setLoadingState(false)
+
+    cargar()
+    return () => {
+      activo = false
+    }
+  }, [session, refresco])
+
+  const desplazar = (sentido) => {
+    if (!tira.current) return
+    const paso = tira.current.clientWidth * 0.8
+    tira.current.scrollBy({ left: paso * sentido, behavior: 'smooth' })
   }
 
-  useEffect(() => {
-    fetchEvents()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUserSession])
+  const avisarSinSesion = () =>
+    toast.current?.show({
+      severity: 'info',
+      summary: 'Necesitas una cuenta',
+      detail: 'Entra para guardar eventos y que no se te escapen.',
+      life: 3000,
+    })
 
-  const handleOpenModal = () => {
-    if (!currentUserSession) {
-      toast.current.show({
-        severity: 'warn',
-        summary: 'Acceso restringido',
-        detail: 'Debes iniciar sesión para publicar.',
-        life: 3000,
-      })
+  const crear = () => {
+    if (!session) {
+      navigate('/login', { state: { returnUrl: '/eventos' } })
       return
     }
-    setShowModal(true)
+    setDialogo(true)
   }
 
-  const containerVars = {
-    hidden: { opacity: 0, y: 30 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
-    },
-  }
+  const cargando = eventos === null
 
   return (
-    <section className='py-8 relative z-10 overflow-hidden'>
-      <Toast ref={toast} position='top-center' className='mt-6 z-5' />
+    <section className='eventos'>
+      <Toast ref={toast} position='top-center' />
 
-      {/* Brillos de fondo orgánicos sutiles */}
-      <div className='absolute top-0 left-0 -translate-x-50 -translate-y-50 w-50rem h-50rem bg-purple-100 border-circle opacity-30 blur-3xl pointer-events-none z-0'></div>
-
-      <MotionDiv
-        variants={containerVars}
-        initial='hidden'
-        whileInView='show'
-        viewport={{ once: true, margin: '-100px' }}
-        className='max-w-7xl mx-auto px-4 md:px-6 relative z-1'
-      >
-        {/* CABECERA */}
-        <div className='flex flex-column md:flex-row justify-content-between md:align-items-end mb-7 gap-4'>
+      <div className='eventos-caja'>
+        <header className='eventos-cabecera'>
           <div>
-            <div className='inline-flex align-items-center gap-2 bg-purple-50 text-purple-600 font-black border-round-3xl px-4 py-2 mb-3 uppercase tracking-widest text-xs shadow-1 border-1 border-purple-100'>
-              <Sparkles size={16} />
-              <span>Agenda del Motor</span>
-            </div>
-
-            <h3 className='text-5xl md:text-7xl font-black text-color m-0 tracking-tighter'>
-              Próximos <span className='text-gradient-purple'>Eventos</span>
-            </h3>
-
-            <p className='text-color-secondary text-xl font-medium m-0 mt-3 max-w-2xl line-height-3'>
-              No te pierdas nada. Las mejores rutas, KDDs y concentraciones
-              seleccionadas para ti.
-            </p>
+            <span className='rotulo'>Calendario</span>
+            <h2 className='eventos-titulo'>Próximas quedadas</h2>
           </div>
-          <div className='flex-shrink-0'>
-            <Button
-              label='Publicar Evento'
-              icon={<Plus size={20} className='mr-2' strokeWidth={2.5} />}
-              className='btn-fichar-primary px-5 py-3 shadow-4 text-lg'
-              onClick={handleOpenModal}
-            />
-          </div>
-        </div>
 
-        {/* CARRUSEL DE PRIME REACT */}
-        <div className='-mx-3'>
-          {!loadingState && events.length > 0 ? (
-            <Carousel
-              value={events}
-              numVisible={3}
-              numScroll={1}
-              responsiveOptions={RESPONSIVE_OPTIONS}
-              itemTemplate={(event) => (
-                <CarouselItem event={event} session={currentUserSession} />
-              )}
-              circular
-              autoplayInterval={6000}
-              showIndicators={false}
-              pt={{
-                itemsContent: { className: 'py-4' },
-              }}
-            />
-          ) : (
-            <div className='text-center py-8 surface-card border-round-3xl border-2 border-dashed surface-border shadow-1 mx-3'>
-              <CalendarDays size={64} className='text-300 mb-4 mx-auto' />
-              <p className='text-color text-3xl font-black m-0 mb-2'>
-                No hay eventos próximos.
-              </p>
-              <p className='text-color-secondary text-xl m-0'>
-                ¡Sé el primero en crear una ruta épica!
-              </p>
-              <Button
-                label='Crear el primer evento'
-                icon={<Plus size={20} className='mr-2' />}
-                className='mt-5 px-5 py-3 font-bold border-round-xl p-button-outlined'
-                onClick={handleOpenModal}
+          <div className='eventos-controles'>
+            {!cargando && eventos.length > 1 && (
+              <div className='eventos-flechas'>
+                <button
+                  type='button'
+                  onClick={() => desplazar(-1)}
+                  aria-label='Anterior'
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type='button'
+                  onClick={() => desplazar(1)}
+                  aria-label='Siguiente'
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+
+            <button type='button' className='btn-librea' onClick={crear}>
+              <Plus size={18} />
+              Crear evento
+            </button>
+          </div>
+        </header>
+
+        {cargando && (
+          <div className='eventos-tira' aria-hidden='true'>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div className='ev-hueco' key={i} />
+            ))}
+          </div>
+        )}
+
+        {!cargando && eventos.length > 0 && (
+          <div className='eventos-tira' ref={tira}>
+            {eventos.map((ev) => (
+              <TarjetaEvento
+                key={ev.id}
+                evento={ev}
+                session={session}
+                alAvisar={avisarSinSesion}
               />
-            </div>
-          )}
-        </div>
-      </MotionDiv>
+            ))}
+          </div>
+        )}
+
+        {!cargando && eventos.length === 0 && (
+          <div className='eventos-vacio'>
+            <CalendarDays size={32} aria-hidden='true' />
+            <h3>El calendario está vacío</h3>
+            <p>
+              No hay ninguna quedada programada todavía. Monta la primera y
+              aparecerá aquí y en el mapa.
+            </p>
+            <button type='button' className='btn-librea' onClick={crear}>
+              <Plus size={18} />
+              Crear la primera
+            </button>
+          </div>
+        )}
+      </div>
 
       <AddEventDialog
-        visible={showModal}
-        onHide={() => setShowModal(false)}
-        onEventAdded={fetchEvents}
-        session={currentUserSession}
+        visible={dialogo}
+        onHide={() => setDialogo(false)}
+        session={session}
+        onEventAdded={() => {
+          setDialogo(false)
+          setRefresco((n) => n + 1)
+        }}
       />
     </section>
   )

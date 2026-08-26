@@ -1,0 +1,279 @@
+/* =========================================================================
+   Muro en directo — sistema Librea
+
+   La foto es la tarjeta. Antes iba recortada a 180px dentro de una caja
+   con relleno, sombra y esquinas redondeadas, y competía con la interfaz
+   en vez de ser el contenido.
+   ========================================================================= */
+
+.muro {
+  padding: var(--e9) var(--e5);
+  background: var(--asfalto);
+}
+
+.muro-caja {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Cabecera --- */
+
+.muro-cabecera {
+  margin-bottom: var(--e6);
+}
+
+.muro-cabecera .rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.muro-punto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--verde);
+  flex-shrink: 0;
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+.muro-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  line-height: 0.95;
+  color: var(--text-color);
+  margin: var(--e2) 0 0;
+}
+
+/* --- Rejilla --- */
+
+.muro-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--e4);
+}
+
+/* --- Tarjeta --- */
+
+.tarjeta-muro {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.tarjeta-muro:hover,
+.tarjeta-muro:focus-visible {
+  border-color: var(--linea-viva);
+  transform: translateY(-3px);
+}
+
+.tarjeta-muro:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: 2px;
+}
+
+/* Foto a sangre, sin relleno alrededor */
+.tarjeta-foto {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--carbono-alto);
+}
+
+.tarjeta-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+.tarjeta-muro:hover .tarjeta-foto img {
+  transform: scale(1.04);
+}
+
+.tarjeta-foto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.35) 0%,
+    transparent 40%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.tarjeta-sinfoto {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--linea-viva);
+  background: var(--carbono-alto);
+}
+
+/* Chapas sobre la foto */
+.tarjeta-chapa {
+  position: absolute;
+  top: var(--e3);
+  left: var(--e3);
+  z-index: 1;
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--carbono);
+  color: var(--texto-medio);
+  border: 1px solid var(--linea-viva);
+  padding: 3px 7px;
+}
+
+.tarjeta-chapa.evento {
+  background: var(--librea);
+  border-color: var(--librea);
+  color: #fff;
+}
+
+.tarjeta-cuando {
+  position: absolute;
+  top: var(--e3);
+  right: var(--e3);
+  z-index: 1;
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  padding: 3px 7px;
+}
+
+/* --- Cuerpo --- */
+
+.tarjeta-cuerpo {
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  flex: 1;
+}
+
+.tarjeta-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tarjeta-pie {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-top: auto;
+  min-width: 0;
+}
+
+.tarjeta-avatar.p-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.75rem;
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 1px solid var(--surface-border);
+  flex-shrink: 0;
+}
+
+.tarjeta-autor,
+.tarjeta-lugar {
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tarjeta-lugar {
+  color: var(--texto-tenue);
+}
+
+.tarjeta-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--texto-tenue);
+  flex-shrink: 0;
+}
+
+/* --- Huecos y vacío --- */
+
+.muro-hueco {
+  aspect-ratio: 4 / 3;
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  animation: zona-latido 1.4s ease-in-out infinite;
+}
+
+.muro-vacio {
+  color: var(--texto-medio);
+  font-size: 1rem;
+  margin: 0;
+  padding: var(--e6);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--linea-viva);
+  max-width: 52ch;
+}
+
+/* --- Móvil --- */
+
+@media (max-width: 768px) {
+  .muro {
+    padding: var(--e7) var(--e4);
+  }
+  .muro-cabecera {
+    margin-bottom: var(--e5);
+  }
+  .muro-rejilla {
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: var(--e3);
+  }
+  .tarjeta-titulo {
+    font-size: 1.0625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .muro-punto,
+  .muro-hueco {
+    animation: none;
+  }
+  .tarjeta-muro:hover {
+    transform: none;
+  }
+  .tarjeta-muro:hover .tarjeta-foto img {
+    transform: none;
+  }
+}

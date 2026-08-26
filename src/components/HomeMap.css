@@ -1,0 +1,275 @@
+/* =========================================================================
+   Radar de la portada — sistema Librea
+   ========================================================================= */
+
+.radar {
+  padding: var(--e9) var(--e5);
+  background: var(--surface-ground);
+}
+
+.radar-caja {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Cabecera --- */
+
+.radar-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--e5);
+  margin-bottom: var(--e5);
+}
+
+.radar-cabecera .rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  color: var(--librea);
+}
+
+.radar-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  line-height: 0.95;
+  color: var(--text-color);
+  margin: var(--e2) 0 0;
+}
+
+.radar-abrir {
+  flex-shrink: 0;
+}
+
+/* --- Marco --- */
+
+.radar-marco {
+  border: 1px solid var(--surface-border);
+  border-top: 2px solid var(--librea);
+  background: var(--carbono);
+  overflow: hidden;
+}
+
+/* Barra de datos: sustituye al velo de 280px que tapaba media pantalla */
+.radar-barra {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--carbono);
+}
+
+.radar-cuenta {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--librea);
+}
+
+.radar-cuenta-etiqueta {
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+}
+
+.radar-pista {
+  margin-left: auto;
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+/* --- Mapa --- */
+
+.radar-mapa {
+  height: 32rem;
+  width: 100%;
+  z-index: 1;
+  background: var(--carbono-alto);
+}
+
+/* Controles de zoom en el lenguaje del sistema */
+.radar-marco .leaflet-control-zoom {
+  border: 1px solid var(--surface-border) !important;
+  border-radius: var(--r) !important;
+  overflow: hidden;
+  box-shadow: none !important;
+}
+
+.radar-marco .leaflet-control-zoom a {
+  background: var(--carbono) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--surface-border) !important;
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  font-size: 1.125rem;
+}
+
+.radar-marco .leaflet-control-zoom a:hover {
+  background: var(--carbono-alto) !important;
+  color: var(--librea) !important;
+}
+
+.radar-marco .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--carbono) 88%, transparent) !important;
+  color: var(--texto-tenue) !important;
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  border-radius: var(--r) 0 0 0;
+}
+
+.radar-marco .leaflet-control-attribution a {
+  color: var(--texto-medio) !important;
+}
+
+/* --- Marcadores --- */
+
+.pin-librea {
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+}
+
+.pin-cuerpo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--pin);
+  border: 2px solid var(--carbono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-cuerpo i {
+  color: #fff;
+  font-size: 13px;
+}
+
+.pin-punta {
+  width: 0;
+  height: 0;
+  margin: -2px auto 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid var(--pin);
+}
+
+/* --- Bocadillo --- */
+
+.popup-librea .leaflet-popup-content-wrapper {
+  background: var(--carbono);
+  color: var(--text-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-3);
+  padding: 0;
+}
+
+.popup-librea .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+  min-width: 12rem;
+}
+
+.popup-librea .leaflet-popup-tip {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+}
+
+.popup-librea .leaflet-popup-close-button {
+  color: var(--texto-tenue) !important;
+  padding: var(--e2) !important;
+}
+
+.popup-cuerpo {
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  align-items: flex-start;
+}
+
+.popup-crew {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  background: var(--ambar-baja);
+  border: 1px solid var(--ambar);
+  padding: 2px 6px;
+}
+
+.popup-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.125rem;
+  line-height: 1.15;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.popup-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+}
+
+.popup-boton {
+  margin-top: var(--e2);
+  width: 100%;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--librea);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  padding: 8px var(--e4);
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.popup-boton:hover {
+  background: var(--librea-alta);
+}
+
+/* --- Móvil --- */
+
+@media (max-width: 768px) {
+  .radar {
+    padding: var(--e7) var(--e4);
+  }
+  .radar-cabecera {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .radar-abrir {
+    width: 100%;
+  }
+  .radar-mapa {
+    height: 24rem;
+  }
+  .radar-pista {
+    display: none;
+  }
+}

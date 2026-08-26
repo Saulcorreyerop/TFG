@@ -1,125 +1,208 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient'
-import { motion } from 'framer-motion'
-import { Activity, Car, Calendar } from 'lucide-react'
-import { Avatar } from 'primereact/avatar'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Car, CalendarDays } from 'lucide-react'
+import { Avatar } from 'primereact/avatar'
+import { supabase } from '../supabaseClient'
+import './ActivityFeed.css'
 
-const MotionDiv = motion.div
+const MotionArticle = motion.article
+
+/*
+ * Muro en directo: lo último que se ha subido a la comunidad.
+ *
+ * Cambios respecto a la versión anterior:
+ *   · La foto pasa a ser la tarjeta, no un recorte de 180px dentro de una
+ *     caja con relleno. El texto va encima, sobre un degradado.
+ *   · Se muestra cuándo pasó. Antes se calculaba created_at y no se
+ *     llegaba a pintar en ninguna parte.
+ *   · Si no hay actividad ya no desaparece la sección entera sin más:
+ *     se dice que aún no hay nada, que es información útil para alguien
+ *     que acaba de entrar.
+ */
+
+const haceCuanto = (fecha) => {
+  const seg = Math.floor((Date.now() - fecha.getTime()) / 1000)
+  if (seg < 60) return 'ahora'
+  const min = Math.floor(seg / 60)
+  if (min < 60) return `hace ${min} min`
+  const hor = Math.floor(min / 60)
+  if (hor < 24) return `hace ${hor} h`
+  const dia = Math.floor(hor / 24)
+  if (dia < 7) return `hace ${dia} d`
+  const sem = Math.floor(dia / 7)
+  if (sem < 5) return `hace ${sem} sem`
+  const mes = Math.floor(dia / 30)
+  return `hace ${mes} mes${mes > 1 ? 'es' : ''}`
+}
 
 const ActivityFeed = () => {
   const navigate = useNavigate()
-  const [activities, setActivities] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [actividad, setActividad] = useState(null)
 
   useEffect(() => {
-    const fetchActivities = async () => {
-      setLoading(true)
-      
-      const { data: cars } = await supabase
-        .from('vehicles')
-        .select('*, profiles(username, avatar_url)')
-        .order('created_at', { ascending: false })
-        .limit(5)
-      
-      const { data: events } = await supabase
-        .from('events')
-        .select('*, profiles(username, avatar_url)')
-        .order('created_at', { ascending: false })
-        .limit(5)
+    let activo = true
 
-      let combined = []
-      if (cars) {
-        combined = [...combined, ...cars.map(c => ({
-          id: `car-${c.id}`,
-          type: 'vehicle',
-          title: `${c.marca} ${c.modelo}`,
-          user: c.profiles?.username || 'Usuario',
+    const cargar = async () => {
+      const [coches, eventos] = await Promise.all([
+        supabase
+          .from('vehicles')
+          .select('id, marca, modelo, image_url, created_at, profiles(username, avatar_url)')
+          .order('created_at', { ascending: false })
+          .limit(6),
+        supabase
+          .from('events')
+          .select('id, titulo, image_url, ubicacion, created_at, profiles(username, avatar_url)')
+          .order('created_at', { ascending: false })
+          .limit(6),
+      ])
+
+      if (!activo) return
+
+      const lista = [
+        ...(coches.data || []).map((c) => ({
+          id: `coche-${c.id}`,
+          tipo: 'coche',
+          titulo: `${c.marca} ${c.modelo}`,
+          detalle: null,
+          usuario: c.profiles?.username || null,
           avatar: c.profiles?.avatar_url,
-          created_at: new Date(c.created_at),
-          image: c.image_url,
-          userId: c.user_id
-        }))]
-      }
-      if (events) {
-        combined = [...combined, ...events.map(e => ({
-          id: `ev-${e.id}`,
-          type: 'event',
-          title: e.titulo,
-          user: e.profiles?.username || 'Usuario',
+          imagen: c.image_url,
+          fecha: new Date(c.created_at),
+        })),
+        ...(eventos.data || []).map((e) => ({
+          id: `evento-${e.id}`,
+          tipo: 'evento',
+          titulo: e.titulo,
+          detalle: e.ubicacion ? e.ubicacion.split(',')[0].trim() : null,
+          usuario: e.profiles?.username || null,
           avatar: e.profiles?.avatar_url,
-          created_at: new Date(e.created_at),
-          image: e.image_url,
-          eventId: e.id
-        }))]
-      }
+          imagen: e.image_url,
+          fecha: new Date(e.created_at),
+          eventoId: e.id,
+        })),
+      ]
+        .sort((a, b) => b.fecha - a.fecha)
+        .slice(0, 4)
 
-      combined.sort((a, b) => b.created_at - a.created_at)
-      setActivities(combined.slice(0, 8))
-      setLoading(false)
+      setActividad(lista)
     }
 
-    fetchActivities()
+    cargar()
+    return () => {
+      activo = false
+    }
   }, [])
 
-  if (loading || activities.length === 0) return null
+  const abrir = (item) => {
+    if (item.tipo === 'evento') navigate(`/evento/${item.eventoId}`)
+    else if (item.usuario) navigate(`/usuario/${item.usuario}`)
+  }
+
+  const cargando = actividad === null
 
   return (
-    <section className='py-8 px-4 relative z-10' style={{ backgroundColor: 'var(--surface-ground)' }}>
-      <div className='max-w-7xl mx-auto'>
-        <div className='flex align-items-center justify-content-between mb-6'>
+    <section className='muro'>
+      <div className='muro-caja'>
+        <header className='muro-cabecera'>
           <div>
-            <h2 className='text-4xl md:text-5xl font-black text-color m-0 tracking-tighter flex align-items-center gap-3'>
-              <Activity className="text-blue-600" size={40} /> Muro en Directo
-            </h2>
-            <p className='text-color-secondary text-lg font-medium mt-2 mb-0'>
-              Lo último que está pasando en la comunidad.
-            </p>
+            <span className='rotulo'>
+              <span className='muro-punto' aria-hidden='true' />
+              Muro en directo
+            </span>
+            <h2 className='muro-titulo'>Lo último de la comunidad</h2>
           </div>
-        </div>
+        </header>
 
-        <div className='grid m-0'>
-          {activities.map((act, index) => (
-            <MotionDiv
-              key={act.id}
-              className='col-12 md:col-6 lg:col-3 p-2'
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <div 
-                className='surface-card hover:shadow-4 transition-all cursor-pointer overflow-hidden h-full flex flex-column'
-                style={{ 
-                  borderRadius: 'var(--r)', 
-                  border: '1px solid color-mix(in srgb, var(--surface-border) 80%, transparent)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.04)' 
+        {cargando && (
+          <div className='muro-rejilla' aria-hidden='true'>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div className='muro-hueco' key={i} />
+            ))}
+          </div>
+        )}
+
+        {!cargando && actividad.length > 0 && (
+          <div className='muro-rejilla'>
+            {actividad.map((item, i) => (
+              <MotionArticle
+                key={item.id}
+                className='tarjeta-muro'
+                onClick={() => abrir(item)}
+                role='link'
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    abrir(item)
+                  }
                 }}
-                onClick={() => act.type === 'event' ? navigate(`/evento/${act.eventId}`) : navigate(`/usuario/${act.user}`)}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.35, delay: Math.min(i * 0.06, 0.3) }}
               >
-                <div className='p-3 flex align-items-center gap-3'>
-                  <Avatar image={act.avatar} icon={!act.avatar && 'pi pi-user'} shape='circle' />
-                  <div>
-                    <div className='font-bold text-sm text-color'>{act.user}</div>
-                    <div className='text-xs text-color-secondary font-medium'>{act.type === 'vehicle' ? 'ha añadido un coche' : 'ha creado un evento'}</div>
+                <div className='tarjeta-foto'>
+                  {item.imagen ? (
+                    <img
+                      src={item.imagen}
+                      alt={item.titulo}
+                      loading='lazy'
+                      decoding='async'
+                    />
+                  ) : (
+                    <div className='tarjeta-sinfoto'>
+                      {item.tipo === 'coche' ? (
+                        <Car size={40} aria-hidden='true' />
+                      ) : (
+                        <CalendarDays size={40} aria-hidden='true' />
+                      )}
+                    </div>
+                  )}
+
+                  <span
+                    className={`tarjeta-chapa ${item.tipo === 'evento' ? 'evento' : ''}`}
+                  >
+                    {item.tipo === 'coche' ? 'Garaje' : 'Evento'}
+                  </span>
+
+                  <span className='tarjeta-cuando datos'>
+                    {haceCuanto(item.fecha)}
+                  </span>
+                </div>
+
+                <div className='tarjeta-cuerpo'>
+                  <h3 className='tarjeta-titulo'>{item.titulo}</h3>
+
+                  <div className='tarjeta-pie'>
+                    <Avatar
+                      image={item.avatar}
+                      icon={!item.avatar ? 'pi pi-user' : null}
+                      shape='circle'
+                      className='tarjeta-avatar'
+                    />
+                    <span className='tarjeta-autor'>
+                      {item.usuario || 'Piloto'}
+                    </span>
+                    {item.detalle && (
+                      <>
+                        <span className='tarjeta-sep' aria-hidden='true' />
+                        <span className='tarjeta-lugar'>{item.detalle}</span>
+                      </>
+                    )}
                   </div>
                 </div>
-                {act.image ? (
-                  <div className='w-full relative' style={{ height: '180px' }}>
-                    <img src={act.image} alt={act.title} className='w-full h-full' style={{ objectFit: 'cover' }} />
-                  </div>
-                ) : (
-                  <div className='w-full surface-hover flex align-items-center justify-content-center text-blue-300' style={{ height: '180px' }}>
-                    {act.type === 'vehicle' ? <Car size={48} /> : <Calendar size={48} />}
-                  </div>
-                )}
-                <div className='p-4 mt-auto surface-card'>
-                  <h4 className='m-0 font-black text-lg text-color line-clamp-1'>{act.title}</h4>
-                </div>
-              </div>
-            </MotionDiv>
-          ))}
-        </div>
+              </MotionArticle>
+            ))}
+          </div>
+        )}
+
+        {!cargando && actividad.length === 0 && (
+          <p className='muro-vacio'>
+            Todavía no se ha subido nada. En cuanto alguien añada un coche o
+            monte una quedada, aparecerá aquí.
+          </p>
+        )}
       </div>
     </section>
   )

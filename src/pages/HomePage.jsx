@@ -66,9 +66,9 @@ const HomePage = ({ session }) => {
         <div className='portada'>
           <Hero session={session} estadisticas={estadisticas} />
           <ZonaProvincias />
-          <HomeMap />
+          <HomeMap session={session} />
           <ActivityFeed />
-          <EventCarousel />
+          <EventCarousel session={session} />
 
           {/* Llamada final */}
           <section className='cta-final'>

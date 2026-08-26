@@ -1,0 +1,406 @@
+/* =========================================================================
+   Próximas quedadas — sistema Librea
+
+   Tira con scroll-snap nativo en lugar del Carousel de PrimeReact: se
+   arrastra con el dedo como se espera en un móvil y las flechas quedan
+   como un extra para ratón, no como el único modo de moverse.
+   ========================================================================= */
+
+.eventos {
+  padding: var(--e9) 0;
+  background: var(--asfalto);
+}
+
+.eventos-caja {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Cabecera --- */
+
+.eventos-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--e5);
+  padding: 0 var(--e5);
+  margin-bottom: var(--e6);
+}
+
+.eventos-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  line-height: 0.95;
+  color: var(--text-color);
+  margin: var(--e2) 0 0;
+}
+
+.eventos-controles {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.eventos-flechas {
+  display: flex;
+  gap: 1px;
+  background: var(--surface-border);
+  border: 1px solid var(--surface-border);
+}
+
+.eventos-flechas button {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--carbono);
+  color: var(--texto-medio);
+  border: none;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.eventos-flechas button:hover {
+  background: var(--carbono-alto);
+  color: var(--librea);
+}
+
+.eventos-flechas button:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: -2px;
+}
+
+/* --- Tira --- */
+
+.eventos-tira {
+  display: flex;
+  gap: var(--e4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: var(--e5);
+  padding: 0 var(--e5) var(--e4);
+  scrollbar-width: thin;
+  scrollbar-color: var(--linea-viva) transparent;
+}
+
+.eventos-tira::-webkit-scrollbar {
+  height: 4px;
+}
+.eventos-tira::-webkit-scrollbar-track {
+  background: var(--carbono);
+}
+.eventos-tira::-webkit-scrollbar-thumb {
+  background: var(--linea-viva);
+}
+
+/* --- Tarjeta --- */
+
+.ev-tarjeta {
+  flex: 0 0 min(20rem, 82vw);
+  scroll-snap-align: start;
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.ev-tarjeta:hover,
+.ev-tarjeta:focus-visible {
+  border-color: var(--linea-viva);
+  transform: translateY(-3px);
+}
+
+.ev-tarjeta:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: 2px;
+}
+
+/* Foto */
+.ev-foto {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--carbono-alto);
+}
+
+.ev-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+.ev-tarjeta:hover .ev-foto img {
+  transform: scale(1.04);
+}
+
+.ev-foto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+  pointer-events: none;
+}
+
+/* Taco de fecha */
+.ev-fecha {
+  position: absolute;
+  bottom: var(--e3);
+  left: var(--e3);
+  z-index: 1;
+  background: var(--librea);
+  color: #fff;
+  padding: var(--e2) var(--e3);
+  text-align: center;
+  line-height: 1;
+  min-width: 3.25rem;
+}
+
+.ev-fecha-dia {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ev-fecha-mes {
+  display: block;
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-top: 2px;
+}
+
+.ev-crew {
+  position: absolute;
+  top: var(--e3);
+  left: var(--e3);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--ambar);
+  padding: 3px 6px;
+}
+
+.ev-guardar {
+  position: absolute;
+  top: var(--e3);
+  right: var(--e3);
+  z-index: 1;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--r);
+  color: #fff;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.ev-guardar:hover {
+  color: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+.ev-guardar.activo {
+  color: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+.ev-guardar:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Cuerpo */
+.ev-cuerpo {
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  flex: 1;
+}
+
+.ev-tipo {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--librea);
+}
+
+.ev-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.375rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ev-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+}
+
+.ev-dato {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ev-pie {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-top: auto;
+  padding-top: var(--e3);
+  border-top: 1px solid var(--surface-border);
+}
+
+.ev-avatar.p-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.75rem;
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 1px solid var(--surface-border);
+  flex-shrink: 0;
+}
+
+.ev-autor {
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Huecos y vacío --- */
+
+.ev-hueco {
+  flex: 0 0 min(20rem, 82vw);
+  aspect-ratio: 16 / 13;
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  animation: zona-latido 1.4s ease-in-out infinite;
+}
+
+.eventos-vacio {
+  margin: 0 var(--e5);
+  padding: var(--e8) var(--e6);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--librea);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e3);
+  color: var(--librea);
+}
+
+.eventos-vacio h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.75rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.eventos-vacio p {
+  color: var(--texto-medio);
+  max-width: 48ch;
+  margin: 0 0 var(--e3);
+  line-height: 1.55;
+}
+
+/* --- Móvil --- */
+
+@media (max-width: 768px) {
+  .eventos {
+    padding: var(--e7) 0;
+  }
+  .eventos-cabecera {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 var(--e4);
+    margin-bottom: var(--e5);
+  }
+  .eventos-controles {
+    justify-content: space-between;
+  }
+  .eventos-flechas {
+    display: none;
+  }
+  .eventos-controles .btn-librea {
+    width: 100%;
+  }
+  .eventos-tira {
+    padding: 0 var(--e4) var(--e4);
+    scroll-padding-left: var(--e4);
+  }
+  .eventos-vacio {
+    margin: 0 var(--e4);
+    padding: var(--e6) var(--e5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-hueco {
+    animation: none;
+  }
+  .ev-tarjeta:hover {
+    transform: none;
+  }
+  .ev-tarjeta:hover .ev-foto img {
+    transform: none;
+  }
+  .eventos-tira {
+    scroll-behavior: auto;
+  }
+}
