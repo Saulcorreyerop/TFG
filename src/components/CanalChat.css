@@ -1,0 +1,456 @@
+/* =========================================================================
+   Registro de canal — sistema Librea
+
+   Lo comparten el chat global y el de cada crew. El componente llena el
+   alto de su contenedor: la página global le da toda la pantalla, la de
+   crew una caja de altura fija.
+   ========================================================================= */
+
+.canal {
+  height: 100%;
+  min-height: 24rem;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--surface-ground);
+  position: relative;
+  overflow: hidden;
+}
+
+/* --- Cabecera --- */
+
+.canal-cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--e4);
+  padding: var(--e4) var(--e5) var(--e3);
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--carbono);
+}
+
+.canal-identidad {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.canal-directo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--verde);
+}
+
+.canal-directo svg {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+.canal-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.canal-aforo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--librea-texto);
+  flex-shrink: 0;
+}
+
+.canal-aforo-etiqueta {
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+  margin-top: 3px;
+}
+
+/* --- Registro --- */
+
+.canal-registro {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--e5) var(--e5) var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--linea-viva) transparent;
+}
+
+.canal-registro::-webkit-scrollbar { width: 6px; }
+.canal-registro::-webkit-scrollbar-thumb { background: var(--linea-viva); }
+
+/* --- Separador de día --- */
+
+.canal-dia {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  margin: var(--e5) 0 var(--e3);
+}
+
+.canal-dia::before,
+.canal-dia::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--surface-border);
+}
+
+.canal-dia span {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+  flex-shrink: 0;
+}
+
+/* --- Mensaje --- */
+
+.canal-msg {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: var(--e3);
+  padding: var(--e2) var(--e3);
+  border-left: 2px solid transparent;
+  border-radius: var(--r);
+  transition: background-color 120ms ease;
+}
+
+.canal-msg:hover {
+  background: var(--carbono);
+}
+
+.canal-msg.seguido {
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+/* Lo propio, con filo de librea */
+.canal-msg.propio {
+  border-left-color: var(--librea);
+}
+
+.canal-msg.pendiente {
+  opacity: 0.55;
+}
+
+.canal-hueco-avatar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.canal-avatar.p-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.875rem;
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 1px solid var(--surface-border);
+}
+
+/* La hora del agrupado sale al pasar el ratón, en el hueco del avatar */
+.canal-hora-lateral {
+  font-size: 0.5625rem;
+  color: var(--texto-tenue);
+  opacity: 0;
+  transition: opacity 120ms ease;
+  line-height: 1.5;
+}
+
+.canal-msg:hover .canal-hora-lateral {
+  opacity: 1;
+}
+
+.canal-cuerpo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.canal-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  min-width: 0;
+}
+
+.canal-autor {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-color);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canal-autor:hover {
+  color: var(--librea-texto);
+}
+
+.canal-msg.propio .canal-autor {
+  color: var(--librea-texto);
+}
+
+.canal-hora {
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+  color: var(--texto-tenue);
+  flex-shrink: 0;
+}
+
+/* Denunciar solo al pasar por encima: tiene que estar, no competir */
+.canal-meta .btn-denunciar {
+  opacity: 0;
+  margin-left: auto;
+  transition: opacity 120ms ease;
+}
+
+.canal-msg:hover .btn-denunciar,
+.canal-meta .btn-denunciar:focus-visible {
+  opacity: 1;
+}
+
+.canal-texto {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* --- Huecos y vacío --- */
+
+.canal-cargando {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.canal-hueco {
+  height: 2.75rem;
+  background: var(--carbono);
+  border-radius: var(--r);
+  animation: zona-latido 1.4s ease-in-out infinite;
+}
+
+.canal-vacio {
+  margin: auto;
+  padding: var(--e6);
+  text-align: center;
+  color: var(--texto-tenue);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.canal-vacio h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.375rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.canal-vacio p {
+  margin: 0;
+  color: var(--texto-medio);
+  max-width: 34ch;
+}
+
+/* --- Bajar --- */
+
+.canal-bajar {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  bottom: 5.25rem;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e4);
+  background: var(--librea);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  box-shadow: var(--sombra-3);
+  cursor: pointer;
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: canal-asomar 200ms ease-out;
+}
+
+@keyframes canal-asomar {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.canal-bajar:hover {
+  background: var(--librea-alta);
+}
+
+/* --- Aviso --- */
+
+.canal-aviso {
+  margin: 0 var(--e5);
+  padding: var(--e2) var(--e3);
+  background: var(--librea-baja);
+  border: 1px solid var(--librea);
+  border-radius: var(--r);
+  color: var(--librea-texto);
+  font-size: 0.8125rem;
+}
+
+/* --- Redactor --- */
+
+.canal-redactor {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e5);
+  border-top: 1px solid var(--surface-border);
+  background: var(--carbono);
+  position: relative;
+}
+
+.canal-campo {
+  flex: 1;
+  min-width: 0;
+  background: var(--asfalto);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  padding: 12px var(--e4);
+  transition: border-color 140ms ease;
+}
+
+.canal-campo::placeholder { color: var(--texto-tenue); }
+
+.canal-campo:focus {
+  outline: none;
+  border-color: var(--librea);
+}
+
+.canal-campo:disabled {
+  opacity: 0.5;
+}
+
+.canal-restantes {
+  position: absolute;
+  right: 5.5rem;
+  font-size: 0.625rem;
+  color: var(--texto-tenue);
+  pointer-events: none;
+}
+
+.canal-restantes.apurado {
+  color: var(--librea-texto);
+  font-weight: 700;
+}
+
+.canal-enviar {
+  flex-shrink: 0;
+  width: 2.875rem;
+  height: 2.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--librea);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.canal-enviar:hover:not(:disabled) {
+  background: var(--librea-alta);
+}
+
+.canal-enviar:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.canal-enviar:focus-visible,
+.canal-campo:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+/* --- Móvil --- */
+
+@media (max-width: 768px) {
+  .canal-cabecera {
+    padding: var(--e3) var(--e4);
+  }
+  .canal-registro {
+    padding: var(--e4) var(--e3);
+  }
+  .canal-msg {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: var(--e2);
+  }
+  .canal-avatar.p-avatar {
+    width: 1.875rem;
+    height: 1.875rem;
+  }
+  .canal-redactor {
+    padding: var(--e3) var(--e4);
+  }
+  .canal-restantes {
+    right: 4.75rem;
+  }
+  /* En táctil no hay hover: denuncia y hora siempre visibles */
+  .canal-meta .btn-denunciar,
+  .canal-hora-lateral {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canal-directo svg,
+  .canal-hueco,
+  .canal-bajar {
+    animation: none;
+  }
+}

@@ -1,0 +1,58 @@
+/* =========================================================================
+   Detalle de crew — canal
+   ========================================================================= */
+
+.crew-canal {
+  max-width: 64rem;
+  margin: var(--e7) auto 0;
+  padding: 0 var(--e4);
+}
+
+.crew-canal-caja {
+  height: 34rem;
+  border: 1px solid var(--surface-border);
+  border-top: 2px solid var(--ambar);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.crew-canal-cerrado {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--ambar);
+  border-radius: var(--r);
+  padding: var(--e7) var(--e6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e3);
+  color: var(--ambar);
+}
+
+.crew-canal-cerrado h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.75rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.crew-canal-cerrado p {
+  margin: 0;
+  color: var(--texto-medio);
+  max-width: 52ch;
+  line-height: 1.55;
+}
+
+@media (max-width: 768px) {
+  .crew-canal {
+    margin-top: var(--e6);
+  }
+  .crew-canal-caja {
+    height: 28rem;
+  }
+  .crew-canal-cerrado {
+    padding: var(--e6) var(--e5);
+  }
+}

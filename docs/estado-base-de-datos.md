@@ -3,7 +3,7 @@
 Bitácora del trabajo sobre Supabase. Se actualiza cada vez que se toca algo
 en el proyecto `stryumcmeavlvjaamcaw`.
 
-**Última revisión:** 2026-09-02
+**Última revisión:** 2026-09-03
 
 ---
 
@@ -17,6 +17,7 @@ en el proyecto `stryumcmeavlvjaamcaw`.
 | Funciones `SECURITY DEFINER` | ⚠️ 3 de 4 con `search_path` fijado |
 | Email en `profiles` | ❌ Legible por anónimos |
 | Clave de OneSignal | ✅ Rotada, en variables de Netlify |
+| Chat de crew | ❌ Legible y escribible por cualquiera (bloque 7 pendiente) |
 
 ---
 
@@ -68,6 +69,17 @@ hace una subconsulta a `crew_members` que se evalúa fila a fila.
 - `guard_is_admin` — revierte en silencio los intentos de auto-ascenso.
   Extendido a `INSERT` con el trigger `trg_guard_is_admin_insert`; antes
   solo vigilaba `UPDATE`.
+
+### Moderación — bloque 6 ejecutado
+
+- Tabla `reports` (denuncias) con una columna por tipo de contenido y
+  borrado en cascada; RLS: cada uno ve las suyas, los admin todas.
+- Tabla `blocks` (bloqueos entre usuarios) con trigger que deja de seguir
+  en ambos sentidos al bloquear.
+- Límite de ritmo en los dos chats: 8 mensajes por minuto y usuario, por
+  trigger (`trg_ritmo_global`, `trg_ritmo_crew`). Longitud máxima 1000.
+- Políticas de borrado por moderación en comentarios y mensajes.
+- Vista `cola_moderacion` con `security_invoker`.
 
 ### OneSignal
 
@@ -146,15 +158,23 @@ en Storage: su avatar y las fotos de sus coches se quedan en los buckets.
 Para el derecho de supresión del RGPD hay que limpiarlos, y eso se hace
 desde la Storage API, no desde SQL.
 
-### 6. Chat sin límite de envío
+### 6. Chat de crew abierto a cualquiera — BLOQUE 7 pendiente de ejecutar
 
-`global_messages` y `crew_messages` no tienen límite por usuario y minuto
-ni longitud máxima. Mientras la web es privada da igual; el día que se
-publique, un chat global abierto es el primer sitio donde aparecen los
-problemas.
+```
+crew_messages  SELECT  using: true
+crew_messages  INSERT  check: (auth.uid() = user_id)
+```
 
-**Plan:** trigger que rechace más de N mensajes por minuto y usuario, y una
-restricción `check` sobre la longitud del mensaje.
+Cualquier usuario con sesión podía leer los mensajes de **todas** las crews
+y escribir en cualquiera, sin ser miembro ni haberlo pedido. Detectado el
+2026-09-03 con un usuario de prueba. La interfaz ya solo pinta el canal a
+miembros aprobados (`CrewDetailPage`), pero eso no basta: la API se puede
+llamar directamente.
+
+**Bloque 7** sustituye las dos políticas por lectura y escritura solo para
+miembros con `status = 'approved'` de esa crew. Realtime respeta las
+políticas, así que los no miembros tampoco reciben mensajes nuevos.
+
 
 ---
 

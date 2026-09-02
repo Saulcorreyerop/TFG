@@ -7,6 +7,7 @@ import { Toast } from 'primereact/toast'
 import { Tag } from 'primereact/tag'
 import PageTransition from '../components/PageTransition'
 import {
+  Lock,
   Users,
   Shield,
   ArrowLeft,
@@ -18,7 +19,8 @@ import {
 } from 'lucide-react'
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTACIÓN AÑADIDA
-import CrewChat from '../components/CrewChat';
+import CrewChat from '../components/CrewChat'
+import './CrewDetailPage.css'
 
 const CrewDetailPage = ({ session }) => {
   const { crewName } = useParams()
@@ -449,19 +451,30 @@ const CrewDetailPage = ({ session }) => {
             </div>
           </div>
         </div>
-        {/* --- SECCIÓN CHAT DE LA CREW --- */}
-<div className="mt-6 border-top-1 surface-border pt-5">
-  <div className="max-w-4xl mx-auto">
-    <h2 className="text-2xl font-black text-color mb-4 flex align-items-center gap-2">
-      <i className="pi pi-comments text-blue-600"></i>
-      Chat Oficial
-    </h2>
-    <div style={{ height: '500px', borderRadius: 'var(--r)', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
-      {/* CAMBIA 'crew.id' POR LA VARIABLE QUE TENGA EL ID DE LA CREW EN ESTE ARCHIVO */}
-      <CrewChat crewId={crew.id} session={session} />
-    </div>
-  </div>
-</div>
+        {/* --- Canal de la crew ---
+            Solo para miembros aprobados. Antes se pintaba para cualquiera
+            con sesión, y la base de datos tampoco lo impedía: cualquier
+            usuario podía leer y escribir en el chat de una crew sin ser
+            miembro ni haberlo pedido. Ahora lo cierran las dos capas. */}
+        <section className='crew-canal'>
+          {userStatus === 'approved' ? (
+            <div className='crew-canal-caja'>
+              <CrewChat crewId={crew.id} crewName={crew.name} session={session} />
+            </div>
+          ) : (
+            <div className='crew-canal-cerrado'>
+              <Lock size={26} aria-hidden='true' />
+              <h2>Canal solo para miembros</h2>
+              <p>
+                {userStatus === 'pending'
+                  ? 'Tu solicitud está pendiente. En cuanto un administrador la acepte, entrarás al canal.'
+                  : session
+                    ? 'Solicita unirte a la crew desde arriba. Cuando te acepten, podrás leer y escribir aquí.'
+                    : 'Inicia sesión y solicita unirte a la crew para entrar al canal.'}
+              </p>
+            </div>
+          )}
+        </section>
       </PageTransition>
     </>
   )

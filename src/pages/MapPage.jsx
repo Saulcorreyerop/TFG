@@ -20,7 +20,6 @@ import 'leaflet/dist/leaflet.css'
 import PageTransition from '../components/PageTransition'
 import './MapPage.css'
 import SEO from '../components/SEO'
-import { useTheme } from '../hooks/useTheme'
 
 // --- CREADOR DE PINES PERSONALIZADOS ---
 const getCustomIcon = (isPrivate) => {
@@ -146,7 +145,6 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
 )
 
 const MapPage = ({ session }) => {
-  const { theme } = useTheme()
   const navigate = useNavigate()
   const toast = useRef(null)
   const mainContainerRef = useRef(null)
@@ -345,19 +343,13 @@ const MapPage = ({ session }) => {
                 inertia={true}
               >
                 {/*
-                  Teselas segun el tema. Las de OpenStreetMap son casi
-                  blancas: sobre la interfaz oscura deslumbran y los
-                  marcadores rojos se pierden. La distribucion de la
-                  pagina no cambia, solo el juego de teselas.
+                  OpenStreetMap, sin clave. CARTO marca sus teselas con
+                  "API KEY REQUIRED" a partir de cierto zoom. El oscuro
+                  lo pone un filtro CSS sobre el panel de teselas.
                 */}
                 <TileLayer
-                  key={theme}
-                  attribution='&copy; OpenStreetMap &copy; CARTO'
-                  url={
-                    theme === 'claro'
-                      ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-                      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                  }
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url='https://tile.openstreetmap.org/{z}/{x}/{y}.png'
                   maxZoom={18}
                   keepBuffer={8}
                   updateWhenZooming={false}

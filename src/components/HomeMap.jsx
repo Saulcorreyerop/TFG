@@ -5,7 +5,6 @@ import L from 'leaflet'
 import { motion } from 'framer-motion'
 import { Navigation, Lock, Radio } from 'lucide-react'
 import { supabase } from '../supabaseClient'
-import { useTheme } from '../hooks/useTheme'
 import './HomeMap.css'
 
 const MotionDiv = motion.div
@@ -18,8 +17,8 @@ const MotionDiv = motion.div
  *     desactivados. Ahora se puede mover y hacer zoom con los botones. La
  *     rueda sigue desactivada a propósito, para no secuestrar el scroll
  *     de la página cuando pasas por encima.
- *   · Teselas oscuras cuando el tema es oscuro. Las de OpenStreetMap son
- *     muy claras y sobre fondo asfalto deslumbran.
+ *   · En tema oscuro las teselas se invierten por CSS (App.css). Se probo
+ *     CARTO y marca las teselas con "API KEY REQUIRED" al hacer zoom.
  *   · El velo inferior ocupaba 280px de un mapa de 600: casi la mitad del
  *     contenido tapado por un botón. Ahora la barra va arriba y es fina.
  *   · La sesión llega por props; antes pedía la suya con getSession.
@@ -28,15 +27,15 @@ const MotionDiv = motion.div
  * que aplica la política RLS events_select_visibilidad en el servidor.
  */
 
+/*
+ * Teselas de OpenStreetMap, sin clave. CARTO empezó a marcar las suyas
+ * con "API KEY REQUIRED" a partir de cierto zoom, así que se descartan.
+ * El aspecto oscuro se consigue con un filtro CSS sobre el panel de
+ * teselas (ver App.css), que no toca marcadores ni bocadillos.
+ */
 const TESELAS = {
-  oscuro: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-  },
-  claro: {
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-  },
+  url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }
 
 const CENTRO_ESPANA = [40.4637, -3.7492]
@@ -61,7 +60,6 @@ const pin = (esPrivado) => {
 
 const HomeMap = ({ session }) => {
   const navigate = useNavigate()
-  const { theme } = useTheme()
   const [eventos, setEventos] = useState([])
 
   useEffect(() => {
@@ -105,7 +103,6 @@ const HomeMap = ({ session }) => {
     }
   }, [session])
 
-  const teselas = TESELAS[theme] || TESELAS.oscuro
 
   return (
     <section className='radar'>
@@ -158,11 +155,7 @@ const HomeMap = ({ session }) => {
             doubleClickZoom
             touchZoom
           >
-            <TileLayer
-              key={theme}
-              attribution={teselas.attribution}
-              url={teselas.url}
-            />
+            <TileLayer attribution={TESELAS.attribution} url={TESELAS.url} />
 
             {eventos.map((ev) => (
               <Marker

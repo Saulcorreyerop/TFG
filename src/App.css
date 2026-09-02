@@ -507,3 +507,16 @@
   height: 2px;
   background: var(--librea);
 }
+
+
+/*
+ * Mapa en tema oscuro. Las teselas de OpenStreetMap son claras; en vez
+ * de depender de un proveedor de teselas oscuras (CARTO exige clave), se
+ * invierten por CSS. El filtro va SOLO sobre el panel de teselas:
+ * marcadores, bocadillos y controles están en otros paneles y no se
+ * tocan. Es el mismo truco que usan muchos paneles de control oscuros.
+ */
+:root[data-tema='oscuro'] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92)
+    saturate(0.55);
+}
