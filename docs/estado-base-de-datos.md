@@ -17,7 +17,7 @@ en el proyecto `stryumcmeavlvjaamcaw`.
 | Funciones `SECURITY DEFINER` | ⚠️ 3 de 4 con `search_path` fijado |
 | Email en `profiles` | ❌ Legible por anónimos |
 | Clave de OneSignal | ✅ Rotada, en variables de Netlify |
-| Chat de crew | ❌ Legible y escribible por cualquiera (bloque 7 pendiente) |
+| Chat de crew | ✅ Solo miembros aprobados (bloque 7) |
 
 ---
 
@@ -80,6 +80,13 @@ hace una subconsulta a `crew_members` que se evalúa fila a fila.
   trigger (`trg_ritmo_global`, `trg_ritmo_crew`). Longitud máxima 1000.
 - Políticas de borrado por moderación en comentarios y mensajes.
 - Vista `cola_moderacion` con `security_invoker`.
+
+### Chat de crew — bloque 7 ejecutado
+
+`crew_messages` era legible y escribible por cualquier usuario con sesión
+(`SELECT using true`). Ahora leer y escribir exige ser miembro con
+`status = 'approved'` de esa crew. Comprobado: 4 políticas, ninguna con
+`true`. Realtime respeta RLS.
 
 ### OneSignal
 
@@ -157,23 +164,6 @@ SQL (`protect_delete()`).
 en Storage: su avatar y las fotos de sus coches se quedan en los buckets.
 Para el derecho de supresión del RGPD hay que limpiarlos, y eso se hace
 desde la Storage API, no desde SQL.
-
-### 6. Chat de crew abierto a cualquiera — BLOQUE 7 pendiente de ejecutar
-
-```
-crew_messages  SELECT  using: true
-crew_messages  INSERT  check: (auth.uid() = user_id)
-```
-
-Cualquier usuario con sesión podía leer los mensajes de **todas** las crews
-y escribir en cualquiera, sin ser miembro ni haberlo pedido. Detectado el
-2026-09-03 con un usuario de prueba. La interfaz ya solo pinta el canal a
-miembros aprobados (`CrewDetailPage`), pero eso no basta: la API se puede
-llamar directamente.
-
-**Bloque 7** sustituye las dos políticas por lectura y escritura solo para
-miembros con `status = 'approved'` de esa crew. Realtime respeta las
-políticas, así que los no miembros tampoco reciben mensajes nuevos.
 
 
 ---

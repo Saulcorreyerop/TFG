@@ -94,6 +94,10 @@
   --librea-texto: #FF5347;
   --librea-baja:  rgba(217, 46, 39, 0.14);
 
+  /* Ambar para texto pequeno. El ambar de senal (#E0A93B) sobre carbono
+     da 7:1 en oscuro, pero sobre blanco se queda en 2.1. */
+  --ambar-texto: #E0A93B;
+
   /* Superficies propias */
   --asfalto:      #0E0E10;
   --carbono:      #16171A;
@@ -158,6 +162,7 @@
   --librea-alta:  #A82019;
   --librea-texto: #C42A24;
   --librea-baja:  rgba(196, 42, 36, 0.10);
+  --ambar-texto:  #7A5200;
 
   --asfalto:      #F2F2F0;
   --carbono:      #FFFFFF;

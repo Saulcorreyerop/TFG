@@ -36,6 +36,8 @@
   position: relative;
   isolation: isolate;
   border-bottom: 1px solid var(--surface-border);
+  /* Fondo oscuro fijo: lo de encima es blanco sobre foto en ambos temas */
+  background: #141518;
 }
 
 .pf-portada {

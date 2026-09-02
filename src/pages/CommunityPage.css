@@ -383,7 +383,7 @@
   font-size: 1.375rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--ambar);
+  color: var(--ambar-texto);
   padding-top: var(--e3);
 }
 

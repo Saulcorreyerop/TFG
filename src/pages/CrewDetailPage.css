@@ -1,35 +1,725 @@
 /* =========================================================================
-   Detalle de crew — canal
+   Ficha de crew — sistema Librea
+
+   Misma estructura que la ficha de piloto. El color que identifica a las
+   crews es el ámbar, igual que en el mapa y en los eventos privados: el
+   escudo, el estado de miembro y el filo del canal lo llevan.
    ========================================================================= */
 
-.crew-canal {
-  max-width: 64rem;
-  margin: var(--e7) auto 0;
-  padding: 0 var(--e4);
+.cr {
+  background: var(--surface-ground);
+  min-height: 100vh;
+  /* Aire antes del pie: el canal no puede quedar pegado al footer */
+  padding-bottom: var(--e9);
 }
 
-.crew-canal-caja {
-  height: 34rem;
+/* -------------------------------------------------------------------------
+   Banda
+   ------------------------------------------------------------------------- */
+
+.cr-banda {
+  position: relative;
+  isolation: isolate;
+  border-bottom: 1px solid var(--surface-border);
+  /* Fondo oscuro FIJO: todo lo que va encima es blanco sobre foto, en
+     los dos temas. Sin esto, en claro dependia solo del velo. */
+  background: #141518;
+}
+
+.cr-portada {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--carbono);
+}
+
+.cr-portada img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.7) brightness(0.5);
+}
+
+.cr-velo {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--sobre-foto) 0%,
+    var(--sobre-foto-fuerte) 55%,
+    var(--surface-ground) 100%
+  );
+}
+
+.cr-banda-caja {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--e5) var(--e5) var(--e6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+.cr-volver {
+  align-self: flex-start;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sobre-foto-fuerte);
+  border: 1px solid var(--borde-foto);
+  border-radius: var(--r);
+  color: #fff;
+  cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+.cr-volver:hover {
+  border-color: #fff;
+}
+
+/* --- Identidad --- */
+
+.cr-identidad {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--e5);
+  flex-wrap: wrap;
+}
+
+.cr-escudo.p-avatar {
+  width: 7rem;
+  height: 7rem;
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  background: var(--carbono);
+  color: var(--ambar);
+  border: 3px solid var(--ambar);
+  border-radius: 50%;
+}
+
+.cr-nombre-bloque {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.cr-nombre-bloque .rotulo {
+  color: color-mix(in srgb, #fff 65%, transparent);
+}
+
+.cr-nombre-fila {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--e3);
+}
+
+.cr-nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  color: #fff;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cr-chip {
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px var(--e3);
+  background: var(--sobre-foto-fuerte);
+  border: 1px solid var(--ambar);
+  border-radius: var(--r);
+  color: var(--ambar);
+}
+
+.cr-desc {
+  margin: 0;
+  max-width: 62ch;
+  color: color-mix(in srgb, #fff 85%, transparent);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+/* --- Acciones y estado --- */
+
+.cr-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+
+.cr-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: 9px var(--e4);
+  background: var(--sobre-foto-fuerte);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borde-foto);
+  border-radius: var(--r);
+  color: #fff;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.cr-accion:hover {
+  border-color: #fff;
+}
+
+.cr-accion.principal {
+  background: var(--librea);
+  border-color: var(--librea);
+}
+.cr-accion.principal:hover {
+  background: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+.cr-accion.peligro:hover {
+  border-color: var(--librea-alta);
+  color: var(--librea-alta);
+}
+
+.cr-accion:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.cr-accion:focus-visible,
+.cr-volver:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+.cr-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: 9px var(--e4);
+  border-radius: var(--r);
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--sobre-foto-fuerte);
+}
+
+.cr-estado.pendiente { color: var(--ambar); border: 1px solid var(--ambar); }
+.cr-estado.miembro   { color: var(--verde); border: 1px solid var(--verde); }
+
+.cr-confirmar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* --- Cifras --- */
+
+.cr-cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 1px;
+  background: var(--borde-foto);
+  border: 1px solid var(--borde-foto);
+}
+
+.cr-cifra {
+  background: var(--sobre-foto);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  padding: var(--e4) var(--e5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-cifra-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.cr-cifra.atencion .cr-cifra-valor {
+  color: var(--ambar);
+}
+
+.cr-cifra-etiqueta {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 78%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   Peticiones pendientes (solo admin)
+   ------------------------------------------------------------------------- */
+
+.cr-peticiones {
+  max-width: 1200px;
+  margin: var(--e6) auto 0;
+  padding: 0 var(--e5);
+}
+
+.cr-peticiones-caja {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--ambar);
+  border-radius: var(--r);
+  padding: var(--e5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.cr-peticiones-cabecera .rotulo {
+  color: var(--ambar-texto);
+}
+
+.cr-seccion-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-color);
+  margin: var(--e1) 0 0;
+}
+
+.cr-peticiones-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--e3);
+}
+
+.cr-peticion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3);
+  background: var(--asfalto);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+}
+
+.cr-peticion-quien {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.cr-avatar-peq.p-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 1px solid var(--surface-border);
+  flex-shrink: 0;
+}
+
+.cr-peticion-nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-peticion-quien:hover .cr-peticion-nombre {
+  color: var(--librea-texto);
+}
+
+.cr-peticion-botones {
+  display: flex;
+  gap: var(--e2);
+  flex-shrink: 0;
+}
+
+.cr-resolver {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  height: 2.25rem;
+  padding: 0 var(--e3);
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+/* Aceptar es la acción principal: verde sólido con texto oscuro */
+.cr-resolver.aceptar {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: #14161A;
+}
+.cr-resolver.aceptar:hover { filter: brightness(1.1); }
+
+.cr-resolver.rechazar {
+  width: 2.25rem;
+  padding: 0;
+  justify-content: center;
+  background: transparent;
+  border-color: var(--surface-border);
+  color: var(--texto-medio);
+}
+.cr-resolver.rechazar:hover {
+  border-color: var(--librea);
+  color: var(--librea-texto);
+}
+
+.cr-resolver:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.cr-resolver:focus-visible,
+.cr-pestana:focus-visible,
+.cr-miembro:focus-visible,
+.cr-coche:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------------
+   Pestañas
+   ------------------------------------------------------------------------- */
+
+.cr-pestanas {
+  position: sticky;
+  top: 5rem;
+  z-index: 10;
+  display: flex;
+  gap: 1px;
+  background: var(--surface-border);
+  border-top: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
+  margin-top: var(--e6);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cr-pestanas::-webkit-scrollbar { display: none; }
+
+.cr-pestana {
+  flex: 1;
+  min-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  padding: var(--e4) var(--e5);
+  background: var(--carbono);
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--texto-medio);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.cr-pestana:hover {
+  background: var(--carbono-alto);
+  color: var(--text-color);
+}
+
+.cr-pestana.activa {
+  background: var(--carbono-alto);
+  color: var(--text-color);
+  border-bottom-color: var(--ambar);
+}
+
+.cr-pestana-num {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  min-width: 1.5rem;
+  text-align: center;
+  background: var(--asfalto);
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  color: var(--texto-tenue);
+}
+
+.cr-pestana.activa .cr-pestana-num {
+  background: var(--ambar);
+  border-color: var(--ambar);
+  color: #14161A;
+}
+
+/* -------------------------------------------------------------------------
+   Contenido
+   ------------------------------------------------------------------------- */
+
+.cr-contenido {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--e6) var(--e5) 0;
+}
+
+/* Canal: caja de altura fija con filo ámbar */
+.cr-canal-caja {
+  height: 36rem;
   border: 1px solid var(--surface-border);
   border-top: 2px solid var(--ambar);
   border-radius: var(--r);
   overflow: hidden;
 }
 
-.crew-canal-cerrado {
+/* --- Miembros --- */
+
+.cr-miembros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--e3);
+}
+
+.cr-miembro {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
   background: var(--carbono);
   border: 1px solid var(--surface-border);
-  border-left: 2px solid var(--ambar);
+  border-left: 2px solid transparent;
   border-radius: var(--r);
-  padding: var(--e7) var(--e6);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.cr-miembro:hover {
+  background: var(--carbono-alto);
+  border-left-color: var(--ambar);
+}
+
+.cr-miembro-avatar.p-avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 1px solid var(--surface-border);
+  flex-shrink: 0;
+}
+
+.cr-miembro-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-miembro-nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-miembro-rol {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+.cr-miembro-rol.fundador {
+  color: var(--ambar-texto);
+}
+
+.cr-miembro-coches {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--texto-medio);
+  flex-shrink: 0;
+}
+
+/* --- Garaje --- */
+
+.cr-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--e4);
+}
+
+.cr-hueco {
+  aspect-ratio: 16 / 13;
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  animation: zona-latido 1.4s ease-in-out infinite;
+}
+
+.cr-coche {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.cr-coche:hover {
+  border-color: var(--linea-viva);
+  transform: translateY(-3px);
+}
+
+.cr-coche-foto {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--carbono-alto);
+}
+
+.cr-coche-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+.cr-coche:hover .cr-coche-foto img {
+  transform: scale(1.04);
+}
+
+.cr-sinfoto {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--linea-viva);
+}
+
+.cr-contador-fotos {
+  position: absolute;
+  top: var(--e3);
+  right: var(--e3);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  background: var(--sobre-foto-fuerte);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.cr-coche-cuerpo {
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.cr-coche-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cr-coche-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+}
+
+.cr-coche-dueno {
+  margin-left: auto;
+  color: var(--texto-tenue);
+}
+
+/* --- Vacío --- */
+
+.cr-vacio {
+  padding: var(--e8) var(--e6);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--librea);
+  border-radius: var(--r);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--e3);
-  color: var(--ambar);
+  color: var(--librea-texto);
 }
 
-.crew-canal-cerrado h2 {
+.cr-vacio.ambar {
+  border-left-color: var(--ambar);
+  color: var(--ambar-texto);
+}
+
+.cr-vacio h2 {
   font-family: var(--display);
   font-weight: 700;
   text-transform: uppercase;
@@ -38,21 +728,72 @@
   margin: 0;
 }
 
-.crew-canal-cerrado p {
-  margin: 0;
+.cr-vacio p {
+  margin: 0 0 var(--e2);
   color: var(--texto-medio);
   max-width: 52ch;
   line-height: 1.55;
 }
 
+/* -------------------------------------------------------------------------
+   Móvil
+   ------------------------------------------------------------------------- */
+
 @media (max-width: 768px) {
-  .crew-canal {
-    margin-top: var(--e6);
+  .cr {
+    padding-bottom: var(--e8);
   }
-  .crew-canal-caja {
-    height: 28rem;
+  .cr-banda-caja {
+    padding: var(--e4) var(--e4) var(--e5);
+    gap: var(--e4);
   }
-  .crew-canal-cerrado {
+  .cr-identidad {
+    align-items: flex-start;
+    gap: var(--e4);
+  }
+  .cr-escudo.p-avatar {
+    width: 5rem;
+    height: 5rem;
+    font-size: 1.75rem;
+  }
+  .cr-acciones {
+    width: 100%;
+  }
+  .cr-accion.principal,
+  .cr-estado {
+    flex: 1;
+    justify-content: center;
+  }
+  .cr-peticiones {
+    padding: 0 var(--e4);
+  }
+  .cr-peticiones-lista {
+    grid-template-columns: 1fr;
+  }
+  .cr-pestana {
+    padding: var(--e3) var(--e4);
+    font-size: 0.875rem;
+  }
+  .cr-pestana-texto {
+    display: none;
+  }
+  .cr-contenido {
+    padding: var(--e5) var(--e4) 0;
+  }
+  .cr-canal-caja {
+    height: 30rem;
+  }
+  .cr-miembros,
+  .cr-rejilla {
+    grid-template-columns: 1fr;
+  }
+  .cr-vacio {
     padding: var(--e6) var(--e5);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-hueco { animation: none; }
+  .cr-coche:hover,
+  .cr-coche:hover .cr-coche-foto img { transform: none; }
 }
