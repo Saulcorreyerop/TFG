@@ -1,0 +1,656 @@
+/* =========================================================================
+   Comunidad — sistema Librea
+   ========================================================================= */
+
+.cm {
+  background: var(--surface-ground);
+  min-height: 100vh;
+}
+
+/* --- Cabecera --- */
+
+.cm-cabecera {
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--carbono);
+}
+
+.cm-cabecera-caja {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--e7) var(--e5) var(--e6);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--e4);
+}
+
+.cm-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 0.95;
+  color: var(--text-color);
+  margin: var(--e2) 0 0;
+}
+
+/* --- Barra pegajosa: pestañas + buscador --- */
+
+.cm-barra {
+  position: sticky;
+  top: 5rem; /* debajo de la cabecera del sitio */
+  z-index: 10;
+  background: var(--carbono);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.cm-pestanas {
+  display: flex;
+  gap: 1px;
+  background: var(--surface-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cm-pestanas::-webkit-scrollbar { display: none; }
+
+.cm-pestana {
+  flex: 1;
+  min-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  padding: var(--e4) var(--e5);
+  background: var(--carbono);
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--texto-medio);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.cm-pestana:hover {
+  background: var(--carbono-alto);
+  color: var(--text-color);
+}
+
+.cm-pestana.activa {
+  background: var(--carbono-alto);
+  color: var(--text-color);
+  border-bottom-color: var(--librea);
+}
+
+.cm-pestana:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: -2px;
+}
+
+.cm-pestana-num {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  min-width: 1.5rem;
+  text-align: center;
+  background: var(--asfalto);
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  color: var(--texto-tenue);
+}
+
+.cm-pestana.activa .cm-pestana-num {
+  background: var(--librea);
+  border-color: var(--librea);
+  color: #fff;
+}
+
+/* --- Buscador --- */
+
+.cm-buscador {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--e3) var(--e5);
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.cm-lupa {
+  color: var(--texto-tenue);
+  flex-shrink: 0;
+}
+
+.cm-campo {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  padding: var(--e2) 0;
+}
+
+.cm-campo::placeholder { color: var(--texto-tenue); }
+
+.cm-campo:focus {
+  outline: none;
+}
+
+/* El foco se marca en la barra entera, no en el input: así se ve. */
+.cm-buscador:focus-within {
+  box-shadow: inset 0 -2px 0 var(--librea);
+}
+
+/* --- Contenido --- */
+
+.cm-contenido {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--e7) var(--e5) var(--e9);
+}
+
+.cm-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--e4);
+}
+
+.cm-hueco {
+  aspect-ratio: 4 / 5;
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  animation: zona-latido 1.4s ease-in-out infinite;
+}
+
+.cm-sinfoto {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--linea-viva);
+  background: var(--carbono-alto);
+}
+
+/* =========================================================================
+   Piloto
+   ========================================================================= */
+
+.cm-piloto {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.cm-piloto:hover,
+.cm-piloto:focus-visible {
+  border-color: var(--linea-viva);
+  transform: translateY(-3px);
+}
+
+.cm-piloto:focus-visible,
+.cm-crew:focus-visible,
+.cm-coche:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: 2px;
+}
+
+.cm-piloto-portada {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--carbono-alto);
+}
+
+.cm-piloto-portada img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+.cm-piloto:hover .cm-piloto-portada img {
+  transform: scale(1.04);
+}
+
+.cm-piloto-cuerpo {
+  padding: 0 var(--e4) var(--e4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e2);
+  text-align: center;
+  flex: 1;
+}
+
+/* El avatar monta sobre la portada. El anillo es carbono, no blanco: en
+   tema oscuro un anillo blanco cantaría. */
+.cm-piloto-avatar.p-avatar {
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.5rem;
+  margin-top: -2rem;
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 3px solid var(--carbono);
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+.cm-piloto-nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: var(--e1) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.cm-piloto-coches {
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+.cm-piloto-ir {
+  margin-top: auto;
+  padding-top: var(--e3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-medio);
+  transition: color 140ms ease;
+}
+
+.cm-piloto:hover .cm-piloto-ir {
+  color: var(--librea-texto);
+}
+
+/* =========================================================================
+   Crew
+   ========================================================================= */
+
+.cm-crews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: var(--e4);
+}
+
+.cm-crew {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid transparent;
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.cm-crew:hover {
+  border-left-color: var(--ambar);
+}
+
+.cm-crew-banner {
+  height: 7rem;
+  overflow: hidden;
+  background: var(--carbono-alto);
+}
+
+.cm-crew-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cm-crew-cuerpo {
+  padding: 0 var(--e4) var(--e4);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: flex-end;
+  gap: var(--e3);
+}
+
+/* El escudo de la crew va en ámbar: es el color que ya identifica a las
+   crews en el mapa y en los eventos privados. */
+.cm-crew-escudo.p-avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 1.25rem;
+  margin-top: -1.75rem;
+  background: var(--carbono-alto);
+  color: var(--ambar);
+  border: 2px solid var(--ambar);
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+.cm-crew-texto {
+  min-width: 0;
+  padding-top: var(--e3);
+}
+
+.cm-crew-nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  color: var(--text-color);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cm-crew-desc {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--texto-medio);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cm-crew-miembros {
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ambar);
+  padding-top: var(--e3);
+}
+
+.cm-crew-miembros span {
+  display: block;
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+  margin-top: 3px;
+}
+
+/* =========================================================================
+   Coche del ranking
+   ========================================================================= */
+
+.cm-coche {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.cm-coche:hover {
+  border-color: var(--linea-viva);
+  transform: translateY(-3px);
+}
+
+.cm-coche.podio {
+  border-color: var(--librea);
+}
+
+.cm-coche-foto {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--carbono-alto);
+}
+
+.cm-coche-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+.cm-coche:hover .cm-coche-foto img {
+  transform: scale(1.04);
+}
+
+.cm-posicion {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: var(--e2) var(--e3);
+  background: var(--librea);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cm-respeto {
+  position: absolute;
+  bottom: var(--e3);
+  right: var(--e3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px var(--e3);
+  background: var(--sobre-foto-fuerte);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--borde-foto);
+  border-radius: var(--r);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.cm-respeto:hover,
+.cm-respeto.dado {
+  color: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+.cm-respeto:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+.cm-coche-cuerpo {
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.cm-coche-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.1875rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cm-coche-autor {
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+/* =========================================================================
+   Vacío y formulario
+   ========================================================================= */
+
+.cm-vacio {
+  padding: var(--e8) var(--e6);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--librea);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e3);
+  color: var(--librea-texto);
+}
+
+.cm-vacio h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.75rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.cm-vacio p {
+  margin: 0 0 var(--e3);
+  color: var(--texto-medio);
+  max-width: 48ch;
+  line-height: 1.55;
+}
+
+.cm-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+.cm-form-intro {
+  margin: 0;
+  color: var(--texto-medio);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.cm-campo-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.cm-imagenes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e3);
+}
+
+.cm-carga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  padding: var(--e4);
+  background: var(--asfalto);
+  border: 1px dashed var(--linea-viva);
+  border-radius: var(--r);
+  color: var(--texto-medio);
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.cm-carga:hover {
+  color: var(--librea-texto);
+  border-color: var(--librea);
+}
+
+.cm-carga-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cm-crear {
+  width: 100%;
+  justify-content: center;
+}
+
+/* =========================================================================
+   Móvil
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  .cm-cabecera-caja {
+    padding: var(--e6) var(--e4) var(--e5);
+  }
+  .cm-cabecera-caja .btn-librea {
+    width: 100%;
+  }
+  .cm-barra {
+    top: 5rem;
+  }
+  .cm-pestana {
+    padding: var(--e3) var(--e4);
+    font-size: 0.875rem;
+  }
+  /* En estrecho se quedan el icono y el número */
+  .cm-pestana-texto {
+    display: none;
+  }
+  .cm-buscador {
+    padding: var(--e2) var(--e4);
+  }
+  .cm-contenido {
+    padding: var(--e5) var(--e4) var(--e8);
+  }
+  .cm-rejilla {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+    gap: var(--e3);
+  }
+  .cm-crews {
+    grid-template-columns: 1fr;
+  }
+  .cm-piloto-nombre,
+  .cm-coche-titulo {
+    font-size: 1.0625rem;
+  }
+  .cm-vacio {
+    padding: var(--e6) var(--e5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-hueco { animation: none; }
+  .cm-piloto:hover,
+  .cm-coche:hover,
+  .cm-piloto:hover .cm-piloto-portada img,
+  .cm-coche:hover .cm-coche-foto img {
+    transform: none;
+  }
+}

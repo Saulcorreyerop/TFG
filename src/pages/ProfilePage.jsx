@@ -1,14 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { supabase } from '../supabaseClient'
-import { Avatar } from 'primereact/avatar'
-import { Button } from 'primereact/button'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Tag } from 'primereact/tag'
+import { Avatar } from 'primereact/avatar'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Toast } from 'primereact/toast'
-import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 import {
   Share2,
@@ -16,19 +12,172 @@ import {
   Flag,
   CheckCircle,
   Heart,
-  Calendar,
+  CalendarDays,
   MapPin,
-  PlusCircle,
+  Plus,
   LogOut,
-  Image as ImageIcon,
+  Images,
   Shield,
   Instagram,
   Youtube,
+  Twitter,
+  Music2,
+  Pencil,
+  Camera,
 } from 'lucide-react'
 
-import './ProfilePage.css'
+import { supabase } from '../supabaseClient'
+import PageTransition from '../components/PageTransition'
 import LightboxFotos from '../components/LightboxFotos'
 import SEO from '../components/SEO'
+import './ProfilePage.css'
+
+/*
+ * Ficha del piloto.
+ *
+ * Antes eran cuatro secciones apiladas (garaje, eventos organizados,
+ * apuntado y guardados) que hacían la página larguísima: había que bajar
+ * mucho para llegar a lo de abajo y no se veía de un vistazo qué tenías.
+ *
+ * Ahora es una ficha: una banda de cabecera con la mejor foto del garaje
+ * de fondo, las cifras tratadas como telemetría, y las cuatro listas
+ * repartidas en pestañas. El contador de cada pestaña te dice si vale la
+ * pena entrar antes de pulsar.
+ *
+ * La lógica de datos no cambia; solo la presentación.
+ */
+
+const PESTANAS = [
+  { id: 'garaje', etiqueta: 'Garaje', icono: Car },
+  { id: 'organizados', etiqueta: 'Organizados', icono: Flag },
+  { id: 'apuntado', etiqueta: 'Me apunto', icono: CheckCircle },
+  { id: 'guardados', etiqueta: 'Guardados', icono: Heart },
+]
+
+const REDES = [
+  { campo: 'instagram', icono: Instagram, url: (v) => `https://instagram.com/${v}`, nombre: 'Instagram' },
+  { campo: 'twitter', icono: Twitter, url: (v) => `https://x.com/${v}`, nombre: 'X' },
+  { campo: 'tiktok', icono: Music2, url: (v) => `https://tiktok.com/@${v}`, nombre: 'TikTok' },
+  { campo: 'youtube', icono: Youtube, url: (v) => `https://youtube.com/@${v}`, nombre: 'YouTube' },
+]
+
+const fechaLarga = (f) =>
+  new Date(f).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+/* --- Tarjeta de vehículo: la foto manda --- */
+
+const TarjetaVehiculo = ({ vehiculo, onAbrir }) => {
+  const [roto, setRoto] = useState(false)
+  const fotos = 1 + (vehiculo.vehicle_images?.length || 0)
+
+  return (
+    <article
+      className='pf-coche'
+      onClick={() => onAbrir(vehiculo)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAbrir(vehiculo)}
+    >
+      <div className='pf-coche-foto'>
+        {vehiculo.image_url && !roto ? (
+          <img
+            src={vehiculo.image_url}
+            alt={`${vehiculo.marca} ${vehiculo.modelo}`}
+            loading='lazy'
+            decoding='async'
+            onError={() => setRoto(true)}
+          />
+        ) : (
+          <div className='pf-sinfoto'>
+            <Car size={38} aria-hidden='true' />
+          </div>
+        )}
+
+        {fotos > 1 && (
+          <span className='pf-contador-fotos datos'>
+            <Images size={12} aria-hidden='true' />
+            {fotos}
+          </span>
+        )}
+      </div>
+
+      <div className='pf-coche-cuerpo'>
+        <h3 className='pf-coche-titulo'>
+          {vehiculo.marca} {vehiculo.modelo}
+        </h3>
+
+        <div className='pf-telemetria'>
+          <div className='pf-dato'>
+            <span className='pf-dato-valor datos'>{vehiculo.cv || '—'}</span>
+            <span className='pf-dato-etiqueta'>CV</span>
+          </div>
+          <div className='pf-dato'>
+            <span className='pf-dato-valor datos'>{vehiculo.anio || '—'}</span>
+            <span className='pf-dato-etiqueta'>Año</span>
+          </div>
+          <div className='pf-dato'>
+            <span className='pf-dato-valor datos'>
+              {vehiculo.combustible ? vehiculo.combustible.slice(0, 3).toUpperCase() : '—'}
+            </span>
+            <span className='pf-dato-etiqueta'>Comb.</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+/* --- Tarjeta de evento: taco de fecha a la izquierda --- */
+
+const TarjetaEvento = ({ evento, onAbrir }) => {
+  const fecha = new Date(evento.fecha)
+  const pasado = fecha < new Date()
+
+  return (
+    <article
+      className={`pf-evento ${pasado ? 'pasado' : ''}`}
+      onClick={() => onAbrir(evento.id)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAbrir(evento.id)}
+    >
+      <div className='pf-fecha'>
+        <span className='pf-fecha-dia datos'>{fecha.getDate()}</span>
+        <span className='pf-fecha-mes'>
+          {fecha.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '')}
+        </span>
+      </div>
+
+      <div className='pf-evento-cuerpo'>
+        <div className='pf-evento-alto'>
+          {evento.tipo && <span className='pf-tipo'>{evento.tipo}</span>}
+          {pasado && <span className='pf-finalizado'>Finalizado</span>}
+        </div>
+
+        <h3 className='pf-evento-titulo'>{evento.titulo}</h3>
+
+        <div className='pf-evento-meta datos'>
+          <span>
+            <CalendarDays size={12} aria-hidden='true' />
+            {fechaLarga(evento.fecha)}
+          </span>
+          {evento.ubicacion && (
+            <span>
+              <MapPin size={12} aria-hidden='true' />
+              {evento.ubicacion.split(',')[0].trim()}
+            </span>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
+/* --- Página --- */
 
 const ProfilePage = ({ session }) => {
   const navigate = useNavigate()
@@ -37,40 +186,39 @@ const ProfilePage = ({ session }) => {
   const [profile, setProfile] = useState(null)
   const [myVehicles, setMyVehicles] = useState([])
   const [myCrew, setMyCrew] = useState(null)
-
   const [favorites, setFavorites] = useState([])
   const [attendingEvents, setAttendingEvents] = useState([])
   const [createdEvents, setCreatedEvents] = useState([])
-
   const [followersCount, setFollowersCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
 
+  const [pestana, setPestana] = useState('garaje')
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [galleryImages, setGalleryImages] = useState(null)
+  const [galleryTitulo, setGalleryTitulo] = useState('')
+
   const [editForm, setEditForm] = useState({
     username: '',
-    avatar_url: null,
+    avatar_url: '',
     bio: '',
     instagram: '',
     twitter: '',
     tiktok: '',
     youtube: '',
   })
-  const [avatarFile, setAvatarFile] = useState(null)
-  const [galleryImages, setGalleryImages] = useState(null)
-  const [galleryTitulo, setGalleryTitulo] = useState('')
 
-  useEffect(() => {
-    if (session) {
-      fetchAllData()
-    }
-  }, [session])
+  /* --- Datos --- */
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
+    if (!session?.user?.id) return
+    const uid = session.user.id
+
     const { data: profData } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', uid)
       .single()
 
     setProfile(profData)
@@ -89,661 +237,477 @@ const ProfilePage = ({ session }) => {
     const { data: vehData } = await supabase
       .from('vehicles')
       .select('*, vehicle_images(*)')
-      .eq('user_id', session.user.id)
+      .eq('user_id', uid)
     if (vehData) setMyVehicles(vehData)
 
     const { data: crewMemberData } = await supabase
       .from('crew_members')
       .select('crews(*)')
-      .eq('user_id', session.user.id)
+      .eq('user_id', uid)
       .eq('status', 'approved')
       .limit(1)
       .maybeSingle()
-
-    if (crewMemberData && crewMemberData.crews) {
-      setMyCrew(crewMemberData.crews)
-    }
+    if (crewMemberData?.crews) setMyCrew(crewMemberData.crews)
 
     const { data: favData } = await supabase
       .from('favorites')
-      .select(`event_id, events (*)`)
-      .eq('user_id', session.user.id)
-    if (favData)
-      setFavorites(
-        favData.map((item) => item.events).filter((ev) => ev !== null),
-      )
+      .select('event_id, events (*)')
+      .eq('user_id', uid)
+    if (favData) setFavorites(favData.map((i) => i.events).filter(Boolean))
 
     const { data: attData } = await supabase
       .from('event_attendees')
-      .select(`event_id, events (*)`)
-      .eq('user_id', session.user.id)
-    if (attData)
-      setAttendingEvents(
-        attData.map((item) => item.events).filter((ev) => ev !== null),
-      )
+      .select('event_id, events (*)')
+      .eq('user_id', uid)
+    if (attData) setAttendingEvents(attData.map((i) => i.events).filter(Boolean))
 
     const { data: creData } = await supabase
       .from('events')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', uid)
       .order('fecha', { ascending: false })
     if (creData) setCreatedEvents(creData)
 
-    try {
-      const { count: f1 } = await supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', session.user.id)
-      const { count: f2 } = await supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('follower_id', session.user.id)
-      setFollowersCount(f1 || 0)
-      setFollowingCount(f2 || 0)
-    } catch (err) {
-      console.warn('Tabla follows no lista aún o error:', err)
+    const [seguidores, siguiendo] = await Promise.all([
+      supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', uid),
+      supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', uid),
+    ])
+    setFollowersCount(seguidores.count || 0)
+    setFollowingCount(siguiendo.count || 0)
+  }, [session])
+
+  useEffect(() => {
+    fetchAllData()
+  }, [fetchAllData])
+
+  /* --- Acciones --- */
+
+  const abrirGaleria = (car) => {
+    const fotos = []
+    if (car.image_url) fotos.push(car.image_url)
+    car.vehicle_images?.forEach((img) => fotos.push(img.image_url))
+
+    if (fotos.length === 0) {
+      navigate('/garaje')
+      return
     }
+    setGalleryTitulo(`${car.marca} ${car.modelo}`)
+    setGalleryImages(fotos)
   }
 
-  const openGalleryViewer = (car) => {
-    const images = []
-    if (car.image_url)
-      images.push({
-        itemImageSrc: car.image_url,
-        thumbnailImageSrc: car.image_url,
-        alt: 'Principal',
-      })
-    if (car.vehicle_images && car.vehicle_images.length > 0) {
-      car.vehicle_images.forEach((img) => {
-        images.push({
-          itemImageSrc: img.image_url,
-          thumbnailImageSrc: img.image_url,
-          alt: 'Detalle',
-        })
-      })
-    }
-    if (images.length > 0) {
-      setGalleryTitulo(`${car.marca} ${car.modelo}`)
-      setGalleryImages(images)
-    }
-    else navigate('/garaje')
-  }
-
-  const handleAvatarUpload = async (file) => {
-    const options = {
+  const subirAvatar = async (file) => {
+    const comprimido = await imageCompression(file, {
       maxSizeMB: 0.5,
       maxWidthOrHeight: 800,
       useWebWorker: true,
       fileType: 'image/webp',
       initialQuality: 0.8,
-    }
-    const compressedFile = await imageCompression(file, options)
-    const filePath = `${session.user.id}-${Date.now()}.webp`
-    const { error: uploadError } = await supabase.storage
+    })
+    const ruta = `${session.user.id}-${Date.now()}.webp`
+    const { error } = await supabase.storage
       .from('avatars')
-      .upload(filePath, compressedFile, { contentType: 'image/webp' })
-    if (uploadError) throw uploadError
-    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
-    return data.publicUrl
+      .upload(ruta, comprimido, { contentType: 'image/webp' })
+    if (error) throw error
+    return supabase.storage.from('avatars').getPublicUrl(ruta).data.publicUrl
   }
 
-  const handleSaveProfile = async () => {
+  const guardarPerfil = async () => {
     setLoading(true)
     try {
-      let finalAvatarUrl = editForm.avatar_url
-      if (avatarFile) {
-        toast.current.show({
-          severity: 'info',
-          summary: 'Optimizando',
-          detail: 'Procesando imagen de perfil...',
-          life: 2000,
-        })
-        finalAvatarUrl = await handleAvatarUpload(avatarFile)
-      }
+      let avatar = editForm.avatar_url
+      if (avatarFile) avatar = await subirAvatar(avatarFile)
 
-      const cleanInsta = editForm.instagram
-        ? editForm.instagram.replace('@', '').trim()
-        : null
-      const cleanTwitter = editForm.twitter
-        ? editForm.twitter.replace('@', '').trim()
-        : null
-      const cleanTiktok = editForm.tiktok
-        ? editForm.tiktok.replace('@', '').trim()
-        : null
-      const cleanYoutube = editForm.youtube
-        ? editForm.youtube.replace('@', '').trim()
-        : null
+      const limpiar = (v) => (v ? v.replace('@', '').trim() || null : null)
 
       const { error } = await supabase
         .from('profiles')
         .update({
           username: editForm.username,
-          avatar_url: finalAvatarUrl,
+          avatar_url: avatar,
           bio: editForm.bio,
-          instagram: cleanInsta,
-          twitter: cleanTwitter,
-          tiktok: cleanTiktok,
-          youtube: cleanYoutube,
+          instagram: limpiar(editForm.instagram),
+          twitter: limpiar(editForm.twitter),
+          tiktok: limpiar(editForm.tiktok),
+          youtube: limpiar(editForm.youtube),
           updated_at: new Date(),
         })
         .eq('id', session.user.id)
+
       if (error) throw error
-      toast.current.show({
+
+      toast.current?.show({
         severity: 'success',
-        summary: 'Actualizado',
-        detail: 'Perfil modificado correctamente',
+        summary: 'Guardado',
+        detail: 'Tu perfil está actualizado.',
       })
       setShowEditDialog(false)
       setAvatarFile(null)
       fetchAllData()
     } catch (err) {
       console.error('Error guardando perfil:', err)
-      toast.current.show({
+      toast.current?.show({
         severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo actualizar el perfil',
+        summary: 'No se ha guardado',
+        detail: 'Revisa los datos e inténtalo otra vez.',
       })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleShareMyProfile = async () => {
-    const profileUrl = `${window.location.origin}/usuario/${profile?.username}`
+  const compartir = async () => {
+    const url = `${window.location.origin}/usuario/${profile?.username}`
     if (navigator.share) {
-      navigator
-        .share({ title: `Perfil de ${profile?.username}`, url: profileUrl })
-        .catch(() => {})
-    } else {
-      navigator.clipboard.writeText(profileUrl)
-      toast.current.show({
+      navigator.share({ title: `Perfil de ${profile?.username}`, url }).catch(() => {})
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.current?.show({
         severity: 'success',
         summary: 'Enlace copiado',
-        detail: 'Enlace copiado al portapapeles.',
+        detail: 'Ya lo puedes pegar donde quieras.',
         life: 3000,
+      })
+    } catch {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'No se ha podido copiar',
+        detail: url,
       })
     }
   }
 
-  if (!session)
+  if (!session) {
     return (
-      <div className='p-5 text-center font-bold text-xl'>
-        Inicia sesión para ver tu perfil
+      <div className='pf-sin-sesion'>
+        <h1>Inicia sesión para ver tu perfil</h1>
       </div>
     )
+  }
 
-  const renderEventCard = (event) => (
-    <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
-      <div
-        className='event-card-modern'
-        onClick={() => navigate(`/evento/${event.id}`)}
-      >
-        <div className='event-card-body'>
-          <Tag
-            value={event.tipo}
-            className='w-min mb-3 bg-blue-50 text-blue-700 font-bold'
-          />
-          <h4 className='m-0 mb-3 text-xl font-black text-color line-clamp-1'>
-            {event.titulo}
-          </h4>
-          <div className='mt-auto flex flex-column gap-2'>
-            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
-              <Calendar size={16} className='text-blue-500' />
-              <span>
-                {new Date(event.fecha).toLocaleDateString('es-ES', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
-              <MapPin size={16} className='text-red-500' />
-              <span className='line-clamp-1'>
-                {event.ubicacion || 'Ubicación en mapa'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  /* --- Contenido de las pestañas --- */
+
+  const cantidades = {
+    garaje: myVehicles.length,
+    organizados: createdEvents.length,
+    apuntado: attendingEvents.length,
+    guardados: favorites.length,
+  }
+
+  const abrirEvento = (id) => navigate(`/evento/${id}`)
+
+  const listaEventos = {
+    organizados: createdEvents,
+    apuntado: attendingEvents,
+    guardados: favorites,
+  }[pestana]
+
+  const VACIOS = {
+    garaje: {
+      icono: Car,
+      titulo: 'El garaje está vacío',
+      texto: 'Sube tu coche y enséñaselo a la comunidad.',
+      accion: 'Añadir vehículo',
+      ir: '/garaje',
+    },
+    organizados: {
+      icono: Flag,
+      titulo: 'Aún no has montado nada',
+      texto: 'Crea una quedada y verás quién se apunta.',
+      accion: 'Crear evento',
+      ir: '/eventos',
+    },
+    apuntado: {
+      icono: CheckCircle,
+      titulo: 'No estás apuntado a nada',
+      texto: 'Mira la agenda y apúntate a lo que te encaje.',
+      accion: 'Ver eventos',
+      ir: '/eventos',
+    },
+    guardados: {
+      icono: Heart,
+      titulo: 'No has guardado ningún evento',
+      texto: 'Guarda los que te interesen para no perderlos de vista.',
+      accion: 'Explorar agenda',
+      ir: '/eventos',
+    },
+  }
+
+  const portada = myVehicles.find((v) => v.image_url)?.image_url
 
   return (
     <>
       <SEO
-        title='Mi Panel'
-        description='Gestiona tu perfil, tus coches y tus eventos guardados en CarMeet ESP.'
+        title='Mi Perfil'
+        description='Tu ficha en CarMeet: garaje, eventos organizados y quedadas a las que vas.'
         url={window.location.href}
       />
+
       <PageTransition>
-        <div className='max-w-6xl mx-auto p-3 md:p-5'>
-          <Toast ref={toast} />{galleryImages && (
+        <div className='pf'>
+          <Toast ref={toast} />
+
+          {/* --- Banda de cabecera --- */}
+          <header className='pf-banda'>
+            <div className='pf-portada' aria-hidden='true'>
+              {portada && <img src={portada} alt='' fetchPriority='high' />}
+              <div className='pf-velo' />
+            </div>
+
+            <div className='pf-banda-caja'>
+              <div className='pf-identidad'>
+                <Avatar
+                  image={profile?.avatar_url}
+                  icon={!profile?.avatar_url ? 'pi pi-user' : null}
+                  shape='circle'
+                  className='pf-avatar'
+                />
+
+                <div className='pf-nombre-bloque'>
+                  <span className='rotulo'>Mi ficha</span>
+                  <h1 className='pf-nombre'>{profile?.username || 'Piloto'}</h1>
+
+                  {myCrew && (
+                    <button
+                      type='button'
+                      className='pf-crew'
+                      onClick={() => navigate(`/crew/${myCrew.name}`)}
+                    >
+                      <Shield size={13} aria-hidden='true' />
+                      {myCrew.name}
+                    </button>
+                  )}
+                </div>
+
+                <div className='pf-acciones'>
+                  <button
+                    type='button'
+                    className='pf-accion'
+                    onClick={() => setShowEditDialog(true)}
+                  >
+                    <Pencil size={16} />
+                    Editar
+                  </button>
+                  <button type='button' className='pf-accion' onClick={compartir}>
+                    <Share2 size={16} />
+                    Compartir
+                  </button>
+                  <button
+                    type='button'
+                    className='pf-accion salir'
+                    onClick={() => supabase.auth.signOut()}
+                    aria-label='Cerrar sesión'
+                  >
+                    <LogOut size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {profile?.bio && <p className='pf-bio'>{profile.bio}</p>}
+
+              {REDES.some((r) => profile?.[r.campo]) && (
+                <div className='pf-redes'>
+                  {REDES.map(({ campo, icono: Icono, url, nombre }) =>
+                    profile?.[campo] ? (
+                      <a
+                        key={campo}
+                        href={url(profile[campo])}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='pf-red'
+                        aria-label={nombre}
+                        title={nombre}
+                      >
+                        <Icono size={17} />
+                      </a>
+                    ) : null,
+                  )}
+                </div>
+              )}
+
+              {/* Cifras como telemetría */}
+              <div className='pf-cifras'>
+                {[
+                  { valor: myVehicles.length, etiqueta: 'Coches' },
+                  { valor: createdEvents.length, etiqueta: 'Eventos' },
+                  { valor: followersCount, etiqueta: 'Seguidores' },
+                  { valor: followingCount, etiqueta: 'Siguiendo' },
+                ].map((c) => (
+                  <div className='pf-cifra' key={c.etiqueta}>
+                    <span className='pf-cifra-valor datos'>{c.valor}</span>
+                    <span className='pf-cifra-etiqueta'>{c.etiqueta}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </header>
+
+          {/* --- Pestañas --- */}
+          <nav className='pf-pestanas' aria-label='Secciones del perfil'>
+            {PESTANAS.map(({ id, etiqueta, icono: Icono }) => (
+              <button
+                key={id}
+                type='button'
+                className={`pf-pestana ${pestana === id ? 'activa' : ''}`}
+                onClick={() => setPestana(id)}
+                aria-current={pestana === id}
+              >
+                <Icono size={16} aria-hidden='true' />
+                <span className='pf-pestana-texto'>{etiqueta}</span>
+                <span className='pf-pestana-num datos'>{cantidades[id]}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* --- Contenido --- */}
+          <div className='pf-contenido'>
+            {pestana === 'garaje' && (
+              myVehicles.length > 0 ? (
+                <>
+                  <div className='pf-rejilla'>
+                    {myVehicles.map((v) => (
+                      <TarjetaVehiculo key={v.id} vehiculo={v} onAbrir={abrirGaleria} />
+                    ))}
+                  </div>
+                  <button
+                    type='button'
+                    className='pf-anadir'
+                    onClick={() => navigate('/garaje')}
+                  >
+                    <Plus size={18} />
+                    Añadir otro vehículo
+                  </button>
+                </>
+              ) : null
+            )}
+
+            {pestana !== 'garaje' && listaEventos.length > 0 && (
+              <div className='pf-lista'>
+                {listaEventos.map((e) => (
+                  <TarjetaEvento key={e.id} evento={e} onAbrir={abrirEvento} />
+                ))}
+              </div>
+            )}
+
+            {cantidades[pestana] === 0 && (
+              <div className='pf-vacio'>
+                {React.createElement(VACIOS[pestana].icono, {
+                  size: 30,
+                  'aria-hidden': 'true',
+                })}
+                <h2>{VACIOS[pestana].titulo}</h2>
+                <p>{VACIOS[pestana].texto}</p>
+                <button
+                  type='button'
+                  className='btn-librea'
+                  onClick={() => navigate(VACIOS[pestana].ir)}
+                >
+                  {VACIOS[pestana].accion}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* --- Editar perfil --- */}
+          <Dialog
+            visible={showEditDialog}
+            onHide={() => setShowEditDialog(false)}
+            header='Editar perfil'
+            dismissableMask
+            draggable={false}
+            style={{ width: 'min(30rem, 94vw)' }}
+          >
+            <div className='pf-form'>
+              <label className='pf-avatar-carga'>
+                <Avatar
+                  image={
+                    avatarFile ? URL.createObjectURL(avatarFile) : editForm.avatar_url
+                  }
+                  icon={
+                    !avatarFile && !editForm.avatar_url ? 'pi pi-user' : null
+                  }
+                  shape='circle'
+                  className='pf-avatar-previo'
+                />
+                <span className='pf-avatar-boton'>
+                  <Camera size={15} />
+                  Cambiar foto
+                </span>
+                <input
+                  type='file'
+                  accept='image/*'
+                  className='sr-solo'
+                  onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                />
+              </label>
+
+              <div className='pf-campo'>
+                <label className='rotulo' htmlFor='pf-username'>
+                  Nombre de piloto
+                </label>
+                <InputText
+                  id='pf-username'
+                  value={editForm.username}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, username: e.target.value })
+                  }
+                  className='w-full'
+                />
+              </div>
+
+              <div className='pf-campo'>
+                <label className='rotulo' htmlFor='pf-bio'>
+                  Biografía
+                </label>
+                <InputTextarea
+                  id='pf-bio'
+                  rows={3}
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  className='w-full'
+                  placeholder='Cuenta algo de ti y de tus coches'
+                />
+              </div>
+
+              <div className='pf-redes-form'>
+                {REDES.map(({ campo, icono: Icono, nombre }) => (
+                  <div className='pf-campo' key={campo}>
+                    <label className='rotulo' htmlFor={`pf-${campo}`}>
+                      <Icono size={12} aria-hidden='true' /> {nombre}
+                    </label>
+                    <InputText
+                      id={`pf-${campo}`}
+                      value={editForm[campo]}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, [campo]: e.target.value })
+                      }
+                      className='w-full'
+                      placeholder='tu_usuario'
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type='button'
+                className='btn-librea pf-guardar'
+                onClick={guardarPerfil}
+                disabled={loading}
+              >
+                {loading ? 'Guardando…' : 'Guardar cambios'}
+              </button>
+            </div>
+          </Dialog>
+
+          {galleryImages && (
             <LightboxFotos
-              fotos={galleryImages.map((f) => f.itemImageSrc)}
+              fotos={galleryImages}
               titulo={galleryTitulo}
               subtitulo={`${galleryImages.length} fotos`}
               onCerrar={() => setGalleryImages(null)}
             />
-          )}<div className='surface-card shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 surface-border'>
-            <div className='relative'>
-              <Avatar
-                icon='pi pi-user'
-                size='xlarge'
-                shape='circle'
-                className='bg-blue-50 text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white'
-                image={profile?.avatar_url}
-              />
-            </div>
-
-            <div className='text-center lg:text-left flex-1'>
-              <h1 className='text-3xl font-black m-0 text-color'>
-                {profile?.username || 'Usuario'}
-              </h1>
-
-              {profile?.bio ? (
-                <p className='text-color-secondary mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto lg:mx-0'>
-                  {profile.bio}
-                </p>
-              ) : (
-                <p className='text-color-secondary mt-1 mb-0 font-medium'>
-                  {session.user.email}
-                </p>
-              )}
-
-              {/* REDES SOCIALES COMPLETAS */}
-              {(profile?.instagram ||
-                profile?.twitter ||
-                profile?.tiktok ||
-                profile?.youtube) && (
-                <div className='flex gap-3 mt-3 justify-content-center lg:justify-content-start'>
-                  {profile?.instagram && (
-                    <a
-                      href={`https://instagram.com/${profile.instagram}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn instagram'
-                      title='Instagram'
-                    >
-                      <Instagram size={18} />
-                    </a>
-                  )}
-                  {profile?.tiktok && (
-                    <a
-                      href={`https://tiktok.com/@${profile.tiktok}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn tiktok'
-                      title='TikTok'
-                    >
-                      <svg
-                        viewBox='0 0 24 24'
-                        width='18'
-                        height='18'
-                        fill='currentColor'
-                      >
-                        <path d='M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z' />
-                      </svg>
-                    </a>
-                  )}
-                  {profile?.youtube && (
-                    <a
-                      href={`https://youtube.com/@${profile.youtube}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn youtube'
-                      title='YouTube'
-                    >
-                      <Youtube size={18} />
-                    </a>
-                  )}
-                  {profile?.twitter && (
-                    <a
-                      href={`https://x.com/${profile.twitter}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn twitter'
-                      title='X'
-                    >
-                      <svg
-                        viewBox='0 0 24 24'
-                        width='16'
-                        height='16'
-                        fill='currentColor'
-                      >
-                        <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
-                      </svg>
-                    </a>
-                  )}
-                </div>
-              )}
-
-              <div className='mt-3'>
-                {myCrew ? (
-                  <div
-                    className='inline-flex align-items-center gap-2 surface-hover hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 surface-border'
-                    onClick={() => navigate(`/crew/${myCrew.name}`)}
-                  >
-                    <Avatar
-                      image={myCrew.profile_image_url}
-                      icon={!myCrew.profile_image_url && <Shield size={14} />}
-                      shape='circle'
-                      className='w-2rem h-2rem shadow-1'
-                    />
-                    <span className='font-bold text-sm text-color'>
-                      {myCrew.name}
-                    </span>
-                  </div>
-                ) : (
-                  <div
-                    className='inline-flex align-items-center gap-2 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer border-round-3xl px-3 py-2 border-1 border-blue-200'
-                    onClick={() =>
-                      navigate('/comunidad', { state: { tab: 'crews' } })
-                    }
-                  >
-                    <Shield size={16} className='text-blue-600' />
-                    <span className='font-bold text-sm text-blue-700'>
-                      Descubrir Crews
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className='flex flex-wrap gap-2 justify-content-center lg:justify-content-start mt-4'>
-                <Button
-                  label='Editar Perfil'
-                  icon='pi pi-pencil'
-                  size='small'
-                  outlined
-                  className='border-round-xl font-bold'
-                  onClick={() => setShowEditDialog(true)}
-                />
-                <Button
-                  label='Compartir'
-                  icon={<Share2 size={16} className='mr-2' />}
-                  size='small'
-                  outlined
-                  severity='info'
-                  className='border-round-xl font-bold'
-                  onClick={handleShareMyProfile}
-                />
-                <Button
-                  icon={<LogOut size={16} />}
-                  size='small'
-                  severity='danger'
-                  text
-                  className='border-round-xl hover:bg-red-50'
-                  onClick={() => supabase.auth.signOut()}
-                  tooltip='Cerrar Sesión'
-                />
-              </div>
-            </div>
-
-            <div className='flex gap-4 md:gap-5 text-center border-top-1 lg:border-top-none lg:border-left-1 surface-border pt-4 lg:pt-0 lg:pl-5 w-full lg:w-auto justify-content-center'>
-              <div>
-                <div className='text-2xl font-black text-color'>
-                  {myVehicles.length}
-                </div>
-                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
-                  Vehículos
-                </div>
-              </div>
-              <div>
-                <div className='text-2xl font-black text-color'>
-                  {followersCount}
-                </div>
-                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
-                  Seguidores
-                </div>
-              </div>
-              <div>
-                <div className='text-2xl font-black text-color'>
-                  {followingCount}
-                </div>
-                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
-                  Seguidos
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <section className='profile-section'>
-            <h2 className='profile-section-title'>
-              <Car className='text-purple-600' size={28} /> Mi Garaje
-            </h2>
-            <div className='grid m-0'>
-              {myVehicles.map((v) => {
-                const totalImages =
-                  (v.image_url ? 1 : 0) +
-                  (v.vehicle_images ? v.vehicle_images.length : 0)
-
-                return (
-                  <div key={v.id} className='col-12 sm:col-6 lg:col-3 p-2'>
-                    <div
-                      className='vehicle-card cursor-pointer'
-                      onClick={() => openGalleryViewer(v)}
-                    >
-                      <div className='vehicle-img-wrapper'>
-                        {v.image_url ? (
-                          <img
-                            src={v.image_url}
-                            alt={`${v.marca} ${v.modelo}`}
-                                                      loading='lazy'
-                            decoding='async'
-                          />
-                        ) : (
-                          <div className='flex h-full align-items-center justify-content-center text-300'>
-                            <ImageIcon size={40} />
-                          </div>
-                        )}
-                        {totalImages > 1 && (
-                          <div className='gallery-indicator-badge'>
-                            <i className='pi pi-images'></i> 1/{totalImages}
-                          </div>
-                        )}
-                      </div>
-                      <div className='p-3 text-center'>
-                        <div className='font-black text-lg text-color mb-1 line-clamp-1'>
-                          {v.marca}
-                        </div>
-                        <div className='text-sm text-color-secondary line-clamp-1 font-medium'>
-                          {v.modelo}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-              <div className='col-12 sm:col-6 lg:col-3 p-2'>
-                <div
-                  className='add-vehicle-card'
-                  onClick={() => navigate('/garaje')}
-                >
-                  <PlusCircle size={36} className='mb-2' />
-                  <span className='font-bold text-lg'>Añadir Vehículo</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className='profile-section'>
-            <h2 className='profile-section-title'>
-              <Flag className='text-blue-600' size={28} /> Eventos Organizados
-            </h2>
-            {createdEvents.length === 0 ? (
-              <div className='empty-state-box'>
-                <Flag size={48} className='text-300 mb-3 mx-auto' />
-                <span className='block font-bold text-lg'>
-                  No has organizado ningún evento.
-                </span>
-              </div>
-            ) : (
-              <div className='grid m-0'>
-                {createdEvents.map(renderEventCard)}
-              </div>
-            )}
-          </section>
-
-          <section className='profile-section'>
-            <h2 className='profile-section-title'>
-              <CheckCircle className='text-emerald-600' size={28} /> Me Apunto
-            </h2>
-            {attendingEvents.length === 0 ? (
-              <div className='empty-state-box'>
-                <CheckCircle size={48} className='text-300 mb-3 mx-auto' />
-                <span className='block font-bold text-lg'>
-                  No te has apuntado a nada aún.
-                </span>
-              </div>
-            ) : (
-              <div className='grid m-0'>
-                {attendingEvents.map(renderEventCard)}
-              </div>
-            )}
-          </section>
-
-          <section className='profile-section mb-0'>
-            <h2 className='profile-section-title'>
-              <Heart className='text-pink-500' size={28} /> Eventos Favoritos
-            </h2>
-            {favorites.length === 0 ? (
-              <div className='empty-state-box'>
-                <Heart size={48} className='text-300 mb-3 mx-auto' />
-                <span className='block font-bold text-lg'>
-                  No tienes eventos en favoritos.
-                </span>
-              </div>
-            ) : (
-              <div className='grid m-0'>{favorites.map(renderEventCard)}</div>
-            )}
-          </section>
-
-          {/* MODAL EDITAR PERFIL */}
-          <Dialog
-            header={<span className='text-xl font-black'>Editar Perfil</span>}
-            visible={showEditDialog}
-            style={{ width: '90vw', maxWidth: '400px' }}
-            onHide={() => setShowEditDialog(false)}
-            className='border-round-2xl shadow-8'
-          >
-            <div className='flex flex-column gap-4 pt-3'>
-              <div className='flex flex-column align-items-center gap-3'>
-                <Avatar
-                  image={
-                    avatarFile
-                      ? URL.createObjectURL(avatarFile)
-                      : editForm.avatar_url
-                  }
-                  icon={
-                    !editForm.avatar_url && !avatarFile ? 'pi pi-user' : null
-                  }
-                  size='xlarge'
-                  shape='circle'
-                  className='w-8rem h-8rem text-5xl surface-hover border-2 surface-border'
-                />
-                <div className='relative'>
-                  <input
-                    type='file'
-                    id='avatar-upload'
-                    accept='image/*'
-                    className='hidden'
-                    onChange={(e) => setAvatarFile(e.target.files[0])}
-                  />
-                  <label
-                    htmlFor='avatar-upload'
-                    className='p-button p-component p-button-outlined p-button-secondary p-button-sm cursor-pointer border-round-xl font-bold'
-                  >
-                    <i className='pi pi-camera mr-2'></i> Cambiar Foto
-                  </label>
-                </div>
-              </div>
-
-              <div className='flex flex-column gap-3 mt-3'>
-                <span className='p-float-label'>
-                  <InputText
-                    id='username'
-                    value={editForm.username}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, username: e.target.value })
-                    }
-                    className='w-full border-round-xl p-3'
-                  />
-                  <label htmlFor='username'>Nombre de Usuario</label>
-                </span>
-
-                <span className='p-float-label'>
-                  <InputTextarea
-                    id='bio'
-                    value={editForm.bio}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, bio: e.target.value })
-                    }
-                    className='w-full border-round-xl p-3'
-                    rows={3}
-                    autoResize
-                  />
-                  <label htmlFor='bio'>Biografía (Opcional)</label>
-                </span>
-
-                {/* REDES SOCIALES INPUTS */}
-                <span className='p-float-label'>
-                  <InputText
-                    id='instagram'
-                    value={editForm.instagram}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, instagram: e.target.value })
-                    }
-                    className='w-full border-round-xl p-3'
-                  />
-                  <label htmlFor='instagram'>Instagram (Tu @usuario)</label>
-                </span>
-
-                <span className='p-float-label'>
-                  <InputText
-                    id='tiktok'
-                    value={editForm.tiktok}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, tiktok: e.target.value })
-                    }
-                    className='w-full border-round-xl p-3'
-                  />
-                  <label htmlFor='tiktok'>TikTok (Tu @usuario)</label>
-                </span>
-
-                <span className='p-float-label'>
-                  <InputText
-                    id='youtube'
-                    value={editForm.youtube}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, youtube: e.target.value })
-                    }
-                    className='w-full border-round-xl p-3'
-                  />
-                  <label htmlFor='youtube'>YouTube (Tu @canal)</label>
-                </span>
-
-                <span className='p-float-label'>
-                  <InputText
-                    id='twitter'
-                    value={editForm.twitter}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, twitter: e.target.value })
-                    }
-                    className='w-full border-round-xl p-3'
-                  />
-                  <label htmlFor='twitter'>X (Tu @usuario)</label>
-                </span>
-              </div>
-
-              <Button
-                label='Guardar Cambios'
-                onClick={handleSaveProfile}
-                loading={loading}
-                className='w-full border-round-xl py-3 font-bold mt-2'
-                style={{ backgroundColor: 'var(--librea)' }}
-              />
-            </div>
-          </Dialog>
+          )}
         </div>
       </PageTransition>
     </>

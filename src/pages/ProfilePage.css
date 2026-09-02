@@ -1,179 +1,867 @@
-/* Contenedores de cada sección en cascada */
-.profile-section {
-  background: var(--surface-card);
-  border-radius: var(--r);
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  border: 1px solid color-mix(in srgb, var(--surface-border) 80%, transparent);
-  transition: all 0.3s ease;
+/* =========================================================================
+   Ficha del piloto — sistema Librea
+
+   Banda de cabecera con la mejor foto del garaje de fondo, cifras como
+   telemetría y las cuatro listas repartidas en pestañas con contador.
+   ========================================================================= */
+
+.pf {
+  background: var(--surface-ground);
+  min-height: 100vh;
 }
 
-.profile-section-title {
-  font-size: 1.5rem;
-  font-weight: 900;
+.pf-sin-sesion {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  padding: var(--e8) var(--e4);
+  background: var(--surface-ground);
+}
+
+.pf-sin-sesion h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.75rem;
   color: var(--text-color);
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--surface-100);
+  margin: 0;
+  text-align: center;
 }
 
-/* Tarjetas de los Vehículos */
-.vehicle-card {
-  border-radius: var(--r);
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-50);
-  cursor: pointer;
-  height: 100%;
-}
+/* -------------------------------------------------------------------------
+   Banda de cabecera
+   ------------------------------------------------------------------------- */
 
-.vehicle-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  border-color: var(--linea-viva);
-}
-
-.vehicle-img-wrapper {
-  height: 160px;
-  overflow: hidden;
-  background: var(--surface-border);
+.pf-banda {
   position: relative;
+  isolation: isolate;
+  border-bottom: 1px solid var(--surface-border);
 }
 
-.vehicle-img-wrapper img {
+.pf-portada {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--carbono);
+}
+
+.pf-portada img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  filter: saturate(0.7) brightness(0.5);
 }
 
-.vehicle-card:hover .vehicle-img-wrapper img {
-  transform: scale(1.05);
-}
-
-/* Tarjeta para Añadir Vehículo */
-.add-vehicle-card {
-  border-radius: var(--r);
-  border: 2px dashed var(--linea-viva);
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 230px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--texto-medio);
-}
-
-.add-vehicle-card:hover {
-  border-color: var(--librea);
-  background: var(--librea-baja);
-  color: var(--librea);
-  transform: translateY(-5px);
-}
-
-/* Tarjetas de los Eventos Modernas */
-.event-card-modern {
-  border-radius: var(--r);
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid var(--surface-border);
-  background: var(--surface-card);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-}
-
-.event-card-modern:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  border-color: var(--librea-baja);
-}
-
-.event-card-body {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-/* Estados Vacíos */
-.empty-state-box {
-  text-align: center;
-  padding: 3rem 1rem;
-  background: var(--surface-50);
-  border-radius: var(--r);
-  border: 2px dashed var(--surface-border);
-  color: var(--texto-medio);
-}
-
-/* Indicador de fotos en la tarjeta del vehículo */
-.gallery-indicator-badge {
+/* El velo funde la foto con el fondo de página. Los tonos vienen de
+   --sobre-foto, que no cambia con el tema: encima de una foto el texto es
+   blanco tanto en claro como en oscuro. */
+.pf-velo {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
-  background: color-mix(in srgb, var(--asfalto) 70%, transparent);
-  backdrop-filter: blur(4px);
-  color: white;
-  padding: 6px 10px;
-  border-radius: var(--r-media);
-  font-size: 0.75rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  z-index: 10;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Botones de Redes Sociales */
-.social-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  color: white;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  text-decoration: none;
-}
-
-.social-icon-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-  color: white;
-}
-
-.social-icon-btn.instagram {
+  inset: 0;
   background: linear-gradient(
-    45deg,
-    #f09433 0%,
-    #e6683c 25%,
-    #dc2743 50%,
-    #cc2366 75%,
-    #bc1888 100%
+    to bottom,
+    var(--sobre-foto) 0%,
+    var(--sobre-foto-fuerte) 55%,
+    var(--surface-ground) 100%
   );
 }
 
-.social-icon-btn.twitter {
-  background: var(--asfalto); /* Color oficial de X / Twitter */
+.pf-banda-caja {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--e8) var(--e5) var(--e6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
 }
 
-.social-icon-btn.tiktok {
-  background: var(--asfalto); /* TikTok usa fondo negro con su logo blanco */
+/* --- Identidad --- */
+
+.pf-identidad {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--e5);
+  flex-wrap: wrap;
 }
 
-.social-icon-btn.youtube {
-  background: var(--librea); /* El rojo inconfundible de YouTube */
+.pf-avatar.p-avatar {
+  width: 7rem;
+  height: 7rem;
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  background: var(--carbono);
+  color: var(--texto-medio);
+  border: 3px solid var(--librea);
+  border-radius: 50%;
+}
+
+.pf-nombre-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pf-nombre-bloque .rotulo {
+  color: color-mix(in srgb, #fff 65%, transparent);
+}
+
+.pf-nombre {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  color: #fff;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pf-crew {
+  align-self: flex-start;
+  margin-top: var(--e2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: 3px var(--e3);
+  background: var(--sobre-foto-fuerte);
+  border: 1px solid var(--ambar);
+  border-radius: var(--r);
+  color: var(--ambar);
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pf-crew:hover {
+  background: var(--ambar);
+  color: var(--asfalto);
+}
+
+/* --- Acciones --- */
+
+.pf-acciones {
+  display: flex;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+
+.pf-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: 9px var(--e4);
+  background: var(--sobre-foto-fuerte);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borde-foto);
+  border-radius: var(--r);
+  color: #fff;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.pf-accion:hover {
+  border-color: #fff;
+}
+
+.pf-accion.salir {
+  padding: 9px var(--e3);
+}
+
+.pf-accion.salir:hover {
+  border-color: var(--librea-alta);
+  color: var(--librea-alta);
+}
+
+.pf-accion:focus-visible,
+.pf-red:focus-visible,
+.pf-crew:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+/* --- Bio y redes --- */
+
+.pf-bio {
+  margin: 0;
+  max-width: 62ch;
+  color: color-mix(in srgb, #fff 85%, transparent);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.pf-redes {
+  display: flex;
+  gap: var(--e2);
+}
+
+.pf-red {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sobre-foto-fuerte);
+  border: 1px solid var(--borde-foto);
+  border-radius: var(--r);
+  color: #fff;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.pf-red:hover {
+  border-color: var(--librea-alta);
+  color: var(--librea-alta);
+}
+
+/* --- Cifras --- */
+
+.pf-cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 1px;
+  background: var(--borde-foto);
+  border: 1px solid var(--borde-foto);
+}
+
+.pf-cifra {
+  background: var(--sobre-foto);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  padding: var(--e4) var(--e5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pf-cifra-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.pf-cifra-etiqueta {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 78%, transparent);
+}
+
+/* -------------------------------------------------------------------------
+   Pestañas
+   ------------------------------------------------------------------------- */
+
+.pf-pestanas {
+  position: sticky;
+  top: 5rem; /* debajo de la cabecera del sitio */
+  z-index: 10;
+  display: flex;
+  gap: 1px;
+  background: var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pf-pestanas::-webkit-scrollbar { display: none; }
+
+.pf-pestana {
+  flex: 1;
+  min-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  padding: var(--e4) var(--e5);
+  background: var(--carbono);
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--texto-medio);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.pf-pestana:hover {
+  background: var(--carbono-alto);
+  color: var(--text-color);
+}
+
+.pf-pestana.activa {
+  color: var(--text-color);
+  background: var(--carbono-alto);
+  border-bottom-color: var(--librea);
+}
+
+.pf-pestana:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: -2px;
+}
+
+/* El contador dice si vale la pena entrar antes de pulsar */
+.pf-pestana-num {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  min-width: 1.5rem;
+  text-align: center;
+  background: var(--asfalto);
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  color: var(--texto-tenue);
+}
+
+.pf-pestana.activa .pf-pestana-num {
+  background: var(--librea);
+  border-color: var(--librea);
+  color: #fff;
+}
+
+/* -------------------------------------------------------------------------
+   Contenido
+   ------------------------------------------------------------------------- */
+
+.pf-contenido {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--e7) var(--e5) var(--e9);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+/* --- Vehículos --- */
+
+.pf-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--e4);
+}
+
+.pf-coche {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.pf-coche:hover,
+.pf-coche:focus-visible {
+  border-color: var(--linea-viva);
+  transform: translateY(-3px);
+}
+
+.pf-coche:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: 2px;
+}
+
+.pf-coche-foto {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--carbono-alto);
+}
+
+.pf-coche-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+.pf-coche:hover .pf-coche-foto img {
+  transform: scale(1.04);
+}
+
+.pf-sinfoto {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--linea-viva);
+}
+
+.pf-contador-fotos {
+  position: absolute;
+  top: var(--e3);
+  right: var(--e3);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  background: var(--sobre-foto-fuerte);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.pf-coche-cuerpo {
+  padding: var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  flex: 1;
+}
+
+.pf-coche-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.375rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: 0;
+}
+
+/* Telemetría del coche: tres celdas separadas por un píxel */
+.pf-telemetria {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--surface-border);
+  border-top: 1px solid var(--surface-border);
+  margin-top: auto;
+}
+
+.pf-dato {
+  background: var(--carbono);
+  padding: var(--e3) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pf-dato-valor {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-color);
+}
+
+.pf-dato-etiqueta {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+.pf-anadir {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e3) var(--e5);
+  background: transparent;
+  border: 1px dashed var(--linea-viva);
+  border-radius: var(--r);
+  color: var(--texto-medio);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.pf-anadir:hover {
+  color: var(--librea-texto);
+  border-color: var(--librea);
+}
+
+/* --- Eventos --- */
+
+.pf-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.pf-evento {
+  display: flex;
+  gap: var(--e5);
+  align-items: center;
+  padding: var(--e4) var(--e5);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.pf-evento:hover,
+.pf-evento:focus-visible {
+  background: var(--carbono-alto);
+  border-left-color: var(--librea);
+}
+
+.pf-evento:focus-visible {
+  outline: 2px solid var(--librea);
+  outline-offset: 2px;
+}
+
+.pf-evento.pasado {
+  opacity: 0.62;
+}
+
+.pf-fecha {
+  flex-shrink: 0;
+  width: 3.75rem;
+  text-align: center;
+  padding-right: var(--e5);
+  border-right: 1px solid var(--surface-border);
+}
+
+.pf-fecha-dia {
+  display: block;
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--text-color);
+}
+
+.pf-fecha-mes {
+  display: block;
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--librea-texto);
+  margin-top: 3px;
+}
+
+.pf-evento-cuerpo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.pf-evento-alto {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.pf-tipo,
+.pf-finalizado {
+  font-family: var(--datos);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pf-tipo { color: var(--librea-texto); }
+
+.pf-finalizado {
+  color: var(--texto-tenue);
+  border: 1px solid var(--surface-border);
+  padding: 1px 5px;
+}
+
+.pf-evento-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.375rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pf-evento-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e4);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+}
+
+.pf-evento-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* --- Vacío --- */
+
+.pf-vacio {
+  padding: var(--e8) var(--e6);
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 2px solid var(--librea);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e3);
+  color: var(--librea-texto);
+}
+
+.pf-vacio h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.75rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.pf-vacio p {
+  margin: 0 0 var(--e3);
+  color: var(--texto-medio);
+  max-width: 48ch;
+  line-height: 1.55;
+}
+
+/* -------------------------------------------------------------------------
+   Formulario de edición
+   ------------------------------------------------------------------------- */
+
+.pf-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+.pf-avatar-carga {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  cursor: pointer;
+}
+
+.pf-avatar-previo.p-avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.5rem;
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 1px solid var(--surface-border);
+}
+
+.pf-avatar-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  color: var(--texto-medio);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.pf-avatar-carga:hover .pf-avatar-boton {
+  color: var(--librea-texto);
+  border-color: var(--librea);
+}
+
+.pf-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.pf-campo .rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pf-redes-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--e4);
+}
+
+.pf-guardar {
+  width: 100%;
+  justify-content: center;
+}
+
+/* -------------------------------------------------------------------------
+   Móvil
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .pf-banda-caja {
+    padding: var(--e7) var(--e4) var(--e5);
+    gap: var(--e4);
+  }
+  .pf-identidad {
+    align-items: flex-start;
+    gap: var(--e4);
+  }
+  .pf-avatar.p-avatar {
+    width: 5rem;
+    height: 5rem;
+    font-size: 1.75rem;
+  }
+  .pf-acciones {
+    width: 100%;
+  }
+  .pf-accion {
+    flex: 1;
+    justify-content: center;
+  }
+  .pf-pestanas {
+    top: 5rem;
+  }
+  .pf-pestana {
+    padding: var(--e3) var(--e4);
+    font-size: 0.875rem;
+  }
+  /* En pantalla estrecha se queda el icono y el número: el texto sobra */
+  .pf-pestana-texto {
+    display: none;
+  }
+  .pf-contenido {
+    padding: var(--e5) var(--e4) var(--e8);
+  }
+  .pf-rejilla {
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: var(--e3);
+  }
+  .pf-evento {
+    gap: var(--e4);
+    padding: var(--e4);
+  }
+  .pf-fecha {
+    width: 3rem;
+    padding-right: var(--e4);
+  }
+  .pf-evento-titulo {
+    font-size: 1.125rem;
+  }
+  .pf-vacio {
+    padding: var(--e6) var(--e5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-coche:hover,
+  .pf-coche:hover .pf-coche-foto img {
+    transform: none;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Piezas del perfil público
+   ------------------------------------------------------------------------- */
+
+/* Acción principal (seguir) */
+.pf-accion.principal {
+  background: var(--librea);
+  border-color: var(--librea);
+}
+
+.pf-accion.principal:hover {
+  background: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+.pf-accion:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* El botón de denunciar, dentro de la banda, se viste como las acciones
+   para que no desentone sobre la foto. */
+.pf-acciones .btn-denunciar {
+  padding: 9px var(--e4);
+  background: var(--sobre-foto-fuerte);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borde-foto);
+  color: #fff;
+  font-size: 0.6875rem;
+}
+
+.pf-acciones .btn-denunciar:hover {
+  border-color: var(--librea-alta);
+  color: var(--librea-alta);
+}
+
+/* Respetos sobre la foto del coche */
+.pf-respeto {
+  position: absolute;
+  bottom: var(--e3);
+  right: var(--e3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px var(--e3);
+  background: var(--sobre-foto-fuerte);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--borde-foto);
+  border-radius: var(--r);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.pf-respeto:hover,
+.pf-respeto.dado {
+  color: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+.pf-respeto:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+/* Huecos mientras carga */
+.pf-hueco {
+  aspect-ratio: 16 / 13;
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  animation: zona-latido 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-hueco { animation: none; }
 }

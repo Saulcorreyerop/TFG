@@ -1,266 +1,474 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { supabase } from '../supabaseClient'
-import { InputText } from 'primereact/inputtext'
-import { Button } from 'primereact/button'
-import { Avatar } from 'primereact/avatar'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Avatar } from 'primereact/avatar'
+import { Radio, Send, ArrowDown, Lock, MessageSquare } from 'lucide-react'
+import { supabase } from '../supabaseClient'
+import { useBloqueo } from '../hooks/useModeracion'
 import PageTransition from '../components/PageTransition'
 import SEO from '../components/SEO'
 import BotonDenunciar from '../components/BotonDenunciar'
-import { useBloqueo } from '../hooks/useModeracion'
+import './GlobalChatPage.css'
+
+/*
+ * Chat global.
+ *
+ * Se abandona el formato de burbujas alineadas a izquierda y derecha. Ese
+ * idioma viene de la mensajería uno a uno y aquí estorba: en un canal
+ * público con mucha gente, media pantalla se queda vacía y cuesta seguir
+ * quién habla. Se pasa a un registro de canal, con todo alineado a la
+ * izquierda y el autor a la cabeza, que es lo que usan las herramientas
+ * pensadas para grupos.
+ *
+ * Lo que gana:
+ *   · Mensajes seguidos de la misma persona se agrupan y no repiten
+ *     avatar ni nombre.
+ *   · Separadores de día.
+ *   · Los propios se marcan con un filo de librea, no con un color de
+ *     fondo distinto.
+ *   · Botón de bajar cuando estás leyendo hacia atrás, en vez de saltar
+ *     al final cada vez que llega algo.
+ *
+ * Arreglado de paso: los mensajes propios enviados desde otro dispositivo
+ * no aparecían nunca, porque el escuchador descartaba todo lo que llevara
+ * tu user_id. Ahora se descartan duplicados de verdad, comparando id.
+ */
+
+const MAX = 1000
+const CERCA_DEL_FINAL = 120
+
+const mismoDia = (a, b) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate()
+
+const etiquetaDia = (fecha) => {
+  const hoy = new Date()
+  const ayer = new Date()
+  ayer.setDate(hoy.getDate() - 1)
+
+  if (mismoDia(fecha, hoy)) return 'Hoy'
+  if (mismoDia(fecha, ayer)) return 'Ayer'
+
+  return fecha.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: fecha.getFullYear() === hoy.getFullYear() ? undefined : 'numeric',
+  })
+}
+
+const hora = (fecha) =>
+  fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
 const GlobalChatPage = ({ session }) => {
   const navigate = useNavigate()
-  const [messages, setMessages] = useState([])
-  const [newMessage, setNewMessage] = useState('')
+
+  const [mensajes, setMensajes] = useState(null)
+  const [texto, setTexto] = useState('')
   const [aviso, setAviso] = useState(null)
-  const scrollRef = useRef(null)
+  const [enviando, setEnviando] = useState(false)
+  const [alFinal, setAlFinal] = useState(true)
+  const [sinLeer, setSinLeer] = useState(0)
+
+  const registro = useRef(null)
+  const campo = useRef(null)
 
   const { filtrar } = useBloqueo(session)
 
-  /* Un mensaje no puede pasar de 1000 caracteres: lo impone tambien una
-     restriccion en la base de datos, aqui solo se avisa antes. */
-  const MAX = 1000
+  const miId = session?.user?.id
+  const miNombre = session?.user?.user_metadata?.username
 
-  const myUsername = session?.user?.user_metadata?.username
+  /* --- Carga y tiempo real --- */
 
   useEffect(() => {
     if (!session) return
+    let activo = true
 
-    const fetchMessages = async () => {
-      // Intentar cargar mensajes de la tabla global
+    const cargar = async () => {
       const { data, error } = await supabase
         .from('global_messages')
-        .select('*, profiles(username, avatar_url)')
-        .order('created_at', { ascending: true })
-        .limit(100) // solo últimos 100
-      
-      if (!error && data) {
-        setMessages(data)
-      } else if (error && error.code === '42P01') {
-        console.error("Falta crear la tabla 'global_messages' en Supabase.")
+        .select('id, user_id, mensaje, created_at, profiles(username, avatar_url)')
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (!activo) return
+
+      if (error) {
+        console.error('No se han podido cargar los mensajes:', error)
+        setMensajes([])
+        return
       }
+
+      // Se piden los últimos 100 en orden inverso y se les da la vuelta:
+      // así el límite recorta lo viejo, no lo nuevo.
+      setMensajes((data || []).reverse())
     }
 
-    fetchMessages()
+    cargar()
 
-    const channel = supabase
+    const canal = supabase
       .channel('chat_global')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'global_messages' },
         async (payload) => {
-          if (payload.new.user_id === session.user.id) return
-
-          const { data: profileData } = await supabase
+          const { data: perfil } = await supabase
             .from('profiles')
             .select('username, avatar_url')
             .eq('id', payload.new.user_id)
-            .single()
-            
-          const completeMessage = {
-             ...payload.new,
-             profiles: profileData || { username: 'Piloto' }
-          }
+            .maybeSingle()
 
-          setMessages((prev) => {
-            if (prev.some(m => m.id === completeMessage.id)) return prev
-            return [...prev, completeMessage]
+          if (!activo) return
+
+          setMensajes((previos) => {
+            const lista = previos || []
+            // Ya está: o es el mismo id, o es el optimista propio que
+            // todavía no ha recibido su id definitivo.
+            if (lista.some((m) => m.id === payload.new.id)) return lista
+            if (
+              payload.new.user_id === miId &&
+              lista.some(
+                (m) => m.pendiente && m.mensaje === payload.new.mensaje,
+              )
+            ) {
+              return lista.map((m) =>
+                m.pendiente && m.mensaje === payload.new.mensaje
+                  ? { ...payload.new, profiles: perfil, pendiente: false }
+                  : m,
+              )
+            }
+            return [...lista, { ...payload.new, profiles: perfil }]
           })
-        }
+        },
       )
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      activo = false
+      supabase.removeChannel(canal)
     }
-  }, [session])
+  }, [session, miId])
+
+  /* --- Desplazamiento ---
+     Solo baja solo si ya estabas abajo. Si estás leyendo hacia atrás, se
+     respeta tu posición y aparece un aviso de mensajes nuevos. */
+
+  const bajar = useCallback((suave = true) => {
+    const el = registro.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: suave ? 'smooth' : 'auto' })
+    setSinLeer(0)
+  }, [])
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
+    if (!mensajes) return
+    if (alFinal) bajar(false)
+    else setSinLeer((n) => n + 1)
+    // Solo cuando llegan mensajes nuevos
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mensajes?.length])
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault()
-    if (!newMessage.trim() || !session) return
-
-    const msgToSend = newMessage.trim().slice(0, MAX)
-    setNewMessage('')
-    setAviso(null)
-
-    const optimisticMessage = {
-      id: Date.now(),
-      user_id: session.user.id,
-      mensaje: msgToSend,
-      created_at: new Date().toISOString(),
-      profiles: {
-        username: myUsername || 'Tú',
-        avatar_url: session.user.user_metadata?.avatar_url || null
-      }
-    }
-
-    setMessages((prev) => [...prev, optimisticMessage])
-
-    const { data: insertedMsg, error } = await supabase.from('global_messages').insert({
-      user_id: session.user.id,
-      mensaje: msgToSend,
-    }).select().single()
-
-    if (error) {
-      /*
-       * Se quita el mensaje optimista. Antes se quedaba pintado como si
-       * se hubiera enviado aunque el insert hubiera fallado, asi que el
-       * autor creia haber escrito algo que nadie recibio.
-       */
-      setMessages((prev) => prev.filter((m) => m.id !== optimisticMessage.id))
-      setNewMessage(msgToSend)
-
-      // P0001 lo lanza el trigger de ritmo de la base de datos
-      setAviso(
-        error.code === 'P0001'
-          ? 'Vas muy rapido. Espera unos segundos.'
-          : 'No se ha podido enviar. Reintentalo.',
-      )
-      console.error('Error al enviar mensaje:', error)
-    } else {
-      setMessages(prev => prev.map(m => m.id === optimisticMessage.id ? { ...m, id: insertedMsg.id } : m))
-    }
+  const alDesplazar = () => {
+    const el = registro.current
+    if (!el) return
+    const abajo =
+      el.scrollHeight - el.scrollTop - el.clientHeight < CERCA_DEL_FINAL
+    setAlFinal(abajo)
+    if (abajo) setSinLeer(0)
   }
 
-  if (!session) {
-    return (
-      <div className="min-h-screen flex align-items-center justify-content-center surface-ground">
-        <div className="text-center surface-card p-5 border-round-2xl shadow-2 max-w-sm">
-          <i className="pi pi-lock text-6xl text-blue-500 mb-4"></i>
-          <h2 className="m-0 mb-3 text-color font-black">Chat Global</h2>
-          <p className="text-color-secondary mb-4">Inicia sesión para hablar con toda la comunidad.</p>
-          <Button label="Ir a Login" className="p-button-primary w-full border-round-xl font-bold" onClick={() => navigate('/login', { state: { returnUrl: '/chat-global' } })} />
-        </div>
-      </div>
+  /* --- Envío --- */
+
+  const enviar = async (e) => {
+    e.preventDefault()
+    const limpio = texto.trim().slice(0, MAX)
+    if (!limpio || !session || enviando) return
+
+    const provisional = {
+      id: `tmp-${Date.now()}`,
+      pendiente: true,
+      user_id: miId,
+      mensaje: limpio,
+      created_at: new Date().toISOString(),
+      profiles: {
+        username: miNombre || 'Tú',
+        avatar_url: session.user.user_metadata?.avatar_url || null,
+      },
+    }
+
+    setTexto('')
+    setAviso(null)
+    setEnviando(true)
+    setAlFinal(true)
+    setMensajes((prev) => [...(prev || []), provisional])
+
+    const { data, error } = await supabase
+      .from('global_messages')
+      .insert({ user_id: miId, mensaje: limpio })
+      .select('id, user_id, mensaje, created_at')
+      .single()
+
+    setEnviando(false)
+
+    if (error) {
+      // Fuera el provisional: si no, el autor cree que ha escrito algo
+      // que en realidad no ha llegado a nadie.
+      setMensajes((prev) => prev.filter((m) => m.id !== provisional.id))
+      setTexto(limpio)
+      campo.current?.focus()
+
+      // P0001 lo lanza el limitador de ritmo de la base de datos
+      setAviso(
+        error.code === 'P0001'
+          ? 'Vas muy rápido. Espera unos segundos antes de volver a escribir.'
+          : 'No se ha podido enviar. Inténtalo otra vez.',
+      )
+      return
+    }
+
+    setMensajes((prev) =>
+      prev.map((m) =>
+        m.id === provisional.id
+          ? { ...m, id: data.id, created_at: data.created_at, pendiente: false }
+          : m,
+      ),
     )
   }
 
+  /* --- Sin sesión --- */
+
+  if (!session) {
+    return (
+      <>
+        <SEO
+          title='Chat Global'
+          description='Habla en directo con toda la comunidad de CarMeet.'
+          url={window.location.href}
+        />
+        <PageTransition>
+          <div className='chat-cerrado'>
+            <div className='chat-cerrado-caja'>
+              <Lock size={28} aria-hidden='true' />
+              <h1>Canal cerrado</h1>
+              <p>
+                El chat global es solo para gente registrada. Entra y únete a
+                la conversación.
+              </p>
+              <button
+                type='button'
+                className='btn-librea'
+                onClick={() =>
+                  navigate('/login', { state: { returnUrl: '/chat-global' } })
+                }
+              >
+                Iniciar sesión
+              </button>
+            </div>
+          </div>
+        </PageTransition>
+      </>
+    )
+  }
+
+  /* --- Registro --- */
+
+  const visibles = filtrar(mensajes || [])
+  const cargando = mensajes === null
+
+  const filas = []
+  let diaAnterior = null
+  let autorAnterior = null
+  let horaAnterior = null
+
+  for (const m of visibles) {
+    const fecha = new Date(m.created_at)
+
+    if (!diaAnterior || !mismoDia(fecha, diaAnterior)) {
+      filas.push({ tipo: 'dia', clave: `d-${m.id}`, etiqueta: etiquetaDia(fecha) })
+      diaAnterior = fecha
+      autorAnterior = null
+    }
+
+    // Se agrupan los seguidos del mismo autor dentro de cinco minutos
+    const seguido =
+      autorAnterior === m.user_id &&
+      horaAnterior &&
+      fecha - horaAnterior < 5 * 60 * 1000
+
+    filas.push({ tipo: 'msg', clave: m.id, m, fecha, seguido })
+    autorAnterior = m.user_id
+    horaAnterior = fecha
+  }
+
+  const restantes = MAX - texto.length
+
   return (
     <>
-      <SEO title='Chat Global' description='Habla en tiempo real con toda la comunidad de CarMeet.' url={window.location.href} />
+      <SEO
+        title='Chat Global'
+        description='Habla en directo con toda la comunidad de CarMeet.'
+        url={window.location.href}
+      />
       <PageTransition>
-        <div className="min-h-screen surface-ground p-4 md:p-6 pb-8 flex flex-column align-items-center">
-          <div className="w-full max-w-5xl h-full flex flex-column surface-card relative overflow-hidden" style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)', boxShadow: '0 10px 40px rgba(0,0,0,0.08)', height: '80vh' }}>
-            
-            {/* HEADER DEL CHAT */}
-            <div className="p-4 surface-card border-bottom-1 surface-border flex justify-content-between align-items-center shadow-1 z-1 relative">
-              <div className="flex align-items-center gap-3">
-                <div className="w-3rem h-3rem surface-hover border-circle flex align-items-center justify-content-center">
-                  <i className="pi pi-globe text-blue-500 text-xl"></i>
-                </div>
-                <div>
-                  <h1 className="m-0 font-black text-color text-2xl">Chat Global</h1>
-                  <span className="text-green-500 font-bold text-sm flex align-items-center gap-1"><span className="w-1rem h-1rem bg-green-500 border-circle block" style={{ transform: 'scale(0.5)' }}></span> En línea</span>
-                </div>
-              </div>
+        <div className='chat'>
+          <header className='chat-cabecera'>
+            <div className='chat-identidad'>
+              <span className='chat-directo'>
+                <Radio size={13} aria-hidden='true' />
+                En directo
+              </span>
+              <h1 className='chat-titulo'>Canal abierto</h1>
             </div>
+            <span className='chat-aforo datos'>
+              {visibles.length}
+              <span className='chat-aforo-etiqueta'>mensajes</span>
+            </span>
+          </header>
 
-            {/* ZONA DE LECTURA */}
-            <div ref={scrollRef} className="flex-1 p-4 md:p-6 overflow-y-auto" style={{ backgroundColor: 'var(--surface-ground)', backgroundImage: 'radial-gradient(var(--linea-viva) 1px, transparent 0)', backgroundSize: '20px 20px' }}>
-              {messages.length === 0 ? (
-                <div className="h-full flex flex-column align-items-center justify-content-center text-color-secondary">
-                  <i className="pi pi-comments text-6xl mb-3 text-300"></i>
-                  <h3 className="m-0 font-black text-xl text-color mb-2">Bienvenido al Chat Global</h3>
-                  <p className="font-medium text-center max-w-sm">Manda un mensaje para saludar a la comunidad. (Nota: Requiere tabla 'global_messages' en Supabase)</p>
-                </div>
-              ) : (
-                filtrar(messages).map((msg, idx) => {
-                  const isMe = msg.user_id === session?.user?.id;
-                  
-                  return (
-                    <div key={msg.id || idx} className={`mb-4 flex ${isMe ? 'justify-content-end' : 'justify-content-start'}`}>
-                      <div className={`flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'} max-w-20rem md:max-w-30rem`}>
-                        
-                        {!isMe && (
-                          <div className='chat-autor'>
-                            <button
-                              type='button'
-                              className='chat-nombre'
-                              onClick={() => navigate(`/usuario/${msg.profiles?.username}`)}
-                            >
-                              {msg.profiles?.username || 'Piloto'}
-                            </button>
-                            <BotonDenunciar
-                              tipo='mensaje_global'
-                              id={msg.id}
-                              autorId={msg.user_id}
-                              autor={msg.profiles?.username || 'este piloto'}
-                              session={session}
-                              compacto
-                            />
-                          </div>
-                        )}
-
-                        <div className="flex align-items-end gap-2">
-                          {!isMe && (
-                            <Avatar 
-                              image={msg.profiles?.avatar_url} 
-                              icon={!msg.profiles?.avatar_url && 'pi pi-user'} 
-                              shape="circle" 
-                              size="large" 
-                              className="shadow-1 flex-shrink-0 cursor-pointer" 
-                              onClick={() => navigate(`/usuario/${msg.profiles?.username}`)}
-                            />
-                          )}
-                          
-                          <div 
-                            className={`p-3 shadow-2 ${isMe ? 'text-white' : 'surface-card text-color border-1 surface-border'}`}
-                            style={{ 
-                              background: isMe ? 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' : 'var(--surface-card)',
-                              borderBottomLeftRadius: 'var(--r-media)',
-                              borderBottomRightRadius: 'var(--r-media)',
-                              borderTopRightRadius: isMe ? '0' : 'var(--r-media)', 
-                              borderTopLeftRadius: !isMe ? '0' : 'var(--r-media)',
-                              fontSize: '1rem',
-                              lineHeight: '1.5'
-                            }}
-                          >
-                            {msg.mensaje}
-                            <div className={`text-right mt-1 ${isMe ? 'text-blue-200' : 'text-400'}`} style={{ fontSize: '0.7rem' }}>
-                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* ZONA DE ESCRITURA */}
-            {aviso && (
-              <div className='chat-aviso' role='alert'>
-                {aviso}
+          <div
+            className='chat-registro'
+            ref={registro}
+            onScroll={alDesplazar}
+            role='log'
+            aria-live='polite'
+            aria-label='Mensajes del canal'
+          >
+            {cargando && (
+              <div className='chat-cargando' aria-hidden='true'>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div className='chat-hueco' key={i} />
+                ))}
               </div>
             )}
 
-            <form onSubmit={handleSendMessage} className="p-4 surface-card border-top-1 surface-border flex gap-3 align-items-center shadow-1 z-1 relative">
-              <InputText
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value.slice(0, MAX))}
-                maxLength={MAX}
-                placeholder="Escribe un mensaje para todos..."
-                className="flex-1 surface-ground border-none px-4 py-3 text-color font-medium text-lg"
-                style={{ borderRadius: 'var(--r)' }}
-              />
-              <Button 
-                type="submit" 
-                icon="pi pi-send" 
-                className="shadow-3 border-none" 
-                style={{ borderRadius: '50%', width: '3.5rem', height: '3.5rem', background: 'linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%)' }}
-                disabled={!newMessage.trim()} 
-                aria-label="Enviar"
-              />
-            </form>
+            {!cargando && visibles.length === 0 && (
+              <div className='chat-vacio'>
+                <MessageSquare size={30} aria-hidden='true' />
+                <h2>El canal está en silencio</h2>
+                <p>Rompe el hielo. Escribe lo primero que se te ocurra.</p>
+              </div>
+            )}
+
+            {filas.map((f) =>
+              f.tipo === 'dia' ? (
+                <div className='chat-dia' key={f.clave}>
+                  <span>{f.etiqueta}</span>
+                </div>
+              ) : (
+                <article
+                  key={f.clave}
+                  className={[
+                    'chat-msg',
+                    f.m.user_id === miId ? 'propio' : '',
+                    f.seguido ? 'seguido' : '',
+                    f.m.pendiente ? 'pendiente' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <div className='chat-hueco-avatar'>
+                    {!f.seguido && (
+                      <Avatar
+                        image={f.m.profiles?.avatar_url}
+                        icon={!f.m.profiles?.avatar_url ? 'pi pi-user' : null}
+                        shape='circle'
+                        className='chat-avatar'
+                      />
+                    )}
+                    {f.seguido && (
+                      <time className='chat-hora-lateral datos' dateTime={f.m.created_at}>
+                        {hora(f.fecha)}
+                      </time>
+                    )}
+                  </div>
+
+                  <div className='chat-cuerpo'>
+                    {!f.seguido && (
+                      <div className='chat-meta'>
+                        <button
+                          type='button'
+                          className='chat-autor'
+                          onClick={() =>
+                            f.m.profiles?.username &&
+                            navigate(`/usuario/${f.m.profiles.username}`)
+                          }
+                        >
+                          {f.m.profiles?.username || 'Piloto'}
+                        </button>
+                        <time className='chat-hora datos' dateTime={f.m.created_at}>
+                          {hora(f.fecha)}
+                        </time>
+                        {f.m.user_id !== miId && (
+                          <BotonDenunciar
+                            tipo='mensaje_global'
+                            id={f.m.id}
+                            autorId={f.m.user_id}
+                            autor={f.m.profiles?.username || 'este piloto'}
+                            session={session}
+                            compacto
+                          />
+                        )}
+                      </div>
+                    )}
+                    <p className='chat-texto'>{f.m.mensaje}</p>
+                  </div>
+                </article>
+              ),
+            )}
           </div>
+
+          {!alFinal && (
+            <button
+              type='button'
+              className='chat-bajar'
+              onClick={() => bajar()}
+              aria-label='Ir al último mensaje'
+            >
+              <ArrowDown size={16} />
+              {sinLeer > 0
+                ? `${sinLeer} ${sinLeer === 1 ? 'mensaje nuevo' : 'mensajes nuevos'}`
+                : 'Ir al final'}
+            </button>
+          )}
+
+          {aviso && (
+            <p className='chat-aviso' role='alert'>
+              {aviso}
+            </p>
+          )}
+
+          <form className='chat-redactor' onSubmit={enviar}>
+            <label className='sr-solo' htmlFor='chat-texto'>
+              Escribe un mensaje
+            </label>
+            <input
+              id='chat-texto'
+              ref={campo}
+              className='chat-campo'
+              value={texto}
+              onChange={(e) => setTexto(e.target.value.slice(0, MAX))}
+              maxLength={MAX}
+              placeholder='Escribe algo para todo el canal…'
+              autoComplete='off'
+            />
+
+            {/* El contador solo aparece cuando de verdad importa */}
+            {restantes <= 120 && (
+              <span
+                className={`chat-restantes datos ${restantes <= 20 ? 'apurado' : ''}`}
+              >
+                {restantes}
+              </span>
+            )}
+
+            <button
+              type='submit'
+              className='chat-enviar'
+              disabled={!texto.trim() || enviando}
+              aria-label='Enviar mensaje'
+            >
+              <Send size={18} />
+            </button>
+          </form>
         </div>
       </PageTransition>
     </>

@@ -1,116 +1,218 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { supabase } from '../supabaseClient'
-import { InputText } from 'primereact/inputtext'
-import { Button } from 'primereact/button'
-import { ProgressSpinner } from 'primereact/progressspinner'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Tag } from 'primereact/tag'
+import { Avatar } from 'primereact/avatar'
 import { Dialog } from 'primereact/dialog'
+import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Toast } from 'primereact/toast'
-import { Avatar } from 'primereact/avatar'
-import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 import {
   Users,
   UserCheck,
   Shield,
-  Search,
   Car,
+  Search,
   Plus,
-  Image as ImageIcon,
   Heart,
+  Image as ImagenIcono,
+  ArrowRight,
 } from 'lucide-react'
-import SEO from '../components/SEO'
-import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 
-const TarjetaUsuario = ({ user, navigate }) => {
+import { supabase } from '../supabaseClient'
+import { sendPushNotification } from '../utils/onesignal'
+import { useBloqueo } from '../hooks/useModeracion'
+import PageTransition from '../components/PageTransition'
+import SEO from '../components/SEO'
+import './CommunityPage.css'
+
+/*
+ * Comunidad.
+ *
+ * Cuatro pestañas: pilotos, a quién sigues, crews y el ranking de coches.
+ * Cada una con su contador, para saber si hay algo dentro antes de entrar.
+ *
+ * El buscador filtra la pestaña en la que estés y se queda pegado arriba
+ * al bajar, que es donde hace falta cuando la lista es larga.
+ *
+ * Se filtra lo publicado por gente bloqueada, que antes no se hacía aquí.
+ */
+
+const PESTANAS = [
+  { id: 'pilotos', etiqueta: 'Pilotos', icono: Users },
+  { id: 'siguiendo', etiqueta: 'Siguiendo', icono: UserCheck },
+  { id: 'crews', etiqueta: 'Crews', icono: Shield },
+  { id: 'coches', etiqueta: 'Coches', icono: Car },
+]
+
+const sinTildes = (t = '') =>
+  t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+/* --- Piloto --- */
+
+const TarjetaPiloto = ({ usuario, onAbrir }) => {
   const [avatarRoto, setAvatarRoto] = useState(false)
-  const coverImage = user.vehicles?.find((v) => v.image_url)?.image_url
+  const [portadaRota, setPortadaRota] = useState(false)
+
+  const portada = usuario.vehicles?.find((v) => v.image_url)?.image_url
+  const coches = usuario.vehicles?.length || 0
+
   return (
-    <div key={user.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
-      <div
-        className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
-        style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
-        onClick={() => navigate(`/usuario/${user.username || user.id}`)}
-      >
-        <div
-          className='w-full bg-gray-200 relative'
-          style={{ height: '120px' }}
-        >
-          {coverImage ? (
-            <img
-              src={coverImage}
-              alt='Cover'
-              className='w-full h-full'
-              style={{ objectFit: 'cover' }}
-                            loading='lazy'
-              decoding='async'
-            />
-          ) : (
-            <div className='w-full h-full surface-hover flex align-items-center justify-content-center'>
-              <Car className='text-400' size={40} />
-            </div>
-          )}
-        </div>
-        <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative surface-card'>
-          <div
-            className='surface-card border-circle flex justify-content-center align-items-center shadow-1'
-            style={{
-              width: '80px',
-              height: '80px',
-              marginTop: '-40px',
-              padding: '4px',
-            }}
-          >
-            {user.avatar_url && !avatarRoto ? (
-              <img
-                src={user.avatar_url}
-                alt={user.username}
-                className='w-full h-full border-circle'
-                style={{ objectFit: 'cover' }}
-                loading='lazy'
-                decoding='async'
-                onError={() => setAvatarRoto(true)}
-              />
-            ) : (
-              <div className='w-full h-full border-circle surface-hover flex align-items-center justify-content-center'>
-                <Users size={32} className='text-400' />
-              </div>
-            )}
-          </div>
-          <h3 className='m-0 mt-3 mb-1 text-xl text-color font-bold line-clamp-1 text-center w-full'>
-            {user.username || 'Usuario'}
-          </h3>
-          <div className='mt-2 mb-4'>
-            {user.vehicles?.length > 0 ? (
-              <Tag
-                className='surface-hover text-blue-700 font-bold px-3 py-2'
-                style={{ borderRadius: 'var(--r)' }}
-              >
-                <i className='pi pi-car text-xs mr-2'></i>
-                {user.vehicles.length} Vehículos
-              </Tag>
-            ) : (
-              <Tag
-                className='surface-hover text-color-secondary font-bold px-3 py-2'
-                style={{ borderRadius: 'var(--r)' }}
-              >
-                Nuevo Miembro
-              </Tag>
-            )}
-          </div>
-          <Button
-            label='Ver Perfil'
-            outlined
-            className='w-full mt-auto font-bold surface-border text-color-secondary hover:surface-ground'
-            style={{ borderRadius: 'var(--r)' }}
+    <article
+      className='cm-piloto'
+      onClick={() => onAbrir(usuario)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAbrir(usuario)}
+    >
+      <div className='cm-piloto-portada'>
+        {portada && !portadaRota ? (
+          <img
+            src={portada}
+            alt=''
+            loading='lazy'
+            decoding='async'
+            onError={() => setPortadaRota(true)}
           />
-        </div>
+        ) : (
+          <div className='cm-sinfoto'>
+            <Car size={32} aria-hidden='true' />
+          </div>
+        )}
       </div>
-    </div>
+
+      <div className='cm-piloto-cuerpo'>
+        <Avatar
+          image={!avatarRoto ? usuario.avatar_url : null}
+          icon={avatarRoto || !usuario.avatar_url ? 'pi pi-user' : null}
+          shape='circle'
+          className='cm-piloto-avatar'
+          onImageError={() => setAvatarRoto(true)}
+        />
+
+        <h3 className='cm-piloto-nombre'>{usuario.username || 'Piloto'}</h3>
+
+        <span className='cm-piloto-coches datos'>
+          {coches} {coches === 1 ? 'coche' : 'coches'}
+        </span>
+
+        <span className='cm-piloto-ir'>
+          Ver ficha <ArrowRight size={14} aria-hidden='true' />
+        </span>
+      </div>
+    </article>
   )
 }
+
+/* --- Crew --- */
+
+const TarjetaCrew = ({ crew, onAbrir }) => {
+  const miembros = crew.crew_members?.length || 0
+
+  return (
+    <article
+      className='cm-crew'
+      onClick={() => onAbrir(crew)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAbrir(crew)}
+    >
+      <div className='cm-crew-banner'>
+        {crew.banner_image_url ? (
+          <img src={crew.banner_image_url} alt='' loading='lazy' decoding='async' />
+        ) : (
+          <div className='cm-sinfoto'>
+            <Shield size={30} aria-hidden='true' />
+          </div>
+        )}
+      </div>
+
+      <div className='cm-crew-cuerpo'>
+        <Avatar
+          image={crew.profile_image_url}
+          icon={!crew.profile_image_url ? 'pi pi-shield' : null}
+          shape='circle'
+          className='cm-crew-escudo'
+        />
+
+        <div className='cm-crew-texto'>
+          <h3 className='cm-crew-nombre'>{crew.name}</h3>
+          <p className='cm-crew-desc'>
+            {crew.description || 'Sin descripción todavía.'}
+          </p>
+        </div>
+
+        <span className='cm-crew-miembros datos'>
+          {miembros}
+          <span>{miembros === 1 ? 'miembro' : 'miembros'}</span>
+        </span>
+      </div>
+    </article>
+  )
+}
+
+/* --- Coche del ranking --- */
+
+const TarjetaCoche = ({ vehiculo, posicion, onAbrir, onRespeto }) => {
+  const [roto, setRoto] = useState(false)
+  const podio = posicion <= 3
+
+  return (
+    <article
+      className={`cm-coche ${podio ? 'podio' : ''}`}
+      onClick={() => onAbrir(vehiculo)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAbrir(vehiculo)}
+    >
+      <div className='cm-coche-foto'>
+        {vehiculo.image_url && !roto ? (
+          <img
+            src={vehiculo.image_url}
+            alt={`${vehiculo.marca} ${vehiculo.modelo}`}
+            loading='lazy'
+            decoding='async'
+            onError={() => setRoto(true)}
+          />
+        ) : (
+          <div className='cm-sinfoto'>
+            <Car size={32} aria-hidden='true' />
+          </div>
+        )}
+
+        {/* La posición solo se marca cuando significa algo */}
+        {podio && (
+          <span className='cm-posicion datos'>
+            {String(posicion).padStart(2, '0')}
+          </span>
+        )}
+
+        <button
+          type='button'
+          className={`cm-respeto ${vehiculo.isLikedByMe ? 'dado' : ''}`}
+          onClick={(e) =>
+            onRespeto(e, vehiculo.id, vehiculo.isLikedByMe, vehiculo.user_id)
+          }
+          aria-pressed={vehiculo.isLikedByMe}
+          aria-label={vehiculo.isLikedByMe ? 'Quitar respeto' : 'Dar respeto'}
+        >
+          <Heart size={15} fill={vehiculo.isLikedByMe ? 'currentColor' : 'none'} />
+          <span className='datos'>{vehiculo.likesCount}</span>
+        </button>
+      </div>
+
+      <div className='cm-coche-cuerpo'>
+        <h3 className='cm-coche-titulo'>
+          {vehiculo.marca} {vehiculo.modelo}
+        </h3>
+        <span className='cm-coche-autor datos'>
+          {vehiculo.profiles?.username || 'Piloto'}
+        </span>
+      </div>
+    </article>
+  )
+}
+
+/* --- Página --- */
 
 const CommunityPage = () => {
   const navigate = useNavigate()
@@ -118,713 +220,507 @@ const CommunityPage = () => {
   const toast = useRef(null)
 
   const [session, setSession] = useState(null)
-  const [activeTab, setActiveTab] = useState(location.state?.tab || 'explorar')
+  const [pestana, setPestana] = useState(location.state?.tab || 'pilotos')
+  const [busqueda, setBusqueda] = useState('')
+  const [cargando, setCargando] = useState(true)
 
-  const [allUsers, setAllUsers] = useState([])
-  const [followingUsers, setFollowingUsers] = useState([])
+  const [pilotos, setPilotos] = useState([])
+  const [siguiendo, setSiguiendo] = useState([])
   const [crews, setCrews] = useState([])
-  const [communityVehicles, setCommunityVehicles] = useState([])
+  const [coches, setCoches] = useState([])
 
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [dialogoCrew, setDialogoCrew] = useState(false)
+  const [creandoCrew, setCreandoCrew] = useState(false)
+  const [nuevaCrew, setNuevaCrew] = useState({ name: '', description: '' })
+  const [escudoCrew, setEscudoCrew] = useState(null)
+  const [bannerCrew, setBannerCrew] = useState(null)
 
-  // Estados para crear Crew
-  const [showCreateCrew, setShowCreateCrew] = useState(false)
-  const [creatingCrew, setCreatingCrew] = useState(false)
-  const [newCrew, setNewCrew] = useState({ name: '', description: '' })
-  const [crewProfileImg, setCrewProfileImg] = useState(null)
-  const [crewBannerImg, setCrewBannerImg] = useState(null)
+  const { filtrar } = useBloqueo(session)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      fetchData(session)
-    })
-  }, [])
+  /* --- Datos --- */
 
-  const fetchData = async (currentSession) => {
-    setLoading(true)
+  const cargar = useCallback(async (sesion) => {
+    setCargando(true)
 
-    // 1. Usuarios
-    const { data: profilesData } = await supabase
+    const { data: perfiles } = await supabase
       .from('profiles')
-      .select('*, vehicles(image_url)')
-    if (profilesData) {
-      const filteredProfiles = currentSession
-        ? profilesData.filter((p) => p.id !== currentSession.user.id)
-        : profilesData
-      setAllUsers(filteredProfiles)
-    }
+      .select('id, username, avatar_url, vehicles(image_url)')
 
-    // 2. Siguiendo
-    if (currentSession) {
-      const { data: followsData } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', currentSession.user.id)
-      if (followsData) {
-        const followingIds = followsData.map((f) => f.following_id)
-        setFollowingUsers(
-          profilesData?.filter((p) => followingIds.includes(p.id)) || [],
-        )
+    if (perfiles) {
+      setPilotos(
+        sesion ? perfiles.filter((p) => p.id !== sesion.user.id) : perfiles,
+      )
+
+      if (sesion) {
+        const { data: sigue } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', sesion.user.id)
+        const ids = new Set((sigue || []).map((f) => f.following_id))
+        setSiguiendo(perfiles.filter((p) => ids.has(p.id)))
       }
     }
 
-    // 3. Crews
     const { data: crewsData } = await supabase
       .from('crews')
       .select('*, crew_members(id)')
     if (crewsData) setCrews(crewsData)
 
-    // 4. VEHÍCULOS GLOBALES (TOP COCHES)
-    const { data: vData } = await supabase
+    const { data: vehiculos } = await supabase
       .from('vehicles')
       .select('*, profiles(username, avatar_url), vehicle_likes(user_id)')
 
-    if (vData) {
-      const formattedVehicles = vData
-        .map((v) => {
-          const likesArray = v.vehicle_likes || []
-          const isLikedByMe = currentSession
-            ? likesArray.some((like) => like.user_id === currentSession.user.id)
-            : false
-          return {
-            ...v,
-            likesCount: likesArray.length,
-            isLikedByMe,
-          }
-        })
-        .sort((a, b) => b.likesCount - a.likesCount)
-      setCommunityVehicles(formattedVehicles)
+    if (vehiculos) {
+      setCoches(
+        vehiculos
+          .map((v) => {
+            const likes = v.vehicle_likes || []
+            return {
+              ...v,
+              likesCount: likes.length,
+              isLikedByMe: sesion
+                ? likes.some((l) => l.user_id === sesion.user.id)
+                : false,
+            }
+          })
+          .sort((a, b) => b.likesCount - a.likesCount),
+      )
     }
 
-    setLoading(false)
-  }
+    setCargando(false)
+  }, [])
 
-  // --- LÓGICA DAR ME GUSTA EN EL TOP COCHES ---
-  const handleToggleLikeVehicle = async (
-    e,
-    vehicleId,
-    isCurrentlyLiked,
-    vehicleOwnerId,
-  ) => {
+  useEffect(() => {
+    let activo = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (!activo) return
+      setSession(data.session)
+      cargar(data.session)
+    })
+    return () => {
+      activo = false
+    }
+  }, [cargar])
+
+  /* --- Respetos --- */
+
+  const darRespeto = async (e, vehicleId, yaDado, duenoId) => {
     e.stopPropagation()
 
     if (!session?.user?.id) {
-      toast.current.show({
+      toast.current?.show({
         severity: 'info',
-        summary: 'Acceso',
-        detail: 'Inicia sesión para dar Me gusta.',
+        summary: 'Necesitas una cuenta',
+        detail: 'Entra para dar respetos a los coches.',
       })
-      return navigate('/login', { state: { returnUrl: '/comunidad' } })
+      navigate('/login', { state: { returnUrl: '/comunidad' } })
+      return
     }
 
-    // Actualización Optimista
-    setCommunityVehicles((prevVehicles) =>
-      prevVehicles.map((v) => {
-        if (v.id === vehicleId) {
-          return {
-            ...v,
-            isLikedByMe: !isCurrentlyLiked,
-            likesCount: isCurrentlyLiked ? v.likesCount - 1 : v.likesCount + 1,
-          }
-        }
-        return v
-      }),
+    setCoches((prev) =>
+      prev.map((v) =>
+        v.id === vehicleId
+          ? {
+              ...v,
+              isLikedByMe: !yaDado,
+              likesCount: yaDado ? v.likesCount - 1 : v.likesCount + 1,
+            }
+          : v,
+      ),
     )
 
     try {
-      if (isCurrentlyLiked) {
+      if (yaDado) {
         await supabase
           .from('vehicle_likes')
           .delete()
           .match({ user_id: session.user.id, vehicle_id: vehicleId })
-      } else {
-        await supabase
-          .from('vehicle_likes')
-          .insert({ user_id: session.user.id, vehicle_id: vehicleId })
+        return
+      }
 
-        if (vehicleOwnerId !== session.user.id) {
-          await supabase.from('notifications').insert({
-            user_id: vehicleOwnerId,
-            actor_id: session.user.id,
-            tipo: 'nuevo_like_vehiculo',
-          })
+      await supabase
+        .from('vehicle_likes')
+        .insert({ user_id: session.user.id, vehicle_id: vehicleId })
 
-          // 🚀 NOTIFICACIÓN PUSH PERSONALIZADA
-          const myName =
-            session.user.user_metadata?.username || 'Un miembro de la comunidad'
-          await sendPushNotification(
-            [vehicleOwnerId],
-            '¡Nuevos Respetos! 🚘',
-            `¡A ${myName} le gusta tu coche!`,
-            `/comunidad`,
-          )
-        }
+      if (duenoId && duenoId !== session.user.id) {
+        await supabase.from('notifications').insert({
+          user_id: duenoId,
+          actor_id: session.user.id,
+          tipo: 'nuevo_like_vehiculo',
+        })
+        const miNombre =
+          session.user.user_metadata?.username || 'Alguien de la comunidad'
+        await sendPushNotification(
+          [duenoId],
+          'Nuevos respetos',
+          `A ${miNombre} le gusta tu coche.`,
+          '/perfil',
+        )
       }
     } catch (err) {
-      console.error('Error al dar like al vehículo:', err)
-      toast.current.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo guardar la acción',
-      })
+      console.error('Error al dar respeto:', err)
+      setCoches((prev) =>
+        prev.map((v) =>
+          v.id === vehicleId
+            ? {
+                ...v,
+                isLikedByMe: yaDado,
+                likesCount: yaDado ? v.likesCount + 1 : v.likesCount - 1,
+              }
+            : v,
+        ),
+      )
     }
   }
 
-  // --- LÓGICA CREAR CREW ---
-  const handleUploadCrewImage = async (file, pathPrefix) => {
-    const options = {
+  /* --- Crear crew --- */
+
+  const subirImagenCrew = async (file, prefijo) => {
+    const comprimido = await imageCompression(file, {
       maxSizeMB: 0.8,
       maxWidthOrHeight: 1200,
       useWebWorker: true,
       fileType: 'image/webp',
-    }
-    const compressedFile = await imageCompression(file, options)
-    const filePath = `${session.user.id}/${pathPrefix}-${Date.now()}.webp`
-    const { error } = await supabase.storage
-      .from('crews')
-      .upload(filePath, compressedFile)
+    })
+    const ruta = `${session.user.id}/${prefijo}-${Date.now()}.webp`
+    const { error } = await supabase.storage.from('crews').upload(ruta, comprimido)
     if (error) throw error
-    const { data } = supabase.storage.from('crews').getPublicUrl(filePath)
-    return data.publicUrl
+    return supabase.storage.from('crews').getPublicUrl(ruta).data.publicUrl
   }
 
-  const handleCreateCrew = async () => {
-    if (!newCrew.name.trim())
-      return toast.current.show({
+  const crearCrew = async () => {
+    if (!nuevaCrew.name.trim()) {
+      toast.current?.show({
         severity: 'warn',
-        summary: 'Falta nombre',
-        detail: 'La crew necesita un nombre.',
+        summary: 'Falta el nombre',
+        detail: 'La crew necesita un nombre para existir.',
       })
-    setCreatingCrew(true)
+      return
+    }
+
+    setCreandoCrew(true)
     try {
-      let profileUrl = null
-      let bannerUrl = null
+      const escudo = escudoCrew ? await subirImagenCrew(escudoCrew, 'profile') : null
+      const banner = bannerCrew ? await subirImagenCrew(bannerCrew, 'banner') : null
 
-      if (crewProfileImg)
-        profileUrl = await handleUploadCrewImage(crewProfileImg, 'profile')
-      if (crewBannerImg)
-        bannerUrl = await handleUploadCrewImage(crewBannerImg, 'banner')
-
-      const { data: createdCrewData, error: crewError } = await supabase
+      const { data: creada, error } = await supabase
         .from('crews')
         .insert({
-          name: newCrew.name,
-          description: newCrew.description,
-          profile_image_url: profileUrl,
-          banner_image_url: bannerUrl,
+          name: nuevaCrew.name.trim(),
+          description: nuevaCrew.description.trim(),
+          profile_image_url: escudo,
+          banner_image_url: banner,
           created_by: session.user.id,
         })
         .select()
         .single()
 
-      if (crewError) throw crewError
+      if (error) throw error
 
       await supabase.from('crew_members').insert({
-        crew_id: createdCrewData.id,
+        crew_id: creada.id,
         user_id: session.user.id,
         role: 'admin',
         status: 'approved',
       })
 
-      toast.current.show({
+      toast.current?.show({
         severity: 'success',
-        summary: 'Crew Creada',
-        detail: '¡Tu club ya es oficial!',
+        summary: 'Crew creada',
+        detail: 'Ya es oficial. Invita a quien quieras.',
       })
-      setShowCreateCrew(false)
-      setNewCrew({ name: '', description: '' })
-      setCrewProfileImg(null)
-      setCrewBannerImg(null)
-      fetchData(session)
-    } catch (error) {
-      console.error(error)
-      toast.current.show({
+
+      setDialogoCrew(false)
+      setNuevaCrew({ name: '', description: '' })
+      setEscudoCrew(null)
+      setBannerCrew(null)
+      cargar(session)
+    } catch (err) {
+      console.error('Error creando crew:', err)
+      toast.current?.show({
         severity: 'error',
-        summary: 'Error',
-        detail: 'El nombre ya existe o hubo un fallo.',
+        summary: 'No se ha podido crear',
+        detail: 'Puede que ese nombre ya esté cogido.',
       })
     } finally {
-      setCreatingCrew(false)
+      setCreandoCrew(false)
     }
   }
 
-  // --- FILTROS ---
-  const getDisplayedUsers = () => {
-    const sourceList = activeTab === 'explorar' ? allUsers : followingUsers
-    if (!searchTerm) return sourceList
-    return sourceList.filter((user) =>
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-  }
-  const displayedUsers = getDisplayedUsers()
-  const displayedCrews = crews.filter((c) =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-  const displayedVehicles = communityVehicles.filter((v) =>
-    `${v.marca} ${v.modelo} ${v.profiles?.username}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
-  )
+  /* --- Filtrado --- */
 
-  // --- COMPONENTES VISUALES ---
-  // La tarjeta de usuario vive fuera: necesita estado propio (ver arriba)
+  const listas = useMemo(() => {
+    const q = sinTildes(busqueda.trim())
 
-  const renderCrewCard = (crew) => {
-    return (
-      <div key={crew.id} className='col-12 sm:col-6 md:col-4 p-2'>
-        <div
-          className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
-          style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
-        >
-          <div
-            className='w-full bg-gray-800 relative'
-            style={{ height: '140px' }}
-          >
-            {crew.banner_image_url && (
-              <img
-                src={crew.banner_image_url}
-                alt='Banner'
-                className='w-full h-full opacity-80'
-                style={{ objectFit: 'cover' }}
-                              loading='lazy'
-                decoding='async'
-              />
-            )}
-          </div>
-          <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative surface-card'>
-            <div
-              className='surface-card flex justify-content-center align-items-center shadow-1'
-              style={{
-                width: '90px',
-                height: '90px',
-                marginTop: '-45px',
-                padding: '4px',
-                borderRadius: 'var(--r)',
-              }}
-            >
-              {crew.profile_image_url ? (
-                <img
-                  src={crew.profile_image_url}
-                  alt={crew.name}
-                  className='w-full h-full'
-                  style={{ objectFit: 'cover', borderRadius: 'var(--r)' }}
-                                  loading='lazy'
-                  decoding='async'
-                />
-              ) : (
-                <div
-                  className='w-full h-full surface-hover flex align-items-center justify-content-center'
-                  style={{ borderRadius: 'var(--r)' }}
-                >
-                  <Shield size={36} className='text-400' />
-                </div>
-              )}
-            </div>
-            <h3 className='m-0 mt-3 mb-1 text-2xl text-color font-black line-clamp-1 text-center w-full'>
-              {crew.name}
-            </h3>
-            <p className='text-color-secondary text-sm font-bold mt-0 mb-3 flex align-items-center gap-2'>
-              <Users size={16} /> {crew.crew_members?.length || 0} Miembros
-            </p>
-            <p className='text-color-secondary text-sm line-clamp-2 text-center mb-4 font-medium px-2'>
-              {crew.description || 'Sin descripción disponible.'}
-            </p>
-            <button
-              className='w-full mt-auto font-bold border-none p-2 text-white cursor-pointer'
-              style={{ borderRadius: 'var(--r-media)', backgroundColor: 'var(--librea)' }}
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate(`/crew/${crew.name}`)
-              }}
-            >
-              Ver Crew
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+    const pilotosVis = filtrar(pilotos, (p) => p.id)
+    const siguiendoVis = filtrar(siguiendo, (p) => p.id)
+    const cochesVis = filtrar(coches, (v) => v.user_id)
+
+    const filtraPersonas = (l) =>
+      q ? l.filter((p) => sinTildes(p.username).includes(q)) : l
+
+    return {
+      pilotos: filtraPersonas(pilotosVis),
+      siguiendo: filtraPersonas(siguiendoVis),
+      crews: q
+        ? crews.filter(
+            (c) =>
+              sinTildes(c.name).includes(q) || sinTildes(c.description).includes(q),
+          )
+        : crews,
+      coches: q
+        ? cochesVis.filter(
+            (v) =>
+              sinTildes(`${v.marca} ${v.modelo}`).includes(q) ||
+              sinTildes(v.profiles?.username).includes(q),
+          )
+        : cochesVis,
+    }
+  }, [busqueda, pilotos, siguiendo, crews, coches, filtrar])
+
+  const cantidades = {
+    pilotos: listas.pilotos.length,
+    siguiendo: listas.siguiendo.length,
+    crews: listas.crews.length,
+    coches: listas.coches.length,
   }
 
-  // --- TARJETA: COCHES TOP ACTUALIZADA (Botón abajo + Click en la tarjeta va al perfil) ---
-  const renderVehicleCard = (v) => {
-    return (
-      <div key={v.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
-        <div
-          className='surface-card shadow-2 hover:shadow-4 transition-all flex flex-column relative overflow-hidden h-full'
-          style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
-        >
-          {/* ÁREA CLICABLE: REDIRIGE AL PERFIL */}
-          <div
-            className='cursor-pointer flex flex-column flex-grow-1'
-            onClick={() =>
-              navigate(`/usuario/${v.profiles?.username || v.user_id}`)
-            }
-          >
-            <div
-              className='w-full bg-gray-200 relative'
-              style={{ height: '200px' }}
-            >
-              {v.image_url ? (
-                <img
-                  src={v.image_url}
-                  alt={v.modelo}
-                  className='w-full h-full'
-                  style={{ objectFit: 'cover' }}
-                                  loading='lazy'
-                  decoding='async'
-                />
-              ) : (
-                <div className='flex h-full align-items-center justify-content-center text-300'>
-                  <Car size={40} />
-                </div>
-              )}
-
-              {/* CONTADOR DE ME GUSTA (ESTÁTICO) */}
-              <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
-                <Heart
-                  size={16}
-                  fill={v.likesCount > 0 ? 'var(--librea)' : 'none'}
-                  className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
-                />
-                <span className='text-white font-bold text-sm'>
-                  {v.likesCount}
-                </span>
-              </div>
-            </div>
-            <div className='p-3 flex flex-column flex-grow-1'>
-              <div className='flex justify-content-between align-items-start mb-2'>
-                <div>
-                  <h3 className='m-0 text-xl font-black text-color'>
-                    {v.marca} {v.modelo}
-                  </h3>
-                  <p className='m-0 text-color-secondary text-sm font-bold mt-1'>
-                    {v.anio} • {v.cv} CV
-                  </p>
-                </div>
-              </div>
-              <div className='mt-auto pt-3 border-top-1 surface-border flex align-items-center gap-2'>
-                <Avatar
-                  image={v.profiles?.avatar_url}
-                  icon={!v.profiles?.avatar_url && 'pi pi-user'}
-                  shape='circle'
-                  className='w-2rem h-2rem shadow-1'
-                />
-                <span className='text-sm font-bold text-color-secondary'>
-                  {v.profiles?.username || 'Usuario'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* BARRA INFERIOR: BOTÓN ME GUSTA */}
-          <div className=' surface-border p-3 surface-ground mt-auto'>
-            <Button
-              label={v.isLikedByMe ? 'Marcado como me gusta' : 'Me gusta'}
-              icon={
-                <Heart
-                  size={18}
-                  fill={v.isLikedByMe ? 'currentColor' : 'none'}
-                  className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
-                />
-              }
-              className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary surface-card' : 'p-button-help shadow-2 hover:shadow-4'}`}
-              onClick={(e) =>
-                handleToggleLikeVehicle(e, v.id, v.isLikedByMe, v.user_id)
-              }
-            />
-          </div>
-        </div>
-      </div>
-    )
+  const VACIOS = {
+    pilotos: {
+      titulo: busqueda ? 'Nadie con ese nombre' : 'Todavía no hay pilotos',
+      texto: busqueda
+        ? 'Prueba con otra búsqueda.'
+        : 'En cuanto se registre gente, aparecerá aquí.',
+    },
+    siguiendo: {
+      titulo: 'No sigues a nadie',
+      texto: 'Cuando sigas a alguien, lo verás aquí de un vistazo.',
+    },
+    crews: {
+      titulo: busqueda ? 'Ninguna crew con ese nombre' : 'Aún no hay crews',
+      texto: busqueda
+        ? 'Prueba con otra búsqueda.'
+        : 'Monta la primera y reúne a los tuyos.',
+    },
+    coches: {
+      titulo: busqueda ? 'Ningún coche con esa búsqueda' : 'El garaje colectivo está vacío',
+      texto: busqueda
+        ? 'Prueba con otra marca o modelo.'
+        : 'Cuando alguien suba su coche, entrará en el ranking.',
+    },
   }
+
+  const abrirPerfil = (u) => navigate(`/usuario/${u.username || u.id}`)
+  const abrirCrew = (c) => navigate(`/crew/${c.name}`)
+  const abrirCoche = (v) =>
+    navigate(`/usuario/${v.profiles?.username || v.user_id}`)
 
   return (
     <>
       <SEO
-        title='Comunidad y Top Coches'
-        description='Descubre los mejores proyectos del país, únete a Crews locales y dales tus respetos a los vehículos más top de la comunidad CarMeet ESP.'
+        title='Comunidad'
+        description='Pilotos, crews y los coches con más respetos de CarMeet.'
         url={window.location.href}
       />
+
       <PageTransition>
-        <div className='min-h-screen surface-ground p-4 md:p-6 pb-8'>
+        <div className='cm'>
           <Toast ref={toast} />
-          <div className='max-w-7xl mx-auto'>
-            <div className='text-center mb-5'>
-              <h1 className='text-4xl md:text-5xl font-black text-color m-0 mb-2'>
-                Comunidad
-              </h1>
-              <p className='text-color-secondary text-lg m-0 font-medium'>
-                Descubre usuarios, clubes y los mejores coches.
-              </p>
-            </div>
 
-            <div className='flex justify-content-center mb-6'>
-              <div
-                className='surface-card p-1 shadow-1 flex flex-wrap justify-content-center gap-1'
-                style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
-              >
-                <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: 'var(--r)' }}
-                  onClick={() => setActiveTab('explorar')}
-                >
-                  <Users size={18} /> Explorar
-                </button>
-
-                <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: 'var(--r)' }}
-                  onClick={() => {
-                    if (!session)
-                      return toast.current.show({
-                        severity: 'warn',
-                        summary: 'Aviso',
-                        detail: 'Inicia sesión para ver a quién sigues',
-                      })
-                    setActiveTab('siguiendo')
-                  }}
-                >
-                  <UserCheck size={18} /> Siguiendo
-                </button>
-
-                <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: 'var(--r)' }}
-                  onClick={() => setActiveTab('crews')}
-                >
-                  <Shield size={18} /> Crews
-                </button>
-
-                {/* PESTAÑA: TOP COCHES */}
-                <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
-                  style={{ borderRadius: 'var(--r)' }}
-                  onClick={() => setActiveTab('vehiculos')}
-                >
-                  <Car size={18} /> Top Coches
-                </button>
-              </div>
-            </div>
-
-            <div className='flex flex-column md:flex-row justify-content-center align-items-center gap-3 mb-6'>
-              <div className='relative w-full md:w-6 lg:w-5'>
-                <Search
-                  className='absolute left-0 top-50 transform -translate-y-50 ml-4 text-400'
-                  size={20}
-                />
-                <InputText
-                  placeholder={
-                    activeTab === 'crews'
-                      ? 'Buscar club...'
-                      : activeTab === 'vehiculos'
-                        ? 'Buscar modelo o marca...'
-                        : 'Buscar usuario...'
-                  }
-                  className='w-full surface-card border-none shadow-1 font-medium text-lg text-color'
-                  style={{
-                    padding: '1rem 1rem 1rem 3rem',
-                    borderRadius: 'var(--r)',
-                  }}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+          <header className='cm-cabecera'>
+            <div className='cm-cabecera-caja'>
+              <div>
+                <span className='rotulo'>La parrilla</span>
+                <h1 className='cm-titulo'>Comunidad</h1>
               </div>
 
-              {activeTab === 'crews' && session && (
-                <Button
-                  label='Crear Crew'
-                  icon={<Plus size={20} className='mr-2' />}
-                  className='bg-black border-none hover:bg-black shadow-2 font-bold w-full md:w-auto'
-                  style={{ padding: '1rem 1.5rem', borderRadius: 'var(--r)' }}
-                  onClick={() => setShowCreateCrew(true)}
-                />
+              {session && (
+                <button
+                  type='button'
+                  className='btn-librea'
+                  onClick={() => setDialogoCrew(true)}
+                >
+                  <Plus size={18} />
+                  Crear crew
+                </button>
               )}
             </div>
+          </header>
 
-            {/* CONTENIDO PRINCIPAL */}
-            {loading ? (
-              <div className='flex justify-content-center py-8'>
-                <ProgressSpinner />
+          {/* Pestañas y buscador, pegados arriba al bajar */}
+          <div className='cm-barra'>
+            <nav className='cm-pestanas' aria-label='Secciones de la comunidad'>
+              {PESTANAS.map(({ id, etiqueta, icono: Icono }) => (
+                <button
+                  key={id}
+                  type='button'
+                  className={`cm-pestana ${pestana === id ? 'activa' : ''}`}
+                  onClick={() => setPestana(id)}
+                  aria-current={pestana === id}
+                >
+                  <Icono size={16} aria-hidden='true' />
+                  <span className='cm-pestana-texto'>{etiqueta}</span>
+                  <span className='cm-pestana-num datos'>{cantidades[id]}</span>
+                </button>
+              ))}
+            </nav>
+
+            <div className='cm-buscador'>
+              <label className='sr-solo' htmlFor='cm-buscar'>
+                Buscar en la comunidad
+              </label>
+              <Search size={17} className='cm-lupa' aria-hidden='true' />
+              <input
+                id='cm-buscar'
+                type='search'
+                className='cm-campo'
+                placeholder='Buscar piloto, crew o coche…'
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className='cm-contenido'>
+            {cargando && (
+              <div className='cm-rejilla' aria-hidden='true'>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div className='cm-hueco' key={i} />
+                ))}
               </div>
-            ) : (
-              <div className='grid m-0'>
-                {activeTab === 'crews' ? (
-                  displayedCrews.length > 0 ? (
-                    displayedCrews.map(renderCrewCard)
-                  ) : (
-                    <div className='col-12 text-center py-8'>
-                      <Shield size={64} className='text-300 mb-4 mx-auto' />
-                      <h3 className='text-2xl font-bold text-color m-0 mb-2'>
-                        No hay Crews disponibles
-                      </h3>
-                      <p className='text-color-secondary text-lg'>
-                        Sé el primero en fundar un club en tu zona.
-                      </p>
-                    </div>
-                  )
-                ) : activeTab === 'vehiculos' ? (
-                  displayedVehicles.length > 0 ? (
-                    displayedVehicles.map(renderVehicleCard)
-                  ) : (
-                    <div className='col-12 text-center py-8'>
-                      <Car size={64} className='text-300 mb-4 mx-auto' />
-                      <h3 className='text-2xl font-bold text-color m-0 mb-2'>
-                        No hay coches en el ranking
-                      </h3>
-                      <p className='text-color-secondary text-lg'>
-                        Aún no hay vehículos subidos en la comunidad.
-                      </p>
-                    </div>
-                  )
-                ) : displayedUsers.length > 0 ? (
-                  displayedUsers.map((u) => (
-                    <TarjetaUsuario key={u.id} user={u} navigate={navigate} />
-                  ))
-                ) : (
-                  <div className='col-12 text-center py-8'>
-                    <Users size={64} className='text-300 mb-4 mx-auto' />
-                    <h3 className='text-2xl font-bold text-color m-0 mb-2'>
-                      No hay resultados
-                    </h3>
-                    <p className='text-color-secondary text-lg'>
-                      Prueba con otra búsqueda.
-                    </p>
-                  </div>
+            )}
+
+            {!cargando && pestana === 'pilotos' && cantidades.pilotos > 0 && (
+              <div className='cm-rejilla'>
+                {listas.pilotos.map((u) => (
+                  <TarjetaPiloto key={u.id} usuario={u} onAbrir={abrirPerfil} />
+                ))}
+              </div>
+            )}
+
+            {!cargando && pestana === 'siguiendo' && cantidades.siguiendo > 0 && (
+              <div className='cm-rejilla'>
+                {listas.siguiendo.map((u) => (
+                  <TarjetaPiloto key={u.id} usuario={u} onAbrir={abrirPerfil} />
+                ))}
+              </div>
+            )}
+
+            {!cargando && pestana === 'crews' && cantidades.crews > 0 && (
+              <div className='cm-crews'>
+                {listas.crews.map((c) => (
+                  <TarjetaCrew key={c.id} crew={c} onAbrir={abrirCrew} />
+                ))}
+              </div>
+            )}
+
+            {!cargando && pestana === 'coches' && cantidades.coches > 0 && (
+              <div className='cm-rejilla'>
+                {listas.coches.map((v, i) => (
+                  <TarjetaCoche
+                    key={v.id}
+                    vehiculo={v}
+                    posicion={i + 1}
+                    onAbrir={abrirCoche}
+                    onRespeto={darRespeto}
+                  />
+                ))}
+              </div>
+            )}
+
+            {!cargando && cantidades[pestana] === 0 && (
+              <div className='cm-vacio'>
+                <Users size={30} aria-hidden='true' />
+                <h2>{VACIOS[pestana].titulo}</h2>
+                <p>{VACIOS[pestana].texto}</p>
+                {pestana === 'crews' && session && !busqueda && (
+                  <button
+                    type='button'
+                    className='btn-librea'
+                    onClick={() => setDialogoCrew(true)}
+                  >
+                    <Plus size={18} />
+                    Crear la primera
+                  </button>
                 )}
               </div>
             )}
           </div>
 
-          {/* MODAL CREAR CREW */}
+          {/* --- Crear crew --- */}
           <Dialog
-            header={
-              <span className='text-2xl font-black text-color'>
-                Fundar Nueva Crew
-              </span>
-            }
-            visible={showCreateCrew}
-            onHide={() => setShowCreateCrew(false)}
-            style={{ width: '90vw', maxWidth: '500px' }}
-            className='border-round-3xl shadow-8'
-            contentClassName='pb-4 pt-2 px-4 md:px-5'
-            headerClassName='px-4 md:px-5 pt-4 pb-2 border-none'
+            visible={dialogoCrew}
+            onHide={() => setDialogoCrew(false)}
+            header='Crear una crew'
+            dismissableMask
+            draggable={false}
+            style={{ width: 'min(30rem, 94vw)' }}
           >
-            <div className='flex flex-column pt-3'>
-              <p className='text-color-secondary mb-4 mt-0 text-sm'>
-                Sube las imágenes haciendo clic en los recuadros
-                correspondientes.
+            <div className='cm-form'>
+              <p className='cm-form-intro'>
+                Una crew es tu club: podéis organizar eventos privados que solo
+                vean sus miembros.
               </p>
 
-              <div
-                className='w-full surface-card border-1 surface-border mb-5 relative'
-                style={{ borderRadius: 'var(--r)', height: '180px' }}
-              >
-                <div
-                  className='w-full surface-hover relative cursor-pointer hover:opacity-80 transition-opacity flex align-items-center justify-content-center overflow-hidden'
-                  style={{ height: '120px', borderRadius: 'var(--r) var(--r) 0 0' }}
-                >
-                  {crewBannerImg ? (
-                    <img
-                      src={URL.createObjectURL(crewBannerImg)}
-                      className='w-full h-full'
-                      style={{ objectFit: 'cover' }}
-                      alt='Banner'
-                                          loading='lazy'
-                      decoding='async'
-                    />
-                  ) : (
-                    <div className='flex flex-column align-items-center text-color-secondary font-bold text-sm'>
-                      <ImageIcon size={24} className='mb-1' /> Banner Fondo
-                    </div>
-                  )}
-                  <input
-                    type='file'
-                    accept='image/*'
-                    className='absolute inset-0 opacity-0 cursor-pointer w-full h-full'
-                    onChange={(e) => setCrewBannerImg(e.target.files[0])}
-                  />
-                </div>
+              <div className='cm-campo-form'>
+                <label className='rotulo' htmlFor='cm-nombre'>
+                  Nombre
+                </label>
+                <InputText
+                  id='cm-nombre'
+                  value={nuevaCrew.name}
+                  onChange={(e) =>
+                    setNuevaCrew({ ...nuevaCrew, name: e.target.value })
+                  }
+                  className='w-full'
+                  placeholder='Los Clásicos de Cáceres'
+                />
+              </div>
 
-                <div
-                  className='absolute surface-card shadow-2 flex align-items-center justify-content-center cursor-pointer hover:surface-ground transition-colors z-2 overflow-hidden'
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    left: '24px',
-                    bottom: '20px',
-                    borderRadius: 'var(--r)',
-                    padding: '4px',
-                  }}
-                >
-                  <div
-                    className='w-full h-full surface-hover flex align-items-center justify-content-center text-color-secondary relative'
-                    style={{ borderRadius: 'var(--r-media)' }}
-                  >
-                    {crewProfileImg ? (
-                      <img
-                        src={URL.createObjectURL(crewProfileImg)}
-                        className='w-full h-full absolute top-0 left-0'
-                        style={{ objectFit: 'cover', borderRadius: 'var(--r-media)' }}
-                        alt='Logo'
-                                              loading='lazy'
-                        decoding='async'
-                      />
-                    ) : (
-                      <div className='flex flex-column align-items-center text-xs font-bold'>
-                        <Plus size={20} /> Logo
-                      </div>
-                    )}
+              <div className='cm-campo-form'>
+                <label className='rotulo' htmlFor='cm-desc'>
+                  Descripción
+                </label>
+                <InputTextarea
+                  id='cm-desc'
+                  rows={3}
+                  value={nuevaCrew.description}
+                  onChange={(e) =>
+                    setNuevaCrew({ ...nuevaCrew, description: e.target.value })
+                  }
+                  className='w-full'
+                  placeholder='De qué va vuestra crew y a quién buscáis'
+                />
+              </div>
+
+              <div className='cm-imagenes'>
+                {[
+                  { valor: escudoCrew, set: setEscudoCrew, texto: 'Escudo' },
+                  { valor: bannerCrew, set: setBannerCrew, texto: 'Portada' },
+                ].map(({ valor, set, texto }) => (
+                  <label className='cm-carga' key={texto}>
+                    <ImagenIcono size={18} aria-hidden='true' />
+                    <span className='cm-carga-texto'>
+                      {valor ? valor.name.slice(0, 18) : texto}
+                    </span>
                     <input
                       type='file'
                       accept='image/*'
-                      className='absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10'
-                      onChange={(e) => setCrewProfileImg(e.target.files[0])}
+                      className='sr-solo'
+                      onChange={(e) => set(e.target.files?.[0] || null)}
                     />
-                  </div>
-                </div>
-              </div>
-
-              <div className='flex flex-column gap-4'>
-                <span className='p-float-label'>
-                  <InputText
-                    id='crewName'
-                    value={newCrew.name}
-                    onChange={(e) =>
-                      setNewCrew({ ...newCrew, name: e.target.value })
-                    }
-                    className='w-full font-bold text-lg'
-                    style={{ borderRadius: 'var(--r)', padding: '1rem' }}
-                  />
-                  <label htmlFor='crewName'>Nombre de la Crew *</label>
-                </span>
-
-                <span className='p-float-label'>
-                  <InputTextarea
-                    id='crewDesc'
-                    value={newCrew.description}
-                    onChange={(e) =>
-                      setNewCrew({ ...newCrew, description: e.target.value })
-                    }
-                    rows={3}
-                    className='w-full text-md'
-                    style={{ borderRadius: 'var(--r)', padding: '1rem' }}
-                    autoResize
-                  />
-                  <label htmlFor='crewDesc'>
-                    Descripción de la crew (Opcional)
                   </label>
-                </span>
-
-                <Button
-                  label='Crear Crew'
-                  className='w-full py-3 mt-2 font-bold text-lg bg-black border-none shadow-2 hover:bg-black'
-                  style={{ borderRadius: 'var(--r)' }}
-                  onClick={handleCreateCrew}
-                  loading={creatingCrew}
-                />
+                ))}
               </div>
+
+              <button
+                type='button'
+                className='btn-librea cm-crear'
+                onClick={crearCrew}
+                disabled={creandoCrew}
+              >
+                {creandoCrew ? 'Creando…' : 'Crear crew'}
+              </button>
             </div>
           </Dialog>
         </div>

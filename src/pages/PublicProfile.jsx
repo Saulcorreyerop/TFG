@@ -1,32 +1,186 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabaseClient'
 import { Avatar } from 'primereact/avatar'
-import { Button } from 'primereact/button'
-import { Tag } from 'primereact/tag'
-import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
-import { Dialog } from 'primereact/dialog'
-import PageTransition from '../components/PageTransition'
 import {
   Share2,
-  UserPlus,
-  UserCheck,
   Car,
   Flag,
-  Calendar,
-  MapPin,
-  Image as ImageIcon,
-  Shield,
   Heart,
+  CalendarDays,
+  MapPin,
+  Images,
+  Shield,
   Instagram,
   Youtube,
+  Twitter,
+  Music2,
+  UserPlus,
+  UserCheck,
+  Ban,
 } from 'lucide-react'
 
-import './ProfilePage.css'
-import LightboxFotos from '../components/LightboxFotos'
-import SEO from '../components/SEO'
+import { supabase } from '../supabaseClient'
 import { sendPushNotification } from '../utils/onesignal'
+import { useBloqueo } from '../hooks/useModeracion'
+import PageTransition from '../components/PageTransition'
+import LightboxFotos from '../components/LightboxFotos'
+import BotonDenunciar from '../components/BotonDenunciar'
+import SEO from '../components/SEO'
+import './ProfilePage.css'
+
+/*
+ * Perfil público de otro piloto.
+ *
+ * Comparte diseño y hoja de estilos con la ficha propia (ProfilePage):
+ * son la misma pantalla vista desde fuera, y no tiene sentido que se vean
+ * distintas. Esta es además la que se comparte por WhatsApp, así que es la
+ * que más gente ve.
+ *
+ * Lo que cambia respecto a la propia: no hay editar ni cerrar sesión, hay
+ * seguir, se pueden dar respetos a los coches, y se puede denunciar o
+ * bloquear al usuario.
+ */
+
+const PESTANAS = [
+  { id: 'garaje', etiqueta: 'Garaje', icono: Car },
+  { id: 'eventos', etiqueta: 'Eventos', icono: Flag },
+]
+
+const REDES = [
+  { campo: 'instagram', icono: Instagram, url: (v) => `https://instagram.com/${v}`, nombre: 'Instagram' },
+  { campo: 'twitter', icono: Twitter, url: (v) => `https://x.com/${v}`, nombre: 'X' },
+  { campo: 'tiktok', icono: Music2, url: (v) => `https://tiktok.com/@${v}`, nombre: 'TikTok' },
+  { campo: 'youtube', icono: Youtube, url: (v) => `https://youtube.com/@${v}`, nombre: 'YouTube' },
+]
+
+const fechaLarga = (f) =>
+  new Date(f).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+/* --- Coche con respetos --- */
+
+const TarjetaCoche = ({ vehiculo, onAbrir, onRespeto }) => {
+  const [roto, setRoto] = useState(false)
+  const fotos = 1 + (vehiculo.vehicle_images?.length || 0)
+
+  return (
+    <article
+      className='pf-coche'
+      onClick={() => onAbrir(vehiculo)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAbrir(vehiculo)}
+    >
+      <div className='pf-coche-foto'>
+        {vehiculo.image_url && !roto ? (
+          <img
+            src={vehiculo.image_url}
+            alt={`${vehiculo.marca} ${vehiculo.modelo}`}
+            loading='lazy'
+            decoding='async'
+            onError={() => setRoto(true)}
+          />
+        ) : (
+          <div className='pf-sinfoto'>
+            <Car size={38} aria-hidden='true' />
+          </div>
+        )}
+
+        {fotos > 1 && (
+          <span className='pf-contador-fotos datos'>
+            <Images size={12} aria-hidden='true' />
+            {fotos}
+          </span>
+        )}
+
+        <button
+          type='button'
+          className={`pf-respeto ${vehiculo.isLikedByMe ? 'dado' : ''}`}
+          onClick={(e) => onRespeto(e, vehiculo.id, vehiculo.isLikedByMe)}
+          aria-pressed={vehiculo.isLikedByMe}
+          aria-label={
+            vehiculo.isLikedByMe ? 'Quitar respeto' : 'Dar respeto a este coche'
+          }
+        >
+          <Heart size={15} fill={vehiculo.isLikedByMe ? 'currentColor' : 'none'} />
+          <span className='datos'>{vehiculo.likesCount}</span>
+        </button>
+      </div>
+
+      <div className='pf-coche-cuerpo'>
+        <h3 className='pf-coche-titulo'>
+          {vehiculo.marca} {vehiculo.modelo}
+        </h3>
+
+        <div className='pf-telemetria'>
+          <div className='pf-dato'>
+            <span className='pf-dato-valor datos'>{vehiculo.cv || '—'}</span>
+            <span className='pf-dato-etiqueta'>CV</span>
+          </div>
+          <div className='pf-dato'>
+            <span className='pf-dato-valor datos'>{vehiculo.anio || '—'}</span>
+            <span className='pf-dato-etiqueta'>Año</span>
+          </div>
+          <div className='pf-dato'>
+            <span className='pf-dato-valor datos'>
+              {vehiculo.combustible ? vehiculo.combustible.slice(0, 3).toUpperCase() : '—'}
+            </span>
+            <span className='pf-dato-etiqueta'>Comb.</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+/* --- Evento --- */
+
+const TarjetaEvento = ({ evento, onAbrir }) => {
+  const fecha = new Date(evento.fecha)
+  const pasado = fecha < new Date()
+
+  return (
+    <article
+      className={`pf-evento ${pasado ? 'pasado' : ''}`}
+      onClick={() => onAbrir(evento.id)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAbrir(evento.id)}
+    >
+      <div className='pf-fecha'>
+        <span className='pf-fecha-dia datos'>{fecha.getDate()}</span>
+        <span className='pf-fecha-mes'>
+          {fecha.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '')}
+        </span>
+      </div>
+      <div className='pf-evento-cuerpo'>
+        <div className='pf-evento-alto'>
+          {evento.tipo && <span className='pf-tipo'>{evento.tipo}</span>}
+          {pasado && <span className='pf-finalizado'>Finalizado</span>}
+        </div>
+        <h3 className='pf-evento-titulo'>{evento.titulo}</h3>
+        <div className='pf-evento-meta datos'>
+          <span>
+            <CalendarDays size={12} aria-hidden='true' />
+            {fechaLarga(evento.fecha)}
+          </span>
+          {evento.ubicacion && (
+            <span>
+              <MapPin size={12} aria-hidden='true' />
+              {evento.ubicacion.split(',')[0].trim()}
+            </span>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
+/* --- Página --- */
 
 const PublicProfile = () => {
   const { userId, username } = useParams()
@@ -46,200 +200,197 @@ const PublicProfile = () => {
   const [isFollowing, setIsFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
 
+  const [pestana, setPestana] = useState('garaje')
   const [galleryImages, setGalleryImages] = useState(null)
   const [galleryTitulo, setGalleryTitulo] = useState('')
 
+  const { bloqueados, bloquear, desbloquear } = useBloqueo(session)
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
   }, [])
 
-  useEffect(() => {
-    const fetchPublicData = async () => {
-      setLoading(true)
-      try {
-        const isUUID =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-            identifier,
-          )
+  /* --- Datos --- */
 
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq(isUUID ? 'id' : 'username', identifier)
-          .maybeSingle()
+  const cargar = useCallback(async () => {
+    setLoading(true)
+    try {
+      const esUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          identifier,
+        )
 
-        if (profileError || !profileData)
-          throw new Error('Usuario no encontrado')
-        setProfile(profileData)
-        const actualUserId = profileData.id
+      const { data: prof, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq(esUuid ? 'id' : 'username', identifier)
+        .maybeSingle()
 
-        const { data: crewMemberData } = await supabase
-          .from('crew_members')
-          .select('crews(*)')
-          .eq('user_id', actualUserId)
-          .eq('status', 'approved')
-          .limit(1)
-          .maybeSingle()
+      if (error || !prof) throw new Error('Usuario no encontrado')
+      setProfile(prof)
+      const uid = prof.id
 
-        if (crewMemberData && crewMemberData.crews) {
-          setUserCrew(crewMemberData.crews)
-        }
+      const { data: crewData } = await supabase
+        .from('crew_members')
+        .select('crews(*)')
+        .eq('user_id', uid)
+        .eq('status', 'approved')
+        .limit(1)
+        .maybeSingle()
+      if (crewData?.crews) setUserCrew(crewData.crews)
 
-        const { data: vehicleData } = await supabase
-          .from('vehicles')
-          .select('*, vehicle_images(*), vehicle_likes(user_id)')
-          .eq('user_id', actualUserId)
+      const { data: vehData } = await supabase
+        .from('vehicles')
+        .select('*, vehicle_images(*), vehicle_likes(user_id)')
+        .eq('user_id', uid)
 
-        if (vehicleData) {
-          const formattedVehicles = vehicleData.map((v) => {
-            const likesArray = v.vehicle_likes || []
-            const isLikedByMe = session
-              ? likesArray.some((like) => like.user_id === session.user.id)
-              : false
+      if (vehData) {
+        setVehicles(
+          vehData.map((v) => {
+            const likes = v.vehicle_likes || []
             return {
               ...v,
-              likesCount: likesArray.length,
-              isLikedByMe,
+              likesCount: likes.length,
+              isLikedByMe: session
+                ? likes.some((l) => l.user_id === session.user.id)
+                : false,
             }
-          })
-          setVehicles(formattedVehicles)
-        }
-
-        const { data: eventsData } = await supabase
-          .from('events')
-          .select('*')
-          .eq('user_id', actualUserId)
-          .order('fecha', { ascending: false })
-        if (eventsData) setCreatedEvents(eventsData)
-
-        const { count: f1 } = await supabase
-          .from('follows')
-          .select('*', { count: 'exact', head: true })
-          .eq('following_id', actualUserId)
-        const { count: f2 } = await supabase
-          .from('follows')
-          .select('*', { count: 'exact', head: true })
-          .eq('follower_id', actualUserId)
-        setFollowersCount(f1 || 0)
-        setFollowingCount(f2 || 0)
-
-        if (session?.user?.id) {
-          const { data: followData } = await supabase
-            .from('follows')
-            .select('id')
-            .eq('follower_id', session.user.id)
-            .eq('following_id', actualUserId)
-            .maybeSingle()
-          setIsFollowing(!!followData)
-        }
-      } catch (error) {
-        console.error('Error cargando perfil:', error)
-      } finally {
-        setLoading(false)
+          }),
+        )
       }
-    }
 
-    fetchPublicData()
+      const { data: evData } = await supabase
+        .from('events')
+        .select('*')
+        .eq('user_id', uid)
+        .order('fecha', { ascending: false })
+      if (evData) setCreatedEvents(evData)
+
+      const [seguidores, siguiendo] = await Promise.all([
+        supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', uid),
+        supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', uid),
+      ])
+      setFollowersCount(seguidores.count || 0)
+      setFollowingCount(siguiendo.count || 0)
+
+      if (session?.user?.id) {
+        const { data: sigo } = await supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', session.user.id)
+          .eq('following_id', uid)
+          .maybeSingle()
+        setIsFollowing(!!sigo)
+      }
+    } catch (err) {
+      console.error('Error cargando perfil:', err)
+      setProfile(null)
+    } finally {
+      setLoading(false)
+    }
   }, [identifier, session])
 
-  const openGalleryViewer = (car) => {
-    const images = []
-    if (car.image_url)
-      images.push({
-        itemImageSrc: car.image_url,
-        thumbnailImageSrc: car.image_url,
-        alt: 'Principal',
-      })
-    if (car.vehicle_images && car.vehicle_images.length > 0) {
-      car.vehicle_images.forEach((img) => {
-        images.push({
-          itemImageSrc: img.image_url,
-          thumbnailImageSrc: img.image_url,
-          alt: 'Detalle',
-        })
-      })
-    }
-    if (images.length > 0) {
-      setGalleryTitulo(`${car.marca} ${car.modelo}`)
-      setGalleryImages(images)
-    }
+  useEffect(() => {
+    cargar()
+  }, [cargar])
+
+  /* --- Acciones --- */
+
+  const abrirGaleria = (car) => {
+    const fotos = []
+    if (car.image_url) fotos.push(car.image_url)
+    car.vehicle_images?.forEach((img) => fotos.push(img.image_url))
+    if (fotos.length === 0) return
+    setGalleryTitulo(`${car.marca} ${car.modelo}`)
+    setGalleryImages(fotos)
   }
 
-  const handleToggleLikeVehicle = async (e, vehicleId, isCurrentlyLiked) => {
+  const darRespeto = async (e, vehicleId, yaDado) => {
     e.stopPropagation()
 
     if (!session?.user?.id) {
-      toast.current.show({
+      toast.current?.show({
         severity: 'info',
-        summary: 'Acceso',
-        detail: 'Inicia sesión para dar Respetos.',
+        summary: 'Necesitas una cuenta',
+        detail: 'Entra para dar respetos a los coches.',
       })
-      return navigate('/login', {
-        state: { returnUrl: `/usuario/${identifier}` },
-      })
+      navigate('/login', { state: { returnUrl: `/usuario/${identifier}` } })
+      return
     }
 
-    setVehicles((prevVehicles) =>
-      prevVehicles.map((v) => {
-        if (v.id === vehicleId) {
-          return {
-            ...v,
-            isLikedByMe: !isCurrentlyLiked,
-            likesCount: isCurrentlyLiked ? v.likesCount - 1 : v.likesCount + 1,
-          }
-        }
-        return v
-      }),
+    // Optimista: el corazón responde al momento
+    setVehicles((prev) =>
+      prev.map((v) =>
+        v.id === vehicleId
+          ? {
+              ...v,
+              isLikedByMe: !yaDado,
+              likesCount: yaDado ? v.likesCount - 1 : v.likesCount + 1,
+            }
+          : v,
+      ),
     )
 
     try {
-      if (isCurrentlyLiked) {
+      if (yaDado) {
         await supabase
           .from('vehicle_likes')
           .delete()
           .match({ user_id: session.user.id, vehicle_id: vehicleId })
-      } else {
-        await supabase
-          .from('vehicle_likes')
-          .insert({ user_id: session.user.id, vehicle_id: vehicleId })
-
-        if (profile.id !== session.user.id) {
-          await supabase.from('notifications').insert({
-            user_id: profile.id,
-            actor_id: session.user.id,
-            tipo: 'nuevo_like_vehiculo',
-          })
-
-          const myName =
-            session.user.user_metadata?.username || 'Un miembro de la comunidad'
-          await sendPushNotification(
-            [profile.id],
-            '¡Nuevos Respetos! 🚘',
-            `¡A ${myName} le gusta tu garaje!`,
-            `/usuario/${profile.username}`,
-          )
-        }
+        return
       }
+
+      await supabase
+        .from('vehicle_likes')
+        .insert({ user_id: session.user.id, vehicle_id: vehicleId })
+
+      if (profile.id === session.user.id) return
+
+      await supabase.from('notifications').insert({
+        user_id: profile.id,
+        actor_id: session.user.id,
+        tipo: 'nuevo_like_vehiculo',
+      })
+
+      const miNombre =
+        session.user.user_metadata?.username || 'Alguien de la comunidad'
+      await sendPushNotification(
+        [profile.id],
+        'Nuevos respetos',
+        `A ${miNombre} le gusta tu garaje.`,
+        `/usuario/${profile.username}`,
+      )
     } catch (err) {
-      console.error('Error al dar like al vehículo:', err)
-      toast.current.show({
+      console.error('Error al dar respeto:', err)
+      // Se deshace lo optimista
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === vehicleId
+            ? {
+                ...v,
+                isLikedByMe: yaDado,
+                likesCount: yaDado ? v.likesCount + 1 : v.likesCount - 1,
+              }
+            : v,
+        ),
+      )
+      toast.current?.show({
         severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo guardar la acción',
+        summary: 'No se ha podido guardar',
+        detail: 'Inténtalo otra vez en un momento.',
       })
     }
   }
 
-  const handleFollowToggle = async () => {
+  const alternarSeguir = async () => {
     if (!session?.user?.id) {
-      toast.current.show({
-        severity: 'warn',
-        summary: 'Atención',
-        detail: 'Inicia sesión para seguir usuarios',
+      toast.current?.show({
+        severity: 'info',
+        summary: 'Necesitas una cuenta',
+        detail: 'Entra para seguir a otros pilotos.',
       })
-      return navigate('/login')
+      navigate('/login', { state: { returnUrl: `/usuario/${identifier}` } })
+      return
     }
 
     setFollowLoading(true)
@@ -250,108 +401,109 @@ const PublicProfile = () => {
           .delete()
           .eq('follower_id', session.user.id)
           .eq('following_id', profile.id)
-        setFollowersCount((prev) => prev - 1)
         setIsFollowing(false)
+        setFollowersCount((n) => n - 1)
       } else {
-        const { error: insertError } = await supabase
+        const { error } = await supabase
           .from('follows')
           .insert({ follower_id: session.user.id, following_id: profile.id })
+        if (error) throw error
 
-        if (!insertError) {
-          setIsFollowing(true)
-          setFollowersCount((prev) => prev + 1)
+        setIsFollowing(true)
+        setFollowersCount((n) => n + 1)
 
-          await supabase.from('notifications').insert({
-            user_id: profile.id,
-            actor_id: session.user.id,
-            tipo: 'nuevo_seguidor',
-          })
+        await supabase.from('notifications').insert({
+          user_id: profile.id,
+          actor_id: session.user.id,
+          tipo: 'nuevo_seguidor',
+        })
 
-          const myName =
-            session.user.user_metadata?.username || 'Un miembro de la comunidad'
-          await sendPushNotification(
-            [profile.id],
-            '¡Nuevo seguidor! 👤',
-            `¡${myName} ha empezado a seguir tu perfil!`,
-            `/usuario/${profile.username}`,
-          )
-        }
+        const miNombre =
+          session.user.user_metadata?.username || 'Alguien de la comunidad'
+        await sendPushNotification(
+          [profile.id],
+          'Nuevo seguidor',
+          `${miNombre} ha empezado a seguirte.`,
+          `/usuario/${profile.username}`,
+        )
       }
-    } catch (error) {
-      console.error('Error en seguimiento:', error)
+    } catch (err) {
+      console.error('Error en seguimiento:', err)
+      toast.current?.show({
+        severity: 'error',
+        summary: 'No se ha podido completar',
+        detail: 'Inténtalo otra vez.',
+      })
     } finally {
       setFollowLoading(false)
     }
   }
 
-  const handleShare = () => {
+  const compartir = async () => {
     const url = `${window.location.origin}/usuario/${profile.username}`
     if (navigator.share) {
-      navigator
-        .share({ title: `Garaje de ${profile?.username}`, url })
-        .catch(() => {})
-    } else {
-      navigator.clipboard.writeText(url)
-      toast.current.show({
+      navigator.share({ title: `Garaje de ${profile.username}`, url }).catch(() => {})
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.current?.show({
         severity: 'success',
-        summary: 'Copiado',
-        detail: 'Enlace copiado al portapapeles.',
-        life: 2000,
+        summary: 'Enlace copiado',
+        detail: 'Ya lo puedes pegar donde quieras.',
+        life: 2500,
       })
+    } catch {
+      toast.current?.show({ severity: 'warn', summary: 'No se ha podido copiar', detail: url })
     }
   }
 
-  if (loading)
-    return (
-      <div className='flex justify-content-center p-8'>
-        <ProgressSpinner />
-      </div>
-    )
-  if (!profile)
-    return (
-      <div className='text-center p-8 text-2xl font-bold text-color-secondary'>
-        Usuario no encontrado
-      </div>
-    )
+  /* --- Estados de carga y error --- */
 
-  const isMyOwnProfile = session?.user?.id === profile.id
-
-  const renderEventCard = (event) => (
-    <div key={event.id} className='col-12 md:col-6 lg:col-4 p-2'>
-      <div
-        className='event-card-modern'
-        onClick={() => navigate(`/evento/${event.id}`)}
-      >
-        <div className='event-card-body'>
-          <Tag
-            value={event.tipo}
-            className='w-min mb-3 surface-hover text-blue-700 font-bold'
-          />
-          <h4 className='m-0 mb-3 text-xl font-black text-color line-clamp-1'>
-            {event.titulo}
-          </h4>
-          <div className='mt-auto flex flex-column gap-2'>
-            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
-              <Calendar size={16} className='text-blue-500' />
-              <span>
-                {new Date(event.fecha).toLocaleDateString('es-ES', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-            <div className='flex align-items-center gap-2 text-sm text-color-secondary font-medium'>
-              <MapPin size={16} className='text-red-500' />
-              <span className='line-clamp-1'>
-                {event.ubicacion || 'En mapa'}
-              </span>
-            </div>
+  if (loading) {
+    return (
+      <div className='pf'>
+        <div className='pf-contenido'>
+          <div className='pf-rejilla' aria-hidden='true'>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div className='pf-hueco' key={i} />
+            ))}
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  if (!profile) {
+    return (
+      <PageTransition>
+        <div className='pf'>
+          <div className='pf-contenido'>
+            <div className='pf-vacio'>
+              <Car size={30} aria-hidden='true' />
+              <h2>Ese piloto no existe</h2>
+              <p>
+                El perfil que buscas no está en CarMeet. Puede que haya
+                cambiado de nombre o que el enlace esté mal.
+              </p>
+              <button
+                type='button'
+                className='btn-librea'
+                onClick={() => navigate('/comunidad')}
+              >
+                Ver la comunidad
+              </button>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    )
+  }
+
+  const esMiPerfil = session?.user?.id === profile.id
+  const estaBloqueado = bloqueados.has(profile.id)
+  const portada = vehicles.find((v) => v.image_url)?.image_url
+  const cantidades = { garaje: vehicles.length, eventos: createdEvents.length }
 
   return (
     <>
@@ -359,334 +511,203 @@ const PublicProfile = () => {
         title={`Perfil de ${profile.username}`}
         description={
           profile.bio ||
-          `Descubre el garaje, los eventos y la crew de ${profile.username} en la comunidad de CarMeet ESP.`
+          `Mira el garaje de ${profile.username} y los eventos que organiza en CarMeet.`
         }
-        image={
-          profile.avatar_url ||
-          'https://stryumcmeavlvjaamcaw.supabase.co/storage/v1/object/public/crews/default-share.jpg'
-        }
+        image={profile.avatar_url || undefined}
         url={window.location.href}
-        type='profile'
       />
 
       <PageTransition>
-        <div className='max-w-6xl mx-auto p-3 md:p-5 min-h-screen'>
-          <Toast ref={toast} />{galleryImages && (
+        <div className='pf'>
+          <Toast ref={toast} />
+
+          <header className='pf-banda'>
+            <div className='pf-portada' aria-hidden='true'>
+              {portada && <img src={portada} alt='' fetchPriority='high' />}
+              <div className='pf-velo' />
+            </div>
+
+            <div className='pf-banda-caja'>
+              <div className='pf-identidad'>
+                <Avatar
+                  image={profile.avatar_url}
+                  icon={!profile.avatar_url ? 'pi pi-user' : null}
+                  shape='circle'
+                  className='pf-avatar'
+                />
+
+                <div className='pf-nombre-bloque'>
+                  <span className='rotulo'>Piloto</span>
+                  <h1 className='pf-nombre'>{profile.username}</h1>
+
+                  {userCrew && (
+                    <button
+                      type='button'
+                      className='pf-crew'
+                      onClick={() => navigate(`/crew/${userCrew.name}`)}
+                    >
+                      <Shield size={13} aria-hidden='true' />
+                      {userCrew.name}
+                    </button>
+                  )}
+                </div>
+
+                <div className='pf-acciones'>
+                  {!esMiPerfil && (
+                    <button
+                      type='button'
+                      className={`pf-accion ${isFollowing ? '' : 'principal'}`}
+                      onClick={alternarSeguir}
+                      disabled={followLoading}
+                    >
+                      {isFollowing ? <UserCheck size={16} /> : <UserPlus size={16} />}
+                      {isFollowing ? 'Siguiendo' : 'Seguir'}
+                    </button>
+                  )}
+
+                  <button type='button' className='pf-accion' onClick={compartir}>
+                    <Share2 size={16} />
+                    Compartir
+                  </button>
+
+                  {!esMiPerfil && session && (
+                    <>
+                      {estaBloqueado ? (
+                        <button
+                          type='button'
+                          className='pf-accion'
+                          onClick={() => desbloquear(profile.id)}
+                        >
+                          <Ban size={16} />
+                          Desbloquear
+                        </button>
+                      ) : (
+                        <BotonDenunciar
+                          tipo='perfil'
+                          id={profile.id}
+                          autorId={profile.id}
+                          autor={profile.username}
+                          session={session}
+                          onBloqueado={() => bloquear(profile.id)}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {profile.bio && <p className='pf-bio'>{profile.bio}</p>}
+
+              {REDES.some((r) => profile[r.campo]) && (
+                <div className='pf-redes'>
+                  {REDES.map(({ campo, icono: Icono, url, nombre }) =>
+                    profile[campo] ? (
+                      <a
+                        key={campo}
+                        href={url(profile[campo])}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='pf-red'
+                        aria-label={nombre}
+                        title={nombre}
+                      >
+                        <Icono size={17} />
+                      </a>
+                    ) : null,
+                  )}
+                </div>
+              )}
+
+              <div className='pf-cifras'>
+                {[
+                  { valor: vehicles.length, etiqueta: 'Coches' },
+                  {
+                    valor: vehicles.reduce((s, v) => s + v.likesCount, 0),
+                    etiqueta: 'Respetos',
+                  },
+                  { valor: followersCount, etiqueta: 'Seguidores' },
+                  { valor: followingCount, etiqueta: 'Siguiendo' },
+                ].map((c) => (
+                  <div className='pf-cifra' key={c.etiqueta}>
+                    <span className='pf-cifra-valor datos'>{c.valor}</span>
+                    <span className='pf-cifra-etiqueta'>{c.etiqueta}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </header>
+
+          <nav className='pf-pestanas' aria-label='Secciones del perfil'>
+            {PESTANAS.map(({ id, etiqueta, icono: Icono }) => (
+              <button
+                key={id}
+                type='button'
+                className={`pf-pestana ${pestana === id ? 'activa' : ''}`}
+                onClick={() => setPestana(id)}
+                aria-current={pestana === id}
+              >
+                <Icono size={16} aria-hidden='true' />
+                <span className='pf-pestana-texto'>{etiqueta}</span>
+                <span className='pf-pestana-num datos'>{cantidades[id]}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className='pf-contenido'>
+            {pestana === 'garaje' && vehicles.length > 0 && (
+              <div className='pf-rejilla'>
+                {vehicles.map((v) => (
+                  <TarjetaCoche
+                    key={v.id}
+                    vehiculo={v}
+                    onAbrir={abrirGaleria}
+                    onRespeto={darRespeto}
+                  />
+                ))}
+              </div>
+            )}
+
+            {pestana === 'eventos' && createdEvents.length > 0 && (
+              <div className='pf-lista'>
+                {createdEvents.map((e) => (
+                  <TarjetaEvento
+                    key={e.id}
+                    evento={e}
+                    onAbrir={(id) => navigate(`/evento/${id}`)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {cantidades[pestana] === 0 && (
+              <div className='pf-vacio'>
+                {pestana === 'garaje' ? (
+                  <Car size={30} aria-hidden='true' />
+                ) : (
+                  <Flag size={30} aria-hidden='true' />
+                )}
+                <h2>
+                  {pestana === 'garaje'
+                    ? 'Todavía no ha subido ningún coche'
+                    : 'Todavía no ha organizado nada'}
+                </h2>
+                <p>
+                  {pestana === 'garaje'
+                    ? `Cuando ${profile.username} suba su garaje, aparecerá aquí.`
+                    : `Cuando ${profile.username} monte una quedada, aparecerá aquí.`}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {galleryImages && (
             <LightboxFotos
-              fotos={galleryImages.map((f) => f.itemImageSrc)}
+              fotos={galleryImages}
               titulo={galleryTitulo}
               subtitulo={`${galleryImages.length} fotos`}
               onCerrar={() => setGalleryImages(null)}
             />
-          )}<div className='flex justify-content-between align-items-center mb-4'>
-            <Button
-              label='Volver'
-              icon='pi pi-arrow-left'
-              text
-              className='font-bold text-color-secondary'
-              onClick={() => navigate(-1)}
-            />
-            <Button
-              icon={<Share2 size={18} />}
-              rounded
-              text
-              className='surface-card shadow-1'
-              onClick={handleShare}
-            />
-          </div>
-
-          <div className='surface-card shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column md:flex-row align-items-center gap-5 border-1 surface-border'>
-            <Avatar
-              icon='pi pi-user'
-              size='xlarge'
-              shape='circle'
-              className='surface-hover text-blue-600 w-8rem h-8rem text-5xl shadow-2 border-2 border-white flex-shrink-0'
-              image={profile.avatar_url}
-            />
-            <div className='text-center md:text-left flex-1'>
-              <h1 className='text-3xl font-black m-0 text-color'>
-                {profile.username || 'Usuario'}
-              </h1>
-              {profile.bio ? (
-                <p className='text-color-secondary mt-2 mb-0 font-medium line-height-3 max-w-30rem mx-auto md:mx-0'>
-                  {profile.bio}
-                </p>
-              ) : (
-                <p className='text-color-secondary mt-1 mb-0 font-medium'>
-                  Miembro de CarMeet ESP
-                </p>
-              )}
-
-              {/* REDES SOCIALES COMPLETAS */}
-              {(profile.instagram ||
-                profile.twitter ||
-                profile.tiktok ||
-                profile.youtube) && (
-                <div className='flex gap-3 mt-3 justify-content-center md:justify-content-start'>
-                  {profile.instagram && (
-                    <a
-                      href={`https://instagram.com/${profile.instagram}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn instagram'
-                      title='Instagram'
-                    >
-                      <Instagram size={18} />
-                    </a>
-                  )}
-                  {profile.tiktok && (
-                    <a
-                      href={`https://tiktok.com/@${profile.tiktok}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn tiktok'
-                      title='TikTok'
-                    >
-                      <svg
-                        viewBox='0 0 24 24'
-                        width='18'
-                        height='18'
-                        fill='currentColor'
-                      >
-                        <path d='M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z' />
-                      </svg>
-                    </a>
-                  )}
-                  {profile.youtube && (
-                    <a
-                      href={`https://youtube.com/@${profile.youtube}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn youtube'
-                      title='YouTube'
-                    >
-                      <Youtube size={18} />
-                    </a>
-                  )}
-                  {profile.twitter && (
-                    <a
-                      href={`https://x.com/${profile.twitter}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='social-icon-btn twitter'
-                      title='X'
-                    >
-                      <svg
-                        viewBox='0 0 24 24'
-                        width='16'
-                        height='16'
-                        fill='currentColor'
-                      >
-                        <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
-                      </svg>
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {userCrew && (
-                <div className='mt-3'>
-                  <div
-                    className='inline-flex align-items-center gap-2 surface-hover hover:bg-gray-200 transition-colors cursor-pointer border-round-3xl pr-4 p-1 border-1 surface-border'
-                    onClick={() => navigate(`/crew/${userCrew.name}`)}
-                  >
-                    <Avatar
-                      image={userCrew.profile_image_url}
-                      icon={!userCrew.profile_image_url && <Shield size={14} />}
-                      shape='circle'
-                      className='w-2rem h-2rem shadow-1'
-                    />
-                    <span className='font-bold text-sm text-color'>
-                      {userCrew.name}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {!isMyOwnProfile && (
-                <div className='mt-4'>
-                  <Button
-                    label={isFollowing ? 'Siguiendo' : 'Seguir'}
-                    icon={
-                      isFollowing ? (
-                        <UserCheck size={18} className='mr-2' />
-                      ) : (
-                        <UserPlus size={18} className='mr-2' />
-                      )
-                    }
-                    className={`border-round-xl font-bold px-4 ${isFollowing ? 'p-button-outlined p-button-secondary' : ''}`}
-                    style={
-                      !isFollowing
-                        ? {
-                            backgroundColor: 'var(--librea)',
-                            color: '#fff',
-                            border: 'none',
-                          }
-                        : {}
-                    }
-                    onClick={handleFollowToggle}
-                    loading={followLoading}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className='flex gap-4 md:gap-5 text-center border-top-1 md:border-top-none md:border-left-1 surface-border pt-4 md:pt-0 md:pl-5 w-full md:w-auto justify-content-center'>
-              <div>
-                <div className='text-2xl font-black text-color'>
-                  {vehicles.length}
-                </div>
-                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
-                  Coches
-                </div>
-              </div>
-              <div>
-                <div className='text-2xl font-black text-color'>
-                  {followersCount}
-                </div>
-                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
-                  Seguidores
-                </div>
-              </div>
-              <div>
-                <div className='text-2xl font-black text-color'>
-                  {followingCount}
-                </div>
-                <div className='text-xs font-bold text-color-secondary uppercase tracking-widest'>
-                  Seguidos
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <section className='profile-section'>
-            <h2 className='profile-section-title'>
-              <Car className='text-purple-600' size={28} /> Garaje de{' '}
-              {profile.username}
-            </h2>
-            {vehicles.length === 0 ? (
-              <div className='empty-state-box'>
-                <Car size={48} className='text-300 mb-3 mx-auto' />
-                <span className='block font-bold text-lg'>
-                  Aún no ha subido vehículos.
-                </span>
-              </div>
-            ) : (
-              <div className='grid m-0'>
-                {vehicles.map((v) => {
-                  const totalImages =
-                    (v.image_url ? 1 : 0) +
-                    (v.vehicle_images ? v.vehicle_images.length : 0)
-
-                  return (
-                    <div key={v.id} className='col-12 sm:col-6 lg:col-4 p-2'>
-                      <div className='vehicle-card hover:-translate-y-1 hover:shadow-2 flex flex-column overflow-hidden surface-card'>
-                        <div
-                          className='cursor-pointer flex-grow-1'
-                          onClick={() => openGalleryViewer(v)}
-                        >
-                          <div
-                            className='vehicle-img-wrapper relative'
-                            style={{ height: '220px' }}
-                          >
-                            {v.image_url ? (
-                              <img
-                                src={v.image_url}
-                                alt={v.modelo}
-                                className='w-full h-full'
-                                style={{ objectFit: 'cover' }}
-                                                              loading='lazy'
-                                decoding='async'
-                              />
-                            ) : (
-                              <div className='flex h-full align-items-center justify-content-center text-300 surface-hover'>
-                                <ImageIcon size={40} />
-                              </div>
-                            )}
-
-                            <Tag
-                              value={v.combustible}
-                              className='absolute top-0 right-0 m-3 bg-black-alpha-60 backdrop-blur-sm px-3'
-                            />
-
-                            <div className='absolute top-0 left-0 m-2 flex align-items-center gap-2 bg-black-alpha-50 backdrop-blur-sm px-3 py-2 border-round-3xl border-1 border-white-alpha-20 z-10'>
-                              <Heart
-                                size={16}
-                                fill={v.likesCount > 0 ? 'var(--librea)' : 'none'}
-                                className={`${v.likesCount > 0 ? 'text-pink-500' : 'text-white'}`}
-                              />
-                              <span className='text-white font-bold text-sm'>
-                                {v.likesCount}
-                              </span>
-                            </div>
-
-                            {totalImages > 1 && (
-                              <div className='gallery-indicator-badge absolute bottom-0 right-0 m-2 bg-black-alpha-60 text-white text-xs px-2 py-1 border-round'>
-                                <i className='pi pi-images mr-1'></i> 1/
-                                {totalImages}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className='p-4 text-center'>
-                            <h3 className='font-black text-2xl text-color mb-1 m-0 line-clamp-1'>
-                              {v.marca} {v.modelo}
-                            </h3>
-                            <div className='text-md text-color-secondary font-bold mb-3'>
-                              {v.anio} • {v.cv} CV
-                            </div>
-                            {v.descripcion && (
-                              <p className='text-color-secondary text-sm line-clamp-2 m-0 surface-ground p-3 border-round-xl border-1 surface-border'>
-                                {v.descripcion}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className='border-top-1 surface-border p-3 surface-ground mt-auto'>
-                          <Button
-                            label={
-                              v.isLikedByMe
-                                ? 'Marcado como me gusta'
-                                : 'Me gusta'
-                            }
-                            icon={
-                              <Heart
-                                size={18}
-                                fill={v.isLikedByMe ? 'currentColor' : 'none'}
-                                className={`mr-2 ${v.isLikedByMe ? 'text-pink-500' : ''}`}
-                              />
-                            }
-                            className={`w-full font-bold border-round-xl transition-all ${v.isLikedByMe ? 'p-button-outlined p-button-secondary surface-card' : 'p-button-help shadow-2 hover:shadow-4'}`}
-                            onClick={(e) =>
-                              handleToggleLikeVehicle(e, v.id, v.isLikedByMe)
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className='profile-section mb-0'>
-            <h2 className='profile-section-title'>
-              <Flag className='text-blue-600' size={28} /> Eventos Organizados
-            </h2>
-            {createdEvents.length === 0 ? (
-              <div className='empty-state-box'>
-                <Flag size={48} className='text-300 mb-3 mx-auto' />
-                <span className='block font-bold text-lg'>
-                  No ha organizado eventos.
-                </span>
-              </div>
-            ) : (
-              <div className='grid m-0'>
-                {createdEvents.map(renderEventCard)}
-              </div>
-            )}
-          </section>
+          )}
         </div>
       </PageTransition>
     </>
