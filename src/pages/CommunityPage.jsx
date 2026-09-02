@@ -24,6 +24,94 @@ import {
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 
+const TarjetaUsuario = ({ user, navigate }) => {
+  const [avatarRoto, setAvatarRoto] = useState(false)
+  const coverImage = user.vehicles?.find((v) => v.image_url)?.image_url
+  return (
+    <div key={user.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
+      <div
+        className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
+        style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
+        onClick={() => navigate(`/usuario/${user.username || user.id}`)}
+      >
+        <div
+          className='w-full bg-gray-200 relative'
+          style={{ height: '120px' }}
+        >
+          {coverImage ? (
+            <img
+              src={coverImage}
+              alt='Cover'
+              className='w-full h-full'
+              style={{ objectFit: 'cover' }}
+                            loading='lazy'
+              decoding='async'
+            />
+          ) : (
+            <div className='w-full h-full surface-hover flex align-items-center justify-content-center'>
+              <Car className='text-400' size={40} />
+            </div>
+          )}
+        </div>
+        <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative surface-card'>
+          <div
+            className='surface-card border-circle flex justify-content-center align-items-center shadow-1'
+            style={{
+              width: '80px',
+              height: '80px',
+              marginTop: '-40px',
+              padding: '4px',
+            }}
+          >
+            {user.avatar_url && !avatarRoto ? (
+              <img
+                src={user.avatar_url}
+                alt={user.username}
+                className='w-full h-full border-circle'
+                style={{ objectFit: 'cover' }}
+                loading='lazy'
+                decoding='async'
+                onError={() => setAvatarRoto(true)}
+              />
+            ) : (
+              <div className='w-full h-full border-circle surface-hover flex align-items-center justify-content-center'>
+                <Users size={32} className='text-400' />
+              </div>
+            )}
+          </div>
+          <h3 className='m-0 mt-3 mb-1 text-xl text-color font-bold line-clamp-1 text-center w-full'>
+            {user.username || 'Usuario'}
+          </h3>
+          <div className='mt-2 mb-4'>
+            {user.vehicles?.length > 0 ? (
+              <Tag
+                className='surface-hover text-blue-700 font-bold px-3 py-2'
+                style={{ borderRadius: 'var(--r)' }}
+              >
+                <i className='pi pi-car text-xs mr-2'></i>
+                {user.vehicles.length} Vehículos
+              </Tag>
+            ) : (
+              <Tag
+                className='surface-hover text-color-secondary font-bold px-3 py-2'
+                style={{ borderRadius: 'var(--r)' }}
+              >
+                Nuevo Miembro
+              </Tag>
+            )}
+          </div>
+          <Button
+            label='Ver Perfil'
+            outlined
+            className='w-full mt-auto font-bold surface-border text-color-secondary hover:surface-ground'
+            style={{ borderRadius: 'var(--r)' }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const CommunityPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -281,91 +369,7 @@ const CommunityPage = () => {
   )
 
   // --- COMPONENTES VISUALES ---
-  const renderUserCard = (user) => {
-    const coverImage = user.vehicles?.find((v) => v.image_url)?.image_url
-    return (
-      <div key={user.id} className='col-12 sm:col-6 md:col-4 lg:col-3 p-2'>
-        <div
-          className='surface-card shadow-2 hover:shadow-4 transition-all cursor-pointer h-full flex flex-column relative overflow-hidden'
-          style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
-          onClick={() => navigate(`/usuario/${user.username || user.id}`)}
-        >
-          <div
-            className='w-full bg-gray-200 relative'
-            style={{ height: '120px' }}
-          >
-            {coverImage ? (
-              <img
-                src={coverImage}
-                alt='Cover'
-                className='w-full h-full'
-                style={{ objectFit: 'cover' }}
-                              loading='lazy'
-                decoding='async'
-              />
-            ) : (
-              <div className='w-full h-full bg-blue-100 flex align-items-center justify-content-center'>
-                <Car className='text-blue-300' size={40} />
-              </div>
-            )}
-          </div>
-          <div className='px-4 pb-4 flex flex-column align-items-center flex-1 relative surface-card'>
-            <div
-              className='surface-card border-circle flex justify-content-center align-items-center shadow-1'
-              style={{
-                width: '80px',
-                height: '80px',
-                marginTop: '-40px',
-                padding: '4px',
-              }}
-            >
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.username}
-                  className='w-full h-full border-circle'
-                  style={{ objectFit: 'cover' }}
-                                  loading='lazy'
-                  decoding='async'
-                />
-              ) : (
-                <div className='w-full h-full border-circle surface-hover flex align-items-center justify-content-center'>
-                  <Users size={32} className='text-400' />
-                </div>
-              )}
-            </div>
-            <h3 className='m-0 mt-3 mb-1 text-xl text-color font-bold line-clamp-1 text-center w-full'>
-              {user.username || 'Usuario'}
-            </h3>
-            <div className='mt-2 mb-4'>
-              {user.vehicles?.length > 0 ? (
-                <Tag
-                  className='surface-hover text-blue-700 font-bold px-3 py-2'
-                  style={{ borderRadius: 'var(--r)' }}
-                >
-                  <i className='pi pi-car text-xs mr-2'></i>
-                  {user.vehicles.length} Vehículos
-                </Tag>
-              ) : (
-                <Tag
-                  className='surface-hover text-color-secondary font-bold px-3 py-2'
-                  style={{ borderRadius: 'var(--r)' }}
-                >
-                  Nuevo Miembro
-                </Tag>
-              )}
-            </div>
-            <Button
-              label='Ver Perfil'
-              outlined
-              className='w-full mt-auto font-bold surface-border text-color-secondary hover:surface-ground'
-              style={{ borderRadius: 'var(--r)' }}
-            />
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // La tarjeta de usuario vive fuera: necesita estado propio (ver arriba)
 
   const renderCrewCard = (crew) => {
     return (
@@ -562,7 +566,7 @@ const CommunityPage = () => {
                 style={{ borderRadius: 'var(--r)', border: '1px solid var(--surface-border)' }}
               >
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'explorar' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: 'var(--r)' }}
                   onClick={() => setActiveTab('explorar')}
                 >
@@ -570,7 +574,7 @@ const CommunityPage = () => {
                 </button>
 
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'siguiendo' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: 'var(--r)' }}
                   onClick={() => {
                     if (!session)
@@ -586,7 +590,7 @@ const CommunityPage = () => {
                 </button>
 
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'crews' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: 'var(--r)' }}
                   onClick={() => setActiveTab('crews')}
                 >
@@ -595,7 +599,7 @@ const CommunityPage = () => {
 
                 {/* PESTAÑA: TOP COCHES */}
                 <button
-                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'text-black shadow-2' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
+                  className={`flex align-items-center gap-2 px-4 py-3 border-none font-bold text-md cursor-pointer transition-all ${activeTab === 'vehiculos' ? 'pestana-activa' : 'bg-transparent text-color-secondary hover:text-color hover:surface-ground'}`}
                   style={{ borderRadius: 'var(--r)' }}
                   onClick={() => setActiveTab('vehiculos')}
                 >
@@ -675,7 +679,9 @@ const CommunityPage = () => {
                     </div>
                   )
                 ) : displayedUsers.length > 0 ? (
-                  displayedUsers.map(renderUserCard)
+                  displayedUsers.map((u) => (
+                    <TarjetaUsuario key={u.id} user={u} navigate={navigate} />
+                  ))
                 ) : (
                   <div className='col-12 text-center py-8'>
                     <Users size={64} className='text-300 mb-4 mx-auto' />

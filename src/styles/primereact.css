@@ -437,3 +437,89 @@
 .p-badge.p-badge-info    { background: var(--carbono-alto); color: var(--texto-medio); }
 .p-badge.p-badge-success { background: var(--verde); color: #14161A; }
 .p-badge.p-badge-warning { background: var(--ambar); color: #14161A; }
+
+
+/* =========================================================================
+   UTILIDADES DE COLOR DE PRIMEFLEX
+
+   El proyecto usa unas 90 veces utilidades de color de PrimeFlex
+   (text-blue-600, bg-gray-200, text-yellow-700...). Hasta ahora no
+   aplicaban nada, porque PrimeFlex 4 las definia con variables --p-* del
+   sistema nuevo de PrimeReact que los temas Lara no traen. Al volver a
+   PrimeFlex 3 empiezan a funcionar de golpe, y se ven azules y morados
+   en un diseno rojo y grafito.
+
+   Aqui se traducen a Librea. Lleva !important porque PrimeFlex tambien lo
+   usa y no va dentro de ninguna capa.
+   ========================================================================= */
+
+/* --- Texto: azules y morados pasan a librea --- */
+.text-blue-300, .text-blue-400, .text-blue-500,
+.text-blue-600, .text-blue-700, .text-blue-900,
+.text-purple-500, .text-purple-600,
+.text-pink-500,
+.text-primary {
+  color: var(--librea-texto) !important;
+}
+
+.text-red-500 { color: var(--librea-texto) !important; }
+
+.text-green-500, .text-green-600 { color: var(--verde) !important; }
+.text-yellow-600, .text-yellow-700, .text-orange-500 { color: var(--ambar) !important; }
+
+/* --- Texto: grises al sistema --- */
+.text-gray-900 { color: var(--text-color) !important; }
+.text-gray-600 { color: var(--texto-medio) !important; }
+.text-gray-300 { color: var(--texto-tenue) !important; }
+.text-300 { color: var(--texto-tenue) !important; }
+.text-400 { color: var(--texto-medio) !important; }
+
+/* --- Fondos --- */
+.bg-blue-50, .bg-blue-100, .bg-purple-50, .bg-red-50 {
+  background-color: var(--librea-baja) !important;
+}
+.bg-blue-600 { background-color: var(--librea) !important; }
+
+.bg-green-50, .bg-green-100 { background-color: var(--verde-baja) !important; }
+.bg-green-500 { background-color: var(--verde) !important; }
+
+.bg-yellow-50, .bg-yellow-100 { background-color: var(--ambar-baja) !important; }
+.bg-yellow-500 { background-color: var(--ambar) !important; }
+
+.bg-gray-200 { background-color: var(--carbono-alto) !important; }
+.bg-gray-800, .bg-gray-900 { background-color: var(--asfalto) !important; }
+
+/* --- Bordes --- */
+.border-blue-100, .border-blue-200, .border-gray-100 {
+  border-color: var(--surface-border) !important;
+}
+.border-yellow-200, .border-yellow-300, .border-yellow-600 {
+  border-color: var(--ambar) !important;
+}
+
+/* --- Variantes con estado --- */
+.hover\:text-blue-400:hover,
+.hover\:text-blue-600:hover,
+.hover\:text-purple-600:hover,
+.hover\:text-primary:hover {
+  color: var(--librea-texto) !important;
+}
+
+.hover\:bg-blue-100:hover,
+.hover\:bg-red-50:hover {
+  background-color: var(--librea-baja) !important;
+}
+
+.hover\:bg-gray-200:hover {
+  background-color: var(--carbono-alto) !important;
+}
+
+.hover\:border-blue-300:hover,
+.hover\:border-blue-400:hover,
+.hover\:border-gray-100:hover {
+  border-color: var(--linea-viva) !important;
+}
+
+.focus\:border-blue-500:focus {
+  border-color: var(--librea) !important;
+}

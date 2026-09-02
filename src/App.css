@@ -487,3 +487,23 @@
   color: var(--librea);
   font-size: 0.8125rem;
 }
+
+/* --- Pestaña activa (comunidad) ---
+   Antes era 'text-black', que venía de cuando el fondo siempre era
+   blanco. Ahora sigue el mismo patrón que el nav: texto principal y
+   barra de librea debajo. */
+.pestana-activa {
+  position: relative;
+  color: var(--text-color);
+  background: var(--carbono-alto);
+}
+
+.pestana-activa::after {
+  content: '';
+  position: absolute;
+  left: var(--e3);
+  right: var(--e3);
+  bottom: 4px;
+  height: 2px;
+  background: var(--librea);
+}

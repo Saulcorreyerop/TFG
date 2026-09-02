@@ -111,9 +111,20 @@
 /* --- Botones de acción de la cabecera --- */
 
 .cabecera-icono.p-button {
+  /*
+   * flex-shrink: 0 es lo importante. Estos botones viven en un contenedor
+   * flex y, aunque tengan ancho fijo, por defecto se encogen: el de tema
+   * acababa midiendo 28px de ancho en escritorio, y con la sesion abierta
+   * (mas elementos en la barra) se quedaba en una tira vertical.
+   */
+  flex-shrink: 0;
   width: 2.75rem;
+  min-width: 2.75rem;
   height: 2.75rem;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--r);
   background: transparent;
   border: 1px solid transparent;

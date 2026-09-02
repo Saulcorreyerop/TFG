@@ -49,7 +49,10 @@
    ------------------------------------------------------------------------- */
 
 .bg-black   { background-color: #000; }
-.text-black { color: #000; }
+
+/* En un sistema con dos temas "negro" no significa nada: se interpreta
+   como el texto de maximo contraste sobre la superficie que toque. */
+.text-black { color: var(--text-color); }
 
 /* Emerald no existe en la paleta de PrimeReact */
 .text-emerald-500 { color: #10b981; }
