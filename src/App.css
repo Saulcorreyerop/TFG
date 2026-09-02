@@ -451,3 +451,39 @@
 :root[data-tema='oscuro'] .footer-logo img {
   filter: invert(1) brightness(1.8);
 }
+
+/* --- Chat: autor y avisos --- */
+
+.chat-autor {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  margin-bottom: var(--e1);
+  margin-left: var(--e2);
+}
+
+.chat-nombre {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+  cursor: pointer;
+}
+
+.chat-nombre:hover {
+  color: var(--librea);
+}
+
+.chat-aviso {
+  margin: 0 var(--e4);
+  padding: var(--e2) var(--e3);
+  background: var(--librea-baja);
+  border: 1px solid var(--librea);
+  border-radius: var(--r);
+  color: var(--librea);
+  font-size: 0.8125rem;
+}

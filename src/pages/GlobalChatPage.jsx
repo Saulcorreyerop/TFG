@@ -6,12 +6,21 @@ import { Avatar } from 'primereact/avatar'
 import { useNavigate } from 'react-router-dom'
 import PageTransition from '../components/PageTransition'
 import SEO from '../components/SEO'
+import BotonDenunciar from '../components/BotonDenunciar'
+import { useBloqueo } from '../hooks/useModeracion'
 
 const GlobalChatPage = ({ session }) => {
   const navigate = useNavigate()
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
+  const [aviso, setAviso] = useState(null)
   const scrollRef = useRef(null)
+
+  const { filtrar } = useBloqueo(session)
+
+  /* Un mensaje no puede pasar de 1000 caracteres: lo impone tambien una
+     restriccion en la base de datos, aqui solo se avisa antes. */
+  const MAX = 1000
 
   const myUsername = session?.user?.user_metadata?.username
 
@@ -77,8 +86,9 @@ const GlobalChatPage = ({ session }) => {
     e.preventDefault()
     if (!newMessage.trim() || !session) return
 
-    const msgToSend = newMessage
+    const msgToSend = newMessage.trim().slice(0, MAX)
     setNewMessage('')
+    setAviso(null)
 
     const optimisticMessage = {
       id: Date.now(),
@@ -99,7 +109,21 @@ const GlobalChatPage = ({ session }) => {
     }).select().single()
 
     if (error) {
-      console.error("Error al enviar mensaje:", error)
+      /*
+       * Se quita el mensaje optimista. Antes se quedaba pintado como si
+       * se hubiera enviado aunque el insert hubiera fallado, asi que el
+       * autor creia haber escrito algo que nadie recibio.
+       */
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticMessage.id))
+      setNewMessage(msgToSend)
+
+      // P0001 lo lanza el trigger de ritmo de la base de datos
+      setAviso(
+        error.code === 'P0001'
+          ? 'Vas muy rapido. Espera unos segundos.'
+          : 'No se ha podido enviar. Reintentalo.',
+      )
+      console.error('Error al enviar mensaje:', error)
     } else {
       setMessages(prev => prev.map(m => m.id === optimisticMessage.id ? { ...m, id: insertedMsg.id } : m))
     }
@@ -147,7 +171,7 @@ const GlobalChatPage = ({ session }) => {
                   <p className="font-medium text-center max-w-sm">Manda un mensaje para saludar a la comunidad. (Nota: Requiere tabla 'global_messages' en Supabase)</p>
                 </div>
               ) : (
-                messages.map((msg, idx) => {
+                filtrar(messages).map((msg, idx) => {
                   const isMe = msg.user_id === session?.user?.id;
                   
                   return (
@@ -155,9 +179,23 @@ const GlobalChatPage = ({ session }) => {
                       <div className={`flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'} max-w-20rem md:max-w-30rem`}>
                         
                         {!isMe && (
-                          <span className="text-xs text-color-secondary font-bold mb-1 ml-2 cursor-pointer hover:text-blue-500 transition-colors" onClick={() => navigate(`/usuario/${msg.profiles?.username}`)}>
-                            {msg.profiles?.username || 'Piloto'}
-                          </span>
+                          <div className='chat-autor'>
+                            <button
+                              type='button'
+                              className='chat-nombre'
+                              onClick={() => navigate(`/usuario/${msg.profiles?.username}`)}
+                            >
+                              {msg.profiles?.username || 'Piloto'}
+                            </button>
+                            <BotonDenunciar
+                              tipo='mensaje_global'
+                              id={msg.id}
+                              autorId={msg.user_id}
+                              autor={msg.profiles?.username || 'este piloto'}
+                              session={session}
+                              compacto
+                            />
+                          </div>
                         )}
 
                         <div className="flex align-items-end gap-2">
@@ -198,10 +236,17 @@ const GlobalChatPage = ({ session }) => {
             </div>
 
             {/* ZONA DE ESCRITURA */}
+            {aviso && (
+              <div className='chat-aviso' role='alert'>
+                {aviso}
+              </div>
+            )}
+
             <form onSubmit={handleSendMessage} className="p-4 surface-card border-top-1 surface-border flex gap-3 align-items-center shadow-1 z-1 relative">
               <InputText
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => setNewMessage(e.target.value.slice(0, MAX))}
+                maxLength={MAX}
                 placeholder="Escribe un mensaje para todos..."
                 className="flex-1 surface-ground border-none px-4 py-3 text-color font-medium text-lg"
                 style={{ borderRadius: 'var(--r)' }}
