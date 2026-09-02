@@ -199,7 +199,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ambar);
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--sobre-foto-fuerte);
   border: 1px solid var(--ambar);
   padding: 3px 6px;
 }
@@ -214,10 +214,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--sobre-foto);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--borde-foto);
   border-radius: var(--r);
   color: #fff;
   cursor: pointer;

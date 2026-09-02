@@ -234,7 +234,7 @@
 }
 
 .map-filter-btn:hover {
-  color: var(--linea);
+  color: var(--text-color);
 }
 
 .map-filter-btn.active {

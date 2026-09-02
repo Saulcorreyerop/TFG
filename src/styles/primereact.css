@@ -1,0 +1,369 @@
+/* =========================================================================
+   primereact.css — los componentes de PrimeReact, traducidos a Librea
+
+   tokens.css redefine las VARIABLES del tema (--surface-*, --text-color,
+   --primary-color) y con eso basta para la mayoría de superficies. Pero el
+   tema trae además colores ESCRITOS A FUEGO en componentes concretos, que
+   ninguna variable alcanza. Los dos que más cantaban:
+
+     .p-button.p-button-help        background: #a855f7   (morado)
+     .p-galleria-thumbnail-container background: rgba(0,0,0,.9)
+
+   Este archivo es esa capa que faltaba. Funciona sin !important porque el
+   tema va envuelto en @layer primereact, y en CSS cualquier hoja sin capa
+   gana a una con capa, independientemente de la especificidad.
+
+   Se carga después de tokens.css.
+   ========================================================================= */
+
+
+/* -------------------------------------------------------------------------
+   Botones
+
+   La paleta de Librea tiene un solo acento. Las severidades de PrimeReact
+   traen seis colores distintos, así que se reducen a lo que significan
+   aquí: acción (librea), aviso (ámbar), confirmación (verde) y neutro.
+
+   'help' no tiene sitio en esta dirección: pasa a neutro. Se usa en seis
+   pantallas y por eso salía un botón morado en el garaje.
+   ------------------------------------------------------------------------- */
+
+.p-button {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--r);
+  transition: background-color 140ms ease, border-color 140ms ease,
+    color 140ms ease;
+}
+
+.p-button:focus,
+.p-button:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+/* Primario */
+.p-button:not(.p-button-text):not(.p-button-outlined):not(.p-button-secondary):not(.p-button-success):not(.p-button-warning):not(.p-button-danger):not(.p-button-help):not(.p-button-info) {
+  background: var(--librea);
+  border-color: var(--librea);
+  color: #fff;
+}
+.p-button:not(.p-button-text):not(.p-button-outlined):not(.p-button-secondary):not(.p-button-success):not(.p-button-warning):not(.p-button-danger):not(.p-button-help):not(.p-button-info):not(:disabled):hover {
+  background: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+/* help e info -> neutro. No aportan un significado propio en Librea. */
+.p-button.p-button-help,
+.p-button.p-button-info {
+  background: var(--carbono-alto);
+  border-color: var(--surface-border);
+  color: var(--text-color);
+}
+.p-button.p-button-help:not(:disabled):hover,
+.p-button.p-button-info:not(:disabled):hover {
+  background: var(--surface-border);
+  border-color: var(--linea-viva);
+  color: var(--text-color);
+}
+
+/* Secundario */
+.p-button.p-button-secondary {
+  background: transparent;
+  border-color: var(--surface-border);
+  color: var(--texto-medio);
+}
+.p-button.p-button-secondary:not(:disabled):hover {
+  background: var(--carbono-alto);
+  border-color: var(--linea-viva);
+  color: var(--text-color);
+}
+
+/* Peligro */
+.p-button.p-button-danger {
+  background: var(--librea);
+  border-color: var(--librea);
+  color: #fff;
+}
+.p-button.p-button-danger:not(:disabled):hover {
+  background: var(--librea-alta);
+  border-color: var(--librea-alta);
+}
+
+/* Aviso */
+.p-button.p-button-warning {
+  background: var(--ambar);
+  border-color: var(--ambar);
+  color: #14161A;
+}
+.p-button.p-button-warning:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+/* Confirmación */
+.p-button.p-button-success {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: #14161A;
+}
+.p-button.p-button-success:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+/* Variantes de texto y contorno: el color lo pone la severidad */
+.p-button.p-button-text {
+  background: transparent;
+  border-color: transparent;
+  color: var(--texto-medio);
+}
+.p-button.p-button-text:not(:disabled):hover {
+  background: var(--surface-hover);
+  color: var(--text-color);
+}
+.p-button.p-button-text.p-button-danger { color: var(--librea); }
+.p-button.p-button-text.p-button-warning { color: var(--ambar); }
+.p-button.p-button-text.p-button-success { color: var(--verde); }
+.p-button.p-button-text.p-button-danger:not(:disabled):hover { background: var(--librea-baja); }
+.p-button.p-button-text.p-button-warning:not(:disabled):hover { background: var(--ambar-baja); }
+.p-button.p-button-text.p-button-success:not(:disabled):hover { background: var(--verde-baja); }
+
+.p-button.p-button-outlined {
+  background: transparent;
+  border-color: var(--surface-border);
+  color: var(--text-color);
+}
+.p-button.p-button-outlined:not(:disabled):hover {
+  background: var(--surface-hover);
+  border-color: var(--linea-viva);
+}
+
+.p-button:disabled {
+  opacity: 0.45;
+}
+
+
+/* -------------------------------------------------------------------------
+   Diálogos
+   ------------------------------------------------------------------------- */
+
+.p-dialog {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-top: 2px solid var(--librea);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-3);
+}
+
+.p-dialog .p-dialog-header {
+  background: var(--carbono);
+  color: var(--text-color);
+  border-bottom: 1px solid var(--surface-border);
+  border-radius: 0;
+  padding: var(--e4) var(--e5);
+}
+
+.p-dialog .p-dialog-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.p-dialog .p-dialog-content {
+  background: var(--carbono);
+  color: var(--text-color);
+  padding: var(--e5);
+  border-radius: 0;
+}
+
+.p-dialog .p-dialog-footer {
+  background: var(--carbono);
+  border-top: 1px solid var(--surface-border);
+  border-radius: 0;
+  padding: var(--e4) var(--e5);
+}
+
+.p-dialog .p-dialog-header-icon {
+  color: var(--texto-medio);
+  border-radius: var(--r);
+}
+.p-dialog .p-dialog-header-icon:hover {
+  background: var(--carbono-alto);
+  color: var(--text-color);
+}
+
+.p-dialog-mask.p-component-overlay {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+
+/* -------------------------------------------------------------------------
+   Campos de formulario
+   ------------------------------------------------------------------------- */
+
+.p-inputtext,
+.p-inputtextarea,
+.p-dropdown,
+.p-inputnumber-input,
+.p-password-input,
+.p-calendar .p-inputtext,
+.p-multiselect {
+  background: var(--asfalto);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  transition: border-color 140ms ease;
+}
+
+.p-inputtext:enabled:hover,
+.p-dropdown:not(.p-disabled):hover,
+.p-multiselect:not(.p-disabled):hover {
+  border-color: var(--linea-viva);
+}
+
+.p-inputtext:enabled:focus,
+.p-dropdown:not(.p-disabled).p-focus,
+.p-multiselect:not(.p-disabled).p-focus {
+  border-color: var(--librea);
+  box-shadow: none;
+  outline: none;
+}
+
+.p-inputtext::placeholder {
+  color: var(--texto-tenue);
+}
+
+.p-dropdown-panel,
+.p-multiselect-panel,
+.p-datepicker,
+.p-autocomplete-panel {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-3);
+  color: var(--text-color);
+}
+
+.p-dropdown-item,
+.p-multiselect-item {
+  color: var(--text-color);
+}
+
+.p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-item:not(.p-highlight):not(.p-disabled):hover {
+  background: var(--carbono-alto);
+}
+
+.p-dropdown-item.p-highlight,
+.p-multiselect-item.p-highlight {
+  background: var(--librea-baja);
+  color: var(--librea);
+}
+
+
+/* -------------------------------------------------------------------------
+   Avisos
+   ------------------------------------------------------------------------- */
+
+.p-toast .p-toast-message {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-left: 3px solid var(--texto-medio);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-3);
+  color: var(--text-color);
+}
+
+.p-toast .p-toast-message.p-toast-message-success { border-left-color: var(--verde); }
+.p-toast .p-toast-message.p-toast-message-warn    { border-left-color: var(--ambar); }
+.p-toast .p-toast-message.p-toast-message-error   { border-left-color: var(--librea); }
+.p-toast .p-toast-message.p-toast-message-info    { border-left-color: var(--librea); }
+
+.p-toast .p-toast-message .p-toast-summary {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-color);
+}
+
+.p-toast .p-toast-message .p-toast-detail {
+  color: var(--texto-medio);
+}
+
+.p-toast .p-toast-icon-close {
+  color: var(--texto-tenue);
+}
+
+
+/* -------------------------------------------------------------------------
+   Etiquetas, avatares y datos
+   ------------------------------------------------------------------------- */
+
+.p-tag {
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: var(--r);
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border: 1px solid var(--surface-border);
+}
+
+.p-tag.p-tag-success { color: var(--verde); border-color: var(--verde); background: var(--verde-baja); }
+.p-tag.p-tag-warning { color: var(--ambar); border-color: var(--ambar); background: var(--ambar-baja); }
+.p-tag.p-tag-danger  { color: var(--librea); border-color: var(--librea); background: var(--librea-baja); }
+.p-tag.p-tag-info    { color: var(--texto-medio); }
+
+.p-avatar {
+  background: var(--carbono-alto);
+  color: var(--texto-medio);
+  border-radius: 50%;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: var(--asfalto);
+  color: var(--texto-medio);
+  border-color: var(--surface-border);
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  background: var(--carbono);
+  color: var(--text-color);
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  border-color: var(--surface-border);
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: var(--carbono-alto);
+}
+
+.p-paginator {
+  background: var(--carbono);
+  border-color: var(--surface-border);
+  color: var(--texto-medio);
+}
+
+.p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background: var(--librea-baja);
+  color: var(--librea);
+}
+
+.p-progress-spinner-circle {
+  stroke: var(--librea) !important;
+  animation: p-progress-spinner-dash 1.5s ease-in-out infinite !important;
+}

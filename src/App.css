@@ -209,7 +209,7 @@
   transform: translateX(5px);
 }
 .link-arrow {
-  color: var(--carbono-alto);
+  color: var(--texto-tenue);
 }
 .footer-link-btn:hover .link-arrow {
   color: var(--librea-alta);

@@ -222,7 +222,7 @@
 .btn-fichar-outline {
   background: var(--surface-card) !important;
   border: 2px solid var(--surface-border) !important;
-  color: var(--carbono-alto) !important;
+  color: var(--texto-medio) !important;
   border-radius: var(--r) !important;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
@@ -256,7 +256,7 @@
   color: var(--librea-alta) !important;
 }
 .map-app-btn.apple-btn:hover {
-  color: var(--asfalto) !important;
+  color: var(--text-color) !important;
 }
 
 .comment-bubble {

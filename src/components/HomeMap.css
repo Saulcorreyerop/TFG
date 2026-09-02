@@ -27,7 +27,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--e2);
-  color: var(--librea);
+  /* Texto pequeño en rojo: usa la variante legible del tema */
+  color: var(--librea-texto);
 }
 
 .radar-titulo {
@@ -67,7 +68,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 .radar-cuenta-etiqueta {

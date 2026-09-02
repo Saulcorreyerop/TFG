@@ -34,7 +34,7 @@
 
 /* --- BOTÓN CREAR EVENTO MODERNIZADO --- */
 .btn-create-modern {
-  background: linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%) !important;
+  background: var(--librea) !important;
   color: white !important;
   border: none !important;
   padding: 1.2rem !important;
@@ -61,7 +61,7 @@
   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
   border-radius: var(--r-media);
   font-weight: 600;
-  color: var(--asfalto);
+  color: var(--text-color);
   outline: none;
   transition: all 0.2s;
 }
@@ -91,7 +91,7 @@
 }
 .category-item:hover {
   background: var(--surface-50);
-  color: var(--asfalto);
+  color: var(--text-color);
 }
 .category-item.active {
   background: var(--librea-baja);
@@ -164,7 +164,7 @@
   color: var(--texto-medio);
 }
 .tech-tab-btn.active {
-  color: var(--asfalto);
+  color: var(--text-color);
 }
 .tech-tab-btn.active::after {
   content: '';
@@ -206,7 +206,7 @@
   font-size: 2.2rem;
   font-weight: 900;
   line-height: 1;
-  color: var(--asfalto);
+  color: var(--text-color);
 }
 .timeline-date .month {
   font-size: 0.85rem;
@@ -254,7 +254,7 @@
 .btn-timeline-ver {
   background-color: transparent !important;
   border: 2px solid var(--surface-100) !important;
-  color: var(--asfalto) !important;
+  color: var(--text-color) !important;
   border-radius: var(--r-media) !important;
   font-weight: 800 !important;
   transition: all 0.2s ease !important;
@@ -262,8 +262,8 @@
 
 /* Forzamos colores explícitos en hover para que no se quede blanco sobre blanco */
 .btn-timeline-ver:hover {
-  background-color: var(--asfalto) !important;
-  border-color: var(--asfalto) !important;
+  background-color: var(--text-color) !important;
+  border-color: var(--text-color) !important;
   color: var(--text-color) !important;
 }
 

@@ -1,0 +1,288 @@
+/* =========================================================================
+   Visor de fotos — sistema Librea
+
+   Se compromete con el fondo oscuro en los dos temas, y a propósito: una
+   foto se mira mejor sobre negro, y es lo que hace cualquier visor. Por
+   eso aquí los colores no salen de los tokens de superficie.
+   ========================================================================= */
+
+.visor {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: rgba(8, 8, 9, 0.96);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: visor-entrar 180ms ease-out;
+}
+
+.visor:focus {
+  outline: none;
+}
+
+@keyframes visor-entrar {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Capa para cerrar al pulsar fuera. Va detrás de todo. */
+.visor-fondo {
+  position: absolute;
+  inset: 0;
+  background: none;
+  border: none;
+  cursor: zoom-out;
+  z-index: 0;
+}
+
+/* --- Cabecera --- */
+
+.visor-cabecera {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e4);
+  padding: var(--e5) var(--e5) var(--e4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.visor-identidad {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.visor-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(1.375rem, 3.5vw, 1.875rem);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: #fff;
+  margin: 0;
+}
+
+.visor-subtitulo {
+  font-family: var(--datos);
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.visor-controles {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  flex-shrink: 0;
+}
+
+.visor-contador {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.visor-barra {
+  color: var(--librea);
+  margin: 0 2px;
+}
+
+.visor-cerrar {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--r);
+  color: #fff;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.visor-cerrar:hover {
+  border-color: var(--librea);
+  color: var(--librea-alta);
+}
+
+/* --- Escena --- */
+
+.visor-escena {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e4);
+  padding: var(--e5);
+  min-height: 0;
+  pointer-events: none; /* deja pasar el clic al fondo */
+}
+
+.visor-marco {
+  position: relative;
+  margin: 0;
+  max-width: min(100%, 72rem);
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.visor-marco img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  animation: visor-foto 260ms ease-out;
+}
+
+@keyframes visor-foto {
+  from { opacity: 0; transform: scale(0.985); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.visor-cargando {
+  position: absolute;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--librea);
+  border-radius: 50%;
+  animation: visor-girar 700ms linear infinite;
+}
+
+@keyframes visor-girar {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Flechas --- */
+
+.visor-flecha {
+  pointer-events: auto;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.visor-flecha:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--librea);
+  color: var(--librea-alta);
+}
+
+.visor-cerrar:focus-visible,
+.visor-flecha:focus-visible,
+.visor-miniatura:focus-visible {
+  outline: 2px solid var(--librea-alta);
+  outline-offset: 2px;
+}
+
+/* --- Tira de miniaturas --- */
+
+.visor-tira {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--e2);
+  padding: var(--e4) var(--e5) var(--e5);
+  overflow-x: auto;
+  justify-content: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.visor-tira::-webkit-scrollbar {
+  height: 4px;
+}
+.visor-tira::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.visor-miniatura {
+  flex: 0 0 auto;
+  width: 5rem;
+  height: 3.5rem;
+  padding: 0;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 140ms ease, border-color 140ms ease;
+}
+
+.visor-miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.visor-miniatura:hover {
+  opacity: 0.85;
+}
+
+.visor-miniatura.activa {
+  opacity: 1;
+  border-color: var(--librea);
+  box-shadow: inset 0 0 0 1px var(--librea);
+}
+
+/* --- Móvil --- */
+
+@media (max-width: 768px) {
+  .visor-cabecera {
+    padding: var(--e4);
+  }
+  .visor-escena {
+    padding: var(--e3);
+    gap: var(--e2);
+  }
+  /* Las flechas estorban en una pantalla pequeña: se navega con la tira
+     y deslizando. Se dejan visibles pero más discretas. */
+  .visor-flecha {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .visor-tira {
+    padding: var(--e3) var(--e4) var(--e4);
+    justify-content: flex-start;
+  }
+  .visor-miniatura {
+    width: 4rem;
+    height: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visor,
+  .visor-marco img {
+    animation: none;
+  }
+  .visor-cargando {
+    animation-duration: 2s;
+  }
+}

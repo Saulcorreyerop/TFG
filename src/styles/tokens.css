@@ -56,6 +56,18 @@
   /* Señales — mismo significado en ambos temas */
   --verde: #3FB984;
   --ambar: #E0A93B;
+
+  /*
+   * Superficies SOBRE FOTOGRAFÍA. Oscuras en los dos temas, a propósito.
+   *
+   * El texto encima de una foto va en blanco tanto si el tema es claro
+   * como oscuro, así que su fondo no puede salir de --asfalto: esa
+   * variable cambia con el tema, y en claro dejaba barras claras con
+   * texto blanco encima. Contraste 1.12, o sea invisible.
+   */
+  --sobre-foto:        rgba(14, 14, 16, 0.72);
+  --sobre-foto-fuerte: rgba(14, 14, 16, 0.88);
+  --borde-foto:        rgba(255, 255, 255, 0.16);
   --verde-baja: rgba(63, 185, 132, 0.12);
   --ambar-baja: rgba(224, 169, 59, 0.12);
 }
@@ -69,10 +81,18 @@
 :root:root[data-tema='oscuro'] {
   color-scheme: dark;
 
-  /* Librea */
-  --librea:      #E4322B;
-  --librea-alta: #FF5347;
-  --librea-baja: rgba(228, 50, 43, 0.12);
+  /*
+   * Librea. El rojo baja de #E4322B a #D92E27: con el original, el texto
+   * blanco encima daba 4.38 de contraste y AA pide 4.5. La diferencia no
+   * se aprecia y afecta a todos los botones principales.
+   *
+   * --librea-texto es el rojo para TEXTO pequeño sobre fondo oscuro; el
+   * de los botones no llega por sí solo cuando va sin fondo detrás.
+   */
+  --librea:       #D92E27;
+  --librea-alta:  #FF5347;
+  --librea-texto: #FF5347;
+  --librea-baja:  rgba(217, 46, 39, 0.14);
 
   /* Superficies propias */
   --asfalto:      #0E0E10;
@@ -81,9 +101,10 @@
   --linea:        #2B2D33;
   --linea-viva:   #3A3D45;
 
-  /* Texto propio */
+  /* Texto propio. --texto-tenue sube de #71757E a #868A93: con el
+     anterior, los rótulos y los enlaces del pie daban 3.88-4.18. */
   --texto-medio: #A2A5AD;
-  --texto-tenue: #71757E;
+  --texto-tenue: #868A93;
 
   /* --- Variables de PrimeReact / PrimeFlex --- */
   --surface-ground:  #0E0E10;
@@ -133,9 +154,10 @@
   color-scheme: light;
 
   /* El rojo se oscurece: sobre blanco, el #E4322B no llega a contraste AA */
-  --librea:      #C42A24;
-  --librea-alta: #A82019;
-  --librea-baja: rgba(196, 42, 36, 0.10);
+  --librea:       #C42A24;
+  --librea-alta:  #A82019;
+  --librea-texto: #C42A24;
+  --librea-baja:  rgba(196, 42, 36, 0.10);
 
   --asfalto:      #F2F2F0;
   --carbono:      #FFFFFF;
@@ -143,8 +165,9 @@
   --linea:        #DEDEDA;
   --linea-viva:   #C4C4BE;
 
+  /* #8A8E96 daba 2.93 sobre el fondo de página. Baja a #63676F. */
   --texto-medio: #5F636B;
-  --texto-tenue: #8A8E96;
+  --texto-tenue: #63676F;
 
   --surface-ground:  #F2F2F0;
   --surface-section: #F2F2F0;

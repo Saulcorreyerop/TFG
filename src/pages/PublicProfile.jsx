@@ -6,7 +6,6 @@ import { Button } from 'primereact/button'
 import { Tag } from 'primereact/tag'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Toast } from 'primereact/toast'
-import { Galleria } from 'primereact/galleria'
 import { Dialog } from 'primereact/dialog'
 import PageTransition from '../components/PageTransition'
 import {
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react'
 
 import './ProfilePage.css'
+import LightboxFotos from '../components/LightboxFotos'
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal'
 
@@ -47,6 +47,7 @@ const PublicProfile = () => {
   const [followLoading, setFollowLoading] = useState(false)
 
   const [galleryImages, setGalleryImages] = useState(null)
+  const [galleryTitulo, setGalleryTitulo] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -160,42 +161,10 @@ const PublicProfile = () => {
         })
       })
     }
-    if (images.length > 0) setGalleryImages(images)
-  }
-
-  const galleryItemTemplate = (item) => {
-    return (
-      <img
-        src={item.itemImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          maxHeight: '70vh',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-              loading='lazy'
-        decoding='async'
-      />
-    )
-  }
-
-  const galleryThumbnailTemplate = (item) => {
-    return (
-      <img
-        src={item.thumbnailImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          height: '80px',
-          objectFit: 'cover',
-          display: 'block',
-          borderRadius: '4px',
-        }}
-              loading='lazy'
-        decoding='async'
-      />
-    )
+    if (images.length > 0) {
+      setGalleryTitulo(`${car.marca} ${car.modelo}`)
+      setGalleryImages(images)
+    }
   }
 
   const handleToggleLikeVehicle = async (e, vehicleId, isCurrentlyLiked) => {
@@ -402,30 +371,14 @@ const PublicProfile = () => {
 
       <PageTransition>
         <div className='max-w-6xl mx-auto p-3 md:p-5 min-h-screen'>
-          <Toast ref={toast} />
-
-          <Dialog
-            visible={!!galleryImages}
-            onHide={() => setGalleryImages(null)}
-            header={`Galería de ${profile.username}`}
-            style={{ width: '90vw', maxWidth: '800px' }}
-            dismissableMask
-          >
-            {galleryImages && (
-              <Galleria
-                value={galleryImages}
-                numVisible={5}
-                circular
-                autoPlay
-                transitionInterval={3000}
-                item={galleryItemTemplate}
-                thumbnail={galleryThumbnailTemplate}
-                style={{ maxWidth: '100%' }}
-              />
-            )}
-          </Dialog>
-
-          <div className='flex justify-content-between align-items-center mb-4'>
+          <Toast ref={toast} />{galleryImages && (
+            <LightboxFotos
+              fotos={galleryImages.map((f) => f.itemImageSrc)}
+              titulo={galleryTitulo}
+              subtitulo={`${galleryImages.length} fotos`}
+              onCerrar={() => setGalleryImages(null)}
+            />
+          )}<div className='flex justify-content-between align-items-center mb-4'>
             <Button
               label='Volver'
               icon='pi pi-arrow-left'

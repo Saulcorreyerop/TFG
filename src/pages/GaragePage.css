@@ -97,7 +97,7 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 800;
-  color: var(--asfalto);
+  color: var(--text-color);
   text-transform: uppercase;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   z-index: 10;
@@ -115,7 +115,7 @@
 .garage-title {
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--asfalto);
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
   line-height: 1.2;
 }

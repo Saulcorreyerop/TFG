@@ -2,7 +2,7 @@
 
 /* --- BOTONES ESTILO FICHAR365 --- */
 .btn-fichar-primary {
-  background: linear-gradient(135deg, var(--librea) 0%, var(--librea) 100%) !important;
+  background: var(--librea) !important;
   border: none !important;
   padding: 1.15rem 2rem !important;
   font-size: 1.1rem !important;
@@ -323,7 +323,7 @@
 }
 
 .btn-contorno {
-  background: color-mix(in srgb, #000 35%, transparent);
+  background: var(--sobre-foto);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-color: color-mix(in srgb, #fff 45%, transparent);
@@ -331,7 +331,7 @@
 }
 .btn-contorno:hover {
   border-color: #fff;
-  background: color-mix(in srgb, #000 55%, transparent);
+  background: var(--sobre-foto-fuerte);
 }
 
 .btn-librea:focus-visible,
@@ -441,8 +441,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--e2);
-  background: color-mix(in srgb, #000 45%, transparent);
-  border: 1px solid color-mix(in srgb, #fff 20%, transparent);
+  background: var(--sobre-foto-fuerte);
+  border: 1px solid var(--borde-foto);
   padding: var(--e2) var(--e3);
 }
 
@@ -468,6 +468,7 @@
 }
 
 .hero-acento {
+  /* Sobre la foto oscura del hero, siempre el rojo claro */
   color: var(--librea-alta);
 }
 
@@ -497,15 +498,17 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 1px;
-  background: color-mix(in srgb, #fff 14%, transparent);
-  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
+  background: var(--borde-foto);
+  border: 1px solid var(--borde-foto);
   padding: 0;
   margin-bottom: var(--e7);
   width: calc(100% - var(--e5) * 2);
 }
 
 .hero-dato {
-  background: color-mix(in srgb, var(--asfalto) 72%, transparent);
+  /* --sobre-foto, no --asfalto: en tema claro --asfalto es claro y esta
+     barra se quedaba clara con el texto en blanco encima. */
+  background: var(--sobre-foto);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   padding: var(--e4) var(--e5);
@@ -526,11 +529,11 @@
   font-size: 0.5625rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: color-mix(in srgb, #fff 60%, transparent);
+  color: color-mix(in srgb, #fff 78%, transparent);
 }
 
 .hero-dato-tema .hero-dato-valor {
-  color: var(--librea-alta);
+  color: var(--librea-texto);
 }
 
 @media (max-width: 768px) {

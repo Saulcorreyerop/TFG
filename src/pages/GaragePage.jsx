@@ -8,13 +8,13 @@ import { Dropdown } from 'primereact/dropdown'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { SelectButton } from 'primereact/selectbutton'
 import { Toast } from 'primereact/toast'
-import { Galleria } from 'primereact/galleria'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 
 
 
 import './GaragePage.css'
+import LightboxFotos from '../components/LightboxFotos'
 import SEO from '../components/SEO'
 
 const GaragePage = ({ session }) => {
@@ -46,6 +46,7 @@ const GaragePage = ({ session }) => {
   const [extraImageFiles, setExtraImageFiles] = useState([])
   const [existingExtraImages, setExistingExtraImages] = useState([])
   const [galleryImages, setGalleryImages] = useState(null)
+  const [galleryTitulo, setGalleryTitulo] = useState('')
 
   const fuelOptions = [
     { label: 'Gasolina', value: 'Gasolina' },
@@ -360,42 +361,10 @@ const GaragePage = ({ session }) => {
         })
       })
     }
-    if (images.length > 0) setGalleryImages(images)
-  }
-
-  const galleryItemTemplate = (item) => {
-    return (
-      <img
-        src={item.itemImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          maxHeight: '70vh',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-              loading='lazy'
-        decoding='async'
-      />
-    )
-  }
-
-  const galleryThumbnailTemplate = (item) => {
-    return (
-      <img
-        src={item.thumbnailImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          height: '80px',
-          objectFit: 'cover',
-          display: 'block',
-          borderRadius: '4px',
-        }}
-              loading='lazy'
-        decoding='async'
-      />
-    )
+    if (images.length > 0) {
+      setGalleryTitulo(`${car.marca} ${car.modelo}`)
+      setGalleryImages(images)
+    }
   }
 
   const carTemplate = (car) => {
@@ -474,30 +443,14 @@ const GaragePage = ({ session }) => {
       />
       <PageTransition>
         <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>
-          <Toast ref={toast} />
-
-          <Dialog
-            visible={!!galleryImages}
-            onHide={() => setGalleryImages(null)}
-            header='Galería del Vehículo'
-            style={{ width: '90vw', maxWidth: '800px' }}
-            dismissableMask
-          >
-            {galleryImages && (
-              <Galleria
-                value={galleryImages}
-                numVisible={5}
-                circular
-                autoPlay
-                transitionInterval={3000}
-                item={galleryItemTemplate}
-                thumbnail={galleryThumbnailTemplate}
-                style={{ maxWidth: '100%' }}
-              />
-            )}
-          </Dialog>
-
-          <div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
+          <Toast ref={toast} />{galleryImages && (
+            <LightboxFotos
+              fotos={galleryImages.map((f) => f.itemImageSrc)}
+              titulo={galleryTitulo}
+              subtitulo={`${galleryImages.length} fotos`}
+              onCerrar={() => setGalleryImages(null)}
+            />
+          )}<div className='flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-4'>
             <div>
               <h1 className='text-4xl font-extrabold m-0 text-color flex align-items-center gap-3'>
                 Mi Garaje

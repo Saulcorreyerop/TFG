@@ -94,7 +94,7 @@
   border: 2px solid transparent !important;
   font-size: 1rem !important;
   font-weight: 600 !important;
-  color: var(--linea) !important;
+  color: var(--text-color) !important;
   transition: all 0.3s ease !important;
   box-shadow: none !important;
 }

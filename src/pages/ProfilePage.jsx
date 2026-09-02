@@ -8,7 +8,6 @@ import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { Toast } from 'primereact/toast'
-import { Galleria } from 'primereact/galleria'
 import PageTransition from '../components/PageTransition'
 import imageCompression from 'browser-image-compression'
 import {
@@ -28,6 +27,7 @@ import {
 } from 'lucide-react'
 
 import './ProfilePage.css'
+import LightboxFotos from '../components/LightboxFotos'
 import SEO from '../components/SEO'
 
 const ProfilePage = ({ session }) => {
@@ -58,6 +58,7 @@ const ProfilePage = ({ session }) => {
   })
   const [avatarFile, setAvatarFile] = useState(null)
   const [galleryImages, setGalleryImages] = useState(null)
+  const [galleryTitulo, setGalleryTitulo] = useState('')
 
   useEffect(() => {
     if (session) {
@@ -161,43 +162,11 @@ const ProfilePage = ({ session }) => {
         })
       })
     }
-    if (images.length > 0) setGalleryImages(images)
+    if (images.length > 0) {
+      setGalleryTitulo(`${car.marca} ${car.modelo}`)
+      setGalleryImages(images)
+    }
     else navigate('/garaje')
-  }
-
-  const galleryItemTemplate = (item) => {
-    return (
-      <img
-        src={item.itemImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          maxHeight: '70vh',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-              loading='lazy'
-        decoding='async'
-      />
-    )
-  }
-
-  const galleryThumbnailTemplate = (item) => {
-    return (
-      <img
-        src={item.thumbnailImageSrc}
-        alt={item.alt}
-        style={{
-          width: '100%',
-          height: '80px',
-          objectFit: 'cover',
-          display: 'block',
-          borderRadius: '4px',
-        }}
-              loading='lazy'
-        decoding='async'
-      />
-    )
   }
 
   const handleAvatarUpload = async (file) => {
@@ -349,30 +318,14 @@ const ProfilePage = ({ session }) => {
       />
       <PageTransition>
         <div className='max-w-6xl mx-auto p-3 md:p-5'>
-          <Toast ref={toast} />
-
-          <Dialog
-            visible={!!galleryImages}
-            onHide={() => setGalleryImages(null)}
-            header='Galería del Vehículo'
-            style={{ width: '90vw', maxWidth: '800px' }}
-            dismissableMask
-          >
-            {galleryImages && (
-              <Galleria
-                value={galleryImages}
-                numVisible={5}
-                circular
-                autoPlay
-                transitionInterval={3000}
-                item={galleryItemTemplate}
-                thumbnail={galleryThumbnailTemplate}
-                style={{ maxWidth: '100%' }}
-              />
-            )}
-          </Dialog>
-
-          <div className='surface-card shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 surface-border'>
+          <Toast ref={toast} />{galleryImages && (
+            <LightboxFotos
+              fotos={galleryImages.map((f) => f.itemImageSrc)}
+              titulo={galleryTitulo}
+              subtitulo={`${galleryImages.length} fotos`}
+              onCerrar={() => setGalleryImages(null)}
+            />
+          )}<div className='surface-card shadow-2 border-round-3xl p-5 md:p-6 mb-5 flex flex-column lg:flex-row align-items-center gap-5 border-1 surface-border'>
             <div className='relative'>
               <Avatar
                 icon='pi pi-user'
