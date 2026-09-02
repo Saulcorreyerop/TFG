@@ -518,7 +518,7 @@ const PublicProfile = () => {
                       !isFollowing
                         ? {
                             backgroundColor: 'var(--librea)',
-                            color: 'var(--surface-card)',
+                            color: '#fff',
                             border: 'none',
                           }
                         : {}

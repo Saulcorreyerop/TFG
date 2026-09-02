@@ -314,7 +314,9 @@
   text-transform: uppercase;
   border-radius: var(--r);
   background: var(--carbono-alto);
-  color: var(--texto-medio);
+  /* --text-color y no --texto-medio: a 10px en mayusculas el gris medio
+     se queda en 4.47 sobre la superficie clara, justo por debajo de AA. */
+  color: var(--text-color);
   border: 1px solid var(--surface-border);
 }
 
@@ -367,3 +369,71 @@
   stroke: var(--librea) !important;
   animation: p-progress-spinner-dash 1.5s ease-in-out infinite !important;
 }
+
+
+/* -------------------------------------------------------------------------
+   Paneles flotantes
+
+   Mismo caso que el menú lateral: el tema define su fondo dentro de
+   @layer primereact y no llegaba, así que el panel de notificaciones
+   salía transparente y se veía el hero por detrás.
+   ------------------------------------------------------------------------- */
+
+.p-overlaypanel {
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-top: 2px solid var(--librea);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-3);
+  color: var(--text-color);
+}
+
+.p-overlaypanel .p-overlaypanel-content {
+  background: var(--carbono);
+  padding: 0;
+}
+
+/* La flecha que apunta al botón */
+.p-overlaypanel:after,
+.p-overlaypanel:before {
+  border-bottom-color: var(--librea);
+}
+
+.p-overlaypanel .p-overlaypanel-close {
+  background: var(--librea);
+  color: #fff;
+  border-radius: var(--r);
+}
+
+.p-tooltip .p-tooltip-text {
+  background: var(--asfalto);
+  color: var(--text-color);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-2);
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.p-tooltip.p-tooltip-bottom .p-tooltip-arrow { border-bottom-color: var(--surface-border); }
+.p-tooltip.p-tooltip-top .p-tooltip-arrow    { border-top-color: var(--surface-border); }
+.p-tooltip.p-tooltip-left .p-tooltip-arrow   { border-left-color: var(--surface-border); }
+.p-tooltip.p-tooltip-right .p-tooltip-arrow  { border-right-color: var(--surface-border); }
+
+.p-confirm-dialog .p-confirm-dialog-message {
+  color: var(--text-color);
+}
+
+/* Contadores */
+.p-badge {
+  font-family: var(--datos);
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.p-badge.p-badge-danger  { background: var(--librea); color: #fff; }
+.p-badge.p-badge-info    { background: var(--carbono-alto); color: var(--texto-medio); }
+.p-badge.p-badge-success { background: var(--verde); color: #14161A; }
+.p-badge.p-badge-warning { background: var(--ambar); color: #14161A; }

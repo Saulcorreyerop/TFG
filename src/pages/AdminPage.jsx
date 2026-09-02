@@ -312,14 +312,14 @@ const AdminPage = ({ session }) => {
           >
             <div
               className='p-3 border-circle flex align-items-center justify-content-center shadow-2'
-              style={{ backgroundColor: 'var(--librea)', color: 'var(--surface-card)' }}
+              style={{ backgroundColor: 'var(--librea)', color: '#fff' }}
             >
               <ShieldAlert size={32} />
             </div>
             <div>
               <h1
                 className='m-0 text-3xl font-black'
-                style={{ color: 'var(--surface-card)' }}
+                style={{ color: '#fff' }}
               >
                 Panel de Moderación
               </h1>

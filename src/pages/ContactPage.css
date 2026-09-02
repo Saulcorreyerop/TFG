@@ -107,7 +107,7 @@
 }
 
 .contact-premium-v3 .v3-card {
-  background: white;
+  background: var(--surface-card);
   border-radius: var(--r);
   overflow: hidden;
   border: 1px solid var(--surface-border);

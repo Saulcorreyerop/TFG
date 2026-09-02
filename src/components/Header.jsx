@@ -290,7 +290,7 @@ const Header = ({ session }) => {
                       <Badge
                         value={unreadCount}
                         severity='danger'
-                        className='absolute top-0 right-0 transform translate-x-30 -translate-y-10 scale-90 shadow-1'
+                        className='cabecera-badge'
                       />
                     )}
                   </div>

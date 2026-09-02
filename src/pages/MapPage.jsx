@@ -20,6 +20,7 @@ import 'leaflet/dist/leaflet.css'
 import PageTransition from '../components/PageTransition'
 import './MapPage.css'
 import SEO from '../components/SEO'
+import { useTheme } from '../hooks/useTheme'
 
 // --- CREADOR DE PINES PERSONALIZADOS ---
 const getCustomIcon = (isPrivate) => {
@@ -145,6 +146,7 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
 )
 
 const MapPage = ({ session }) => {
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const toast = useRef(null)
   const mainContainerRef = useRef(null)
@@ -342,9 +344,20 @@ const MapPage = ({ session }) => {
                 fadeAnimation={true}
                 inertia={true}
               >
+                {/*
+                  Teselas segun el tema. Las de OpenStreetMap son casi
+                  blancas: sobre la interfaz oscura deslumbran y los
+                  marcadores rojos se pierden. La distribucion de la
+                  pagina no cambia, solo el juego de teselas.
+                */}
                 <TileLayer
-                  attribution='&copy; OpenStreetMap'
-                  url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                  key={theme}
+                  attribution='&copy; OpenStreetMap &copy; CARTO'
+                  url={
+                    theme === 'claro'
+                      ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+                      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                  }
                   maxZoom={18}
                   keepBuffer={8}
                   updateWhenZooming={false}
