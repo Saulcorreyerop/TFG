@@ -1,8 +1,52 @@
-/sitemap.xml
-  Content-Type: application/xml
+# Cabeceras de Netlify
+#
+# El orden importa: gana la primera regla que coincide.
+#
+# ANTES había una regla /* con caché de un año e immutable, pensada para
+# los assets, que acababa aplicándose también al HTML. La excepción estaba
+# escrita como /index.html, pero la URL que visita la gente es "/", y esa
+# no la cubre. Resultado: el navegador de cada visitante se quedaba clavado
+# en la versión que hubiera cargado la primera vez, y al desplegar algo
+# nuevo seguía viendo la aplicación antigua hasta vaciar la caché.
+#
+# Ahora se hace al revés: caché larga SOLO para lo que lleva hash en el
+# nombre, y sin caché para todo lo demás.
 
-/*
+# --- Assets con hash: el nombre cambia en cada build, así que son seguros
+/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-/index.html
-  Cache-Control: no-cache, no-store, must-revalidate
+# --- Fuentes e iconos: cambian muy poco, una semana con revalidación
+/themes/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/favicon-32.png
+  Cache-Control: public, max-age=604800
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800
+/icon-192.png
+  Cache-Control: public, max-age=604800
+/icon-512.png
+  Cache-Control: public, max-age=604800
+/logo.png
+  Cache-Control: public, max-age=604800
+
+# --- Archivos que tienen que poder actualizarse el mismo día
+/sitemap.xml
+  Content-Type: application/xml
+  Cache-Control: public, max-age=3600
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+# --- Todo lo demás, empezando por el HTML: nunca en caché.
+# Es lo que permite que un despliegue llegue a los usuarios ya existentes.
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: geolocation=(self), microphone=(), camera=()

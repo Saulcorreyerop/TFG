@@ -283,6 +283,8 @@ const AdminPage = ({ session }) => {
           objectFit: 'cover',
           borderRadius: 'var(--r-media)',
         }}
+              loading='lazy'
+        decoding='async'
       />
     ) : (
       <span>Sin foto</span>

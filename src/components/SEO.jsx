@@ -5,7 +5,7 @@ const SEO = ({
   title,
   description,
   image = 'https://stryumcmeavlvjaamcaw.supabase.co/storage/v1/object/public/crews/default-share.jpg',
-  url = 'https://carmeetesp.netlify.app',
+  url = 'https://carmeet.es',
   type = 'website',
 }) => {
   const siteTitle = title.includes('CarMeet') ? title : `${title} | CarMeet ESP`

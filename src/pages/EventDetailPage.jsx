@@ -624,6 +624,8 @@ const EventDetailPage = ({ session }) => {
               src={event.image_url}
               alt={event.titulo}
               className='hero-img-main'
+                          loading='lazy'
+              decoding='async'
             />
             <div className='hero-overlay'></div>
 
@@ -706,6 +708,8 @@ const EventDetailPage = ({ session }) => {
                             alt='Extra'
                             className='w-full border-round-2xl shadow-2 object-cover'
                             style={{ height: '240px' }}
+                                                      loading='lazy'
+                            decoding='async'
                           />
                         </div>
                       ))}
@@ -1186,6 +1190,8 @@ const EventDetailPage = ({ session }) => {
                           alt='Extra'
                           className='w-full border-round-xl object-cover'
                           style={{ height: '100px' }}
+                                                  loading='lazy'
+                          decoding='async'
                         />
                         <Button
                           icon={<X size={14} />}

@@ -176,6 +176,8 @@ const ProfilePage = ({ session }) => {
           objectFit: 'contain',
           display: 'block',
         }}
+              loading='lazy'
+        decoding='async'
       />
     )
   }
@@ -192,6 +194,8 @@ const ProfilePage = ({ session }) => {
           display: 'block',
           borderRadius: '4px',
         }}
+              loading='lazy'
+        decoding='async'
       />
     )
   }
@@ -571,6 +575,8 @@ const ProfilePage = ({ session }) => {
                           <img
                             src={v.image_url}
                             alt={`${v.marca} ${v.modelo}`}
+                                                      loading='lazy'
+                            decoding='async'
                           />
                         ) : (
                           <div className='flex h-full align-items-center justify-content-center text-300'>

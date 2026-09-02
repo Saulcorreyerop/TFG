@@ -433,3 +433,21 @@
     transition: none;
   }
 }
+
+/*
+ * El logo es una marca plana de un solo tono. En tema oscuro se invierte
+ * para que pase de casi negro a casi blanco, en vez de desaparecer sobre
+ * el carbono del pie.
+ *
+ * Nota: el archivo original (logo-original.png) no tenía transparencia —
+ * llevaba el tablero de cuadros de Canva pintado dentro. La transparencia
+ * se reconstruye en scripts/generar-iconos.mjs.
+ */
+.footer-logo img {
+  height: 2.25rem;
+  width: auto;
+}
+
+:root[data-tema='oscuro'] .footer-logo img {
+  filter: invert(1) brightness(1.8);
+}

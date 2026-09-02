@@ -201,12 +201,16 @@ const AuthPage = ({ session }) => {
               alt='Login Background'
               className='auth-bg-img'
               style={{ opacity: isLogin ? 0.8 : 0 }}
+                          loading='lazy'
+              decoding='async'
             />
             <img
               src={REGISTER_IMAGE}
               alt='Register Background'
               className='auth-bg-img'
               style={{ opacity: !isLogin ? 0.8 : 0 }}
+                          loading='lazy'
+              decoding='async'
             />
 
             <div className='auth-image-overlay'>

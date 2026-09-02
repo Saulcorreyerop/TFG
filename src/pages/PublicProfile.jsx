@@ -174,6 +174,8 @@ const PublicProfile = () => {
           objectFit: 'contain',
           display: 'block',
         }}
+              loading='lazy'
+        decoding='async'
       />
     )
   }
@@ -190,6 +192,8 @@ const PublicProfile = () => {
           display: 'block',
           borderRadius: '4px',
         }}
+              loading='lazy'
+        decoding='async'
       />
     )
   }
@@ -637,6 +641,8 @@ const PublicProfile = () => {
                                 alt={v.modelo}
                                 className='w-full h-full'
                                 style={{ objectFit: 'cover' }}
+                                                              loading='lazy'
+                                decoding='async'
                               />
                             ) : (
                               <div className='flex h-full align-items-center justify-content-center text-300 surface-hover'>

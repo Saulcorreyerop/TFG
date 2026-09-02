@@ -374,6 +374,8 @@ const GaragePage = ({ session }) => {
           objectFit: 'contain',
           display: 'block',
         }}
+              loading='lazy'
+        decoding='async'
       />
     )
   }
@@ -390,6 +392,8 @@ const GaragePage = ({ session }) => {
           display: 'block',
           borderRadius: '4px',
         }}
+              loading='lazy'
+        decoding='async'
       />
     )
   }
@@ -405,7 +409,9 @@ const GaragePage = ({ session }) => {
         onClick={() => openGalleryViewer(car)}
       >
         {car.image_url ? (
-          <img alt={car.marca} src={car.image_url} className='garage-image' />
+          <img alt={car.marca} src={car.image_url} className='garage-image'   loading='lazy'
+  decoding='async'
+/>
         ) : (
           <div className='garage-no-image'>
             <i className='pi pi-car text-6xl'></i>
@@ -680,7 +686,9 @@ const GaragePage = ({ session }) => {
                     <div className='gallery-preview-grid'>
                       {existingExtraImages.map((img) => (
                         <div key={img.id} className='gallery-preview-item'>
-                          <img src={img.image_url} alt='Extra guardada' />
+                          <img src={img.image_url} alt='Extra guardada'   loading='lazy'
+  decoding='async'
+/>
                           <button
                             type='button'
                             className='remove-preview-btn'
@@ -696,6 +704,8 @@ const GaragePage = ({ session }) => {
                           <img
                             src={URL.createObjectURL(file)}
                             alt='Nueva preview'
+                                                      loading='lazy'
+                            decoding='async'
                           />
                           <button
                             type='button'

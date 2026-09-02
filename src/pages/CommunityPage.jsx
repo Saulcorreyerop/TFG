@@ -300,6 +300,8 @@ const CommunityPage = () => {
                 alt='Cover'
                 className='w-full h-full'
                 style={{ objectFit: 'cover' }}
+                              loading='lazy'
+                decoding='async'
               />
             ) : (
               <div className='w-full h-full bg-blue-100 flex align-items-center justify-content-center'>
@@ -323,6 +325,8 @@ const CommunityPage = () => {
                   alt={user.username}
                   className='w-full h-full border-circle'
                   style={{ objectFit: 'cover' }}
+                                  loading='lazy'
+                  decoding='async'
                 />
               ) : (
                 <div className='w-full h-full border-circle surface-hover flex align-items-center justify-content-center'>
@@ -380,6 +384,8 @@ const CommunityPage = () => {
                 alt='Banner'
                 className='w-full h-full opacity-80'
                 style={{ objectFit: 'cover' }}
+                              loading='lazy'
+                decoding='async'
               />
             )}
           </div>
@@ -400,6 +406,8 @@ const CommunityPage = () => {
                   alt={crew.name}
                   className='w-full h-full'
                   style={{ objectFit: 'cover', borderRadius: 'var(--r)' }}
+                                  loading='lazy'
+                  decoding='async'
                 />
               ) : (
                 <div
@@ -460,6 +468,8 @@ const CommunityPage = () => {
                   alt={v.modelo}
                   className='w-full h-full'
                   style={{ objectFit: 'cover' }}
+                                  loading='lazy'
+                  decoding='async'
                 />
               ) : (
                 <div className='flex h-full align-items-center justify-content-center text-300'>
@@ -715,6 +725,8 @@ const CommunityPage = () => {
                       className='w-full h-full'
                       style={{ objectFit: 'cover' }}
                       alt='Banner'
+                                          loading='lazy'
+                      decoding='async'
                     />
                   ) : (
                     <div className='flex flex-column align-items-center text-color-secondary font-bold text-sm'>
@@ -750,6 +762,8 @@ const CommunityPage = () => {
                         className='w-full h-full absolute top-0 left-0'
                         style={{ objectFit: 'cover', borderRadius: 'var(--r-media)' }}
                         alt='Logo'
+                                              loading='lazy'
+                        decoding='async'
                       />
                     ) : (
                       <div className='flex flex-column align-items-center text-xs font-bold'>

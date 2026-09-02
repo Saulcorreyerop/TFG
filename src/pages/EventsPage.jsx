@@ -123,6 +123,8 @@ const TechnicalCoverCard = ({ event }) => {
           src={event.image}
           alt={event.titulo}
           className='cover-image group-hover:scale-105 transition-transform duration-700'
+                  loading='lazy'
+          decoding='async'
         />
         <div className='cover-overlay'></div>
       </div>
@@ -487,6 +489,8 @@ const EventsPage = ({ session }) => {
                               src={fav.image}
                               alt=''
                               className='w-2rem h-2rem border-round-md object-cover'
+                                                          loading='lazy'
+                              decoding='async'
                             />
                             <span className='text-sm font-bold text-color-secondary white-space-nowrap overflow-hidden text-overflow-ellipsis'>
                               {fav.titulo}

@@ -201,6 +201,8 @@ const CrewDetailPage = ({ session }) => {
                 src={crew.banner_image_url}
                 className='w-full h-full object-cover opacity-60'
                 alt='Banner'
+                              loading='lazy'
+                decoding='async'
               />
             ) : (
               <div className='w-full h-full bg-gradient-to-r from-blue-700 to-indigo-900' />
@@ -225,6 +227,8 @@ const CrewDetailPage = ({ session }) => {
                       src={crew.profile_image_url}
                       className='w-full h-full object-cover border-round-xl'
                       alt='Logo'
+                                          loading='lazy'
+                      decoding='async'
                     />
                   ) : (
                     <Shield size={60} className='text-400' />
@@ -413,6 +417,8 @@ const CrewDetailPage = ({ session }) => {
                               className='w-full h-full'
                               style={{ objectFit: 'cover' }}
                               alt={`${v.make} ${v.model}`}
+                                                          loading='lazy'
+                              decoding='async'
                             />
                             <div className='absolute bottom-0 right-0 p-3'>
                               <Tag

@@ -39,19 +39,15 @@
       name="google-site-verification"
       content="AxfNP3EnmcgbGwVOaW6GZj0N6g74UdgM1Eg59_YsvdQ"
     />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
+    <!--
+      Leaflet ya viene en el bundle: es la copia que usa react-leaflet.
+      La del CDN era una segunda descarga de 157 KB con un <script>
+      bloqueante en el head, que retrasaba el primer pintado en TODAS
+      las páginas, incluidas las que no tienen mapa.
+    -->
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/jpg" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <meta

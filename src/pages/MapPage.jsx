@@ -101,6 +101,8 @@ const EventCard = ({ ev, isSelected, onClick, onNavigate }) => (
         alt={ev.titulo}
         className='w-full h-full'
         style={{ objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
+              loading='lazy'
+        decoding='async'
       />
     </div>
     <div className='flex-grow-1 overflow-hidden min-w-0'>
@@ -384,6 +386,8 @@ const MapPage = ({ session }) => {
                                 top: 0,
                                 left: 0,
                               }}
+                                                          loading='lazy'
+                              decoding='async'
                             />
                           </div>
                         )}

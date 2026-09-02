@@ -28,6 +28,8 @@ const Footer = () => {
                 src='/logo.png'
                 alt='CarMeet ESP Logo'
                 style={{ width: '40px', height: 'auto', borderRadius: 'var(--r-media)' }}
+                              loading='lazy'
+                decoding='async'
               />
               <span className='logo-text'>
                 CarMeet <span className='text-flag-esp'>ESP</span>
