@@ -32,6 +32,11 @@ const AuthPage = ({ session }) => {
   const [regPassword, setRegPassword] = useState('')
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
 
+  // Recuperación de contraseña
+  const [recuperando, setRecuperando] = useState(false)
+  const [emailRecuperar, setEmailRecuperar] = useState('')
+  const [enviadoRecuperar, setEnviadoRecuperar] = useState(false)
+
   useEffect(() => {
     if (session) {
       setLoading(false)
@@ -99,6 +104,38 @@ const AuthPage = ({ session }) => {
       })
       setLoading(false)
     }
+  }
+
+  // --- RECUPERAR CONTRASEÑA ---
+  const handleRecuperar = async (e) => {
+    e.preventDefault()
+
+    const correo = emailRecuperar.trim()
+    if (!correo) {
+      return toast.current.show({
+        severity: 'warn',
+        summary: 'Falta el correo',
+        detail: 'Escribe el correo con el que te registraste',
+      })
+    }
+
+    setLoading(true)
+
+    const { error } = await supabase.auth.resetPasswordForEmail(correo, {
+      redirectTo: `${window.location.origin}/recuperar`,
+    })
+
+    setLoading(false)
+
+    /*
+     * Se dice lo mismo haya cuenta o no. Si aquí se distinguiera, esta
+     * pantalla se convertiría en una forma de averiguar qué correos
+     * están registrados en CarMeet.
+     */
+    if (error) {
+      console.error('Error al pedir la recuperación:', error.message)
+    }
+    setEnviadoRecuperar(true)
   }
 
   // --- REGISTRO ---
@@ -204,7 +241,59 @@ const AuthPage = ({ session }) => {
                 </p>
               </div>
 
-              {isLogin ? (
+              {recuperando ? (
+                <div className='flex flex-column gap-4 w-full'>
+                  {enviadoRecuperar ? (
+                    <div className='auth-aviso'>
+                      <i className='pi pi-check-circle' aria-hidden='true'></i>
+                      <div>
+                        <strong>Revisa tu correo</strong>
+                        <p>
+                          Si hay una cuenta con esa dirección, te acaba de
+                          llegar un enlace para poner una contraseña nueva.
+                          Caduca en una hora.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={handleRecuperar}
+                      className='flex flex-column gap-4 w-full'
+                    >
+                      <p className='auth-explica'>
+                        Escribe tu correo y te mandamos un enlace para poner
+                        una contraseña nueva.
+                      </p>
+
+                      <span className='p-input-icon-left w-full'>
+                        <i className='pi pi-envelope' />
+                        <InputText
+                          value={emailRecuperar}
+                          onChange={(e) => setEmailRecuperar(e.target.value)}
+                          placeholder='Tu correo electrónico'
+                          type='email'
+                          autoComplete='email'
+                          className='auth-input-modern w-full'
+                        />
+                      </span>
+
+                      <Button
+                        label={loading ? 'Enviando...' : 'Enviar enlace'}
+                        className='auth-btn-primary'
+                        loading={loading}
+                      />
+                    </form>
+                  )}
+
+                  <button
+                    type='button'
+                    className='auth-enlace'
+                    onClick={() => setRecuperando(false)}
+                  >
+                    Volver a iniciar sesión
+                  </button>
+                </div>
+              ) : isLogin ? (
                 <form
                   onSubmit={handleLogin}
                   className='flex flex-column gap-4 w-full'
@@ -233,9 +322,19 @@ const AuthPage = ({ session }) => {
                   </span>
 
                   <div className='flex justify-content-end w-full mb-2'>
-                    <span className='text-sm font-bold text-blue-500 cursor-pointer hover:underline'>
+                    <button
+                      type='button'
+                      className='auth-enlace'
+                      onClick={() => {
+                        setEmailRecuperar(
+                          loginInput.includes('@') ? loginInput.trim() : '',
+                        )
+                        setEnviadoRecuperar(false)
+                        setRecuperando(true)
+                      }}
+                    >
                       ¿Olvidaste tu contraseña?
-                    </span>
+                    </button>
                   </div>
 
                   <Button

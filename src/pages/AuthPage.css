@@ -206,3 +206,128 @@
     display: block; /* Volvemos a mostrar la descripción */
   }
 }
+
+/* =========================================================================
+   Recuperación de contraseña
+   ========================================================================= */
+
+.auth-enlace {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--datos);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--librea);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  align-self: center;
+}
+
+.auth-enlace:hover {
+  color: var(--librea-alta);
+}
+
+.auth-explica {
+  color: var(--texto-medio);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.auth-aviso {
+  display: flex;
+  gap: var(--e3);
+  padding: var(--e4);
+  background: var(--verde-baja);
+  border: 1px solid var(--verde);
+  border-radius: var(--r);
+  color: var(--verde);
+}
+
+.auth-aviso strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-color);
+  margin-bottom: var(--e1);
+}
+
+.auth-aviso p {
+  margin: 0;
+  color: var(--texto-medio);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.auth-error {
+  padding: var(--e3) var(--e4);
+  background: var(--librea-baja);
+  border: 1px solid var(--librea);
+  border-radius: var(--r);
+  color: var(--librea);
+  font-size: 0.875rem;
+}
+
+/* --- Página de nueva contraseña --- */
+
+.recuperar-pagina {
+  min-height: 78vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e8) var(--e4);
+  background: var(--surface-ground);
+}
+
+.recuperar-caja {
+  width: 100%;
+  max-width: 26rem;
+  background: var(--carbono);
+  border: 1px solid var(--surface-border);
+  border-top: 2px solid var(--librea);
+  border-radius: var(--r);
+  padding: var(--e7) var(--e6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e4);
+}
+
+.recuperar-icono {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--librea);
+  background: var(--librea-baja);
+  color: var(--librea);
+  border-radius: var(--r);
+}
+
+.recuperar-icono.bien {
+  border-color: var(--verde);
+  background: var(--verde-baja);
+  color: var(--verde);
+}
+
+.recuperar-icono.aviso {
+  border-color: var(--ambar);
+  background: var(--ambar-baja);
+  color: var(--ambar);
+}
+
+.recuperar-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--text-color);
+  margin: 0;
+}

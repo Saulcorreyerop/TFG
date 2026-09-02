@@ -10,6 +10,7 @@ import { AnimatePresence } from 'framer-motion'
 
 import Header from './components/Header'
 import Footer from './components/Footer'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const MapPage = lazy(() => import('./pages/MapPage'))
@@ -24,6 +25,8 @@ const ContactPage = lazy(() => import('./pages/ContactPage'))
 const CrewDetailPage = lazy(() => import('./pages/CrewDetailPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const GlobalChatPage = lazy(() => import('./pages/GlobalChatPage'))
+const RecoverPage = lazy(() => import('./pages/RecoverPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 import OneSignal from 'react-onesignal'
 
@@ -58,6 +61,7 @@ const AnimatedRoutes = ({ session }) => {
 
   return (
     <AnimatePresence mode='wait'>
+      <ErrorBoundary key={location.pathname}>
       <Suspense fallback={<div className='flex align-items-center justify-content-center min-h-screen surface-ground'><ProgressSpinner strokeWidth='4' /></div>}>
         <Routes location={location} key={location.pathname}>
           <Route path='/' element={<HomePage session={session} />} />
@@ -72,11 +76,18 @@ const AnimatedRoutes = ({ session }) => {
           <Route path='/perfil' element={session ? <ProfilePage session={session} /> : <Navigate to='/login' state={{ returnUrl: '/perfil' }} />} />
           <Route path='/usuario/:username' element={<PublicProfile />} />
           <Route path='/login' element={<AuthPage session={session} />} />
+          <Route path='/recuperar' element={<RecoverPage />} />
           <Route path='/evento/:id' element={<EventDetailPage session={session} />} />
           <Route path='/crew/:crewName' element={<CrewDetailPage session={session} />} />
           <Route path='/admin' element={session ? <AdminPage session={session} /> : <Navigate to='/login' state={{ returnUrl: '/admin' }} />} />
+
+          {/* Cualquier otra ruta. Sin esto, una URL inventada renderizaba
+              la cabecera y el pie con la nada en medio, y Google lo
+              indexaba como página válida. */}
+          <Route path='*' element={<NotFoundPage />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
     </AnimatePresence>
   )
 }
