@@ -30,7 +30,7 @@ const NotFoundPage = () => {
       <SEO
         title='Página no encontrada'
         description='La página que buscas no existe en CarMeet.'
-        url={window.location.href}
+        noindex
       />
       <PageTransition>
         <div className='nf'>

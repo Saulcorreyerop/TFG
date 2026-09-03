@@ -31,6 +31,11 @@
 /logo.png
   Cache-Control: public, max-age=604800
 
+# La imagen de las tarjetas al compartir. WhatsApp y Twitter la cachean
+# por su cuenta durante días, así que aquí también puede ir larga.
+/og-carmeet.png
+  Cache-Control: public, max-age=604800
+
 # --- Archivos que tienen que poder actualizarse el mismo día
 /sitemap.xml
   Content-Type: application/xml

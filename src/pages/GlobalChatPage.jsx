@@ -23,7 +23,6 @@ const GlobalChatPage = ({ session }) => {
         <SEO
           title='Chat Global'
           description='Habla en directo con toda la comunidad de CarMeet.'
-          url={window.location.href}
         />
         <PageTransition>
           <div className='chat-cerrado'>
@@ -55,7 +54,6 @@ const GlobalChatPage = ({ session }) => {
       <SEO
         title='Chat Global'
         description='Habla en directo con toda la comunidad de CarMeet.'
-        url={window.location.href}
       />
       <PageTransition>
         <div className='chat'>

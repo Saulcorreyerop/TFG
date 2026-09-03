@@ -40,12 +40,24 @@ export default defineConfig([
 
   /* --- Funciones de Netlify: se ejecutan en Node, no en el navegador --- */
   {
-    files: ['netlify/**/*.js'],
+    files: ['netlify/functions/**/*.js'],
     extends: [js.configs.recommended],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: { ...globals.node },
+    },
+  },
+
+  /* --- Funciones de borde: Deno, no Node. Tienen las APIs del
+         navegador (fetch, Response, URL) más el objeto Deno. --- */
+  {
+    files: ['netlify/edge-functions/**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: { ...globals.browser, Deno: 'readonly' },
     },
   },
 

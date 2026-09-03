@@ -1,29 +1,41 @@
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-   <url>
-      <loc>https://carmeet.es/</loc>
-      <priority>1.0</priority>
-      <changefreq>daily</changefreq>
-   </url>
-   <url>
-      <loc>https://carmeet.es/mapa</loc>
-      <priority>0.9</priority>
-      <changefreq>always</changefreq>
-   </url>
-   <url>
-      <loc>https://carmeet.es/eventos</loc>
-      <priority>0.9</priority>
-      <changefreq>daily</changefreq>
-   </url>
-   
-   <url>
-      <loc>https://carmeet.es/comunidad</loc>
-      <priority>0.7</priority>
-      <changefreq>weekly</changefreq>
-   </url>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sitemap de reserva.
 
-      <url>
-      <loc>https://carmeet.es/contacto</loc>
-      <priority>0.7</priority>
-      <changefreq>weekly</changefreq>
-   </url>
+  El que se sirve de verdad lo genera netlify/edge-functions/sitemap.js
+  consultando Supabase, e incluye todos los eventos, crews, perfiles y
+  provincias. Este archivo solo se entrega si esa consulta falla, para
+  que Google nunca reciba un sitemap vacío.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://carmeet.es/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://carmeet.es/eventos</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://carmeet.es/mapa</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://carmeet.es/comunidad</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://carmeet.es/chat-global</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://carmeet.es/contacto</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
 </urlset>

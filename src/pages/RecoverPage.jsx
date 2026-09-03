@@ -91,7 +91,7 @@ const RecoverPage = () => {
       <SEO
         title='Recuperar contraseña'
         description='Pon una contraseña nueva en tu cuenta de CarMeet.'
-        url={window.location.href}
+        noindex
       />
       <PageTransition>
         <div className='recuperar-pagina'>

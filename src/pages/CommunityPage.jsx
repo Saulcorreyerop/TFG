@@ -520,7 +520,6 @@ const CommunityPage = () => {
       <SEO
         title='Comunidad'
         description='Pilotos, crews y los coches con más respetos de CarMeet.'
-        url={window.location.href}
       />
 
       <PageTransition>

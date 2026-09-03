@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="es">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0E0E10" />
 
@@ -30,40 +33,71 @@
         }
       })()
     </script>
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
+
+    <meta name="author" content="Saúl Correyero" />
+    <meta name="robots" content="index, follow" />
     <meta
       name="google-site-verification"
       content="AxfNP3EnmcgbGwVOaW6GZj0N6g74UdgM1Eg59_YsvdQ"
     />
-    <!--
-      Leaflet ya viene en el bundle: es la copia que usa react-leaflet.
-      La del CDN era una segunda descarga de 157 KB con un <script>
-      bloqueante en el head, que retrasaba el primer pintado en TODAS
-      las páginas, incluidas las que no tienen mapa.
-    -->
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!--
+      Bloque de metadatos sociales.
+
+      Los dos marcadores "og" que envuelven este bloque NO son
+      decorativos. La función de borde netlify/edge-functions/og.js
+      sustituye todo lo que hay entre ellos por los datos reales de la
+      página cuando quien pide el HTML es un rastreador: WhatsApp,
+      Twitter, Telegram, Google. Si los borras, los enlaces compartidos
+      vuelven a salir todos iguales. Lo de aquí abajo son los valores de
+      reserva.
+
+      En el navegador manda src/components/SEO.jsx, que reescribe estas
+      mismas etiquetas al cambiar de página.
+    -->
+    <!--og-->
+    <title>CarMeet ESP | Eventos y Rutas de Coches en España</title>
     <meta
       name="description"
-      content="La mayor comunidad de coches en España. Encuentra eventos, rutas en tiempo real y concentraciones de coches cerca de ti."
+      content="La mayor comunidad de coches en España. Encuentra quedadas, rutas y trackdays cerca de ti, comparte tu garaje y únete a una crew."
     />
+    <link rel="canonical" href="https://carmeet.es/" />
 
+    <meta property="og:site_name" content="CarMeet ESP" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://carmeet.es/" />
     <meta
-      name="keywords"
-      content="CarMeet ESP, eventos de coches, coches en tiempo real, concentraciones de coches, car meet españa, rutas"
+      property="og:title"
+      content="CarMeet ESP | Eventos y Rutas de Coches en España"
     />
-    <meta name="author" content="Saúl Correyero" />
-    <meta name="robots" content="index, follow" />
-    <meta name="googlebot" content="index, follow" />
+    <meta
+      property="og:description"
+      content="La mayor comunidad de coches en España. Encuentra quedadas, rutas y trackdays cerca de ti, comparte tu garaje y únete a una crew."
+    />
+    <meta property="og:image" content="https://carmeet.es/og-carmeet.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
-    <title>CarMeet ESP | Eventos y Rutas de Coches en España</title>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="CarMeet ESP | Eventos y Rutas de Coches en España"
+    />
+    <meta
+      name="twitter:description"
+      content="La mayor comunidad de coches en España. Encuentra quedadas, rutas y trackdays cerca de ti, comparte tu garaje y únete a una crew."
+    />
+    <meta name="twitter:image" content="https://carmeet.es/og-carmeet.png" />
+    <!--/og-->
   </head>
   <body>
     <div id="root"></div>

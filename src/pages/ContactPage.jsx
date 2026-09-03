@@ -64,7 +64,6 @@ const ContactPage = () => {
       <SEO
         title='Contacto y Soporte'
         description='¿Tienes alguna duda, recomendación o quieres colaborar con CarMeet ESP? Contacta con nuestro soporte técnico.'
-        url={window.location.href}
       />
       <PageTransition>
         <div className='contact-premium-v3'>

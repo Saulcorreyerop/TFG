@@ -597,7 +597,6 @@ const EventDetailPage = ({ session }) => {
             : `No te pierdas el evento ${event.titulo} organizado por ${event.profiles?.username} en CarMeet ESP.`
         }
         image={event.image_url}
-        url={window.location.href}
         type='article'
       />
 

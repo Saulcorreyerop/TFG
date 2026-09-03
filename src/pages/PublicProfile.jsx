@@ -514,7 +514,7 @@ const PublicProfile = () => {
           `Mira el garaje de ${profile.username} y los eventos que organiza en CarMeet.`
         }
         image={profile.avatar_url || undefined}
-        url={window.location.href}
+        type='profile'
       />
 
       <PageTransition>

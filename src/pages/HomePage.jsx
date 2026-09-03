@@ -60,7 +60,6 @@ const HomePage = ({ session }) => {
       <SEO
         title='Inicio'
         description='La comunidad del motor en España. Encuentra concentraciones y rutas cerca de ti, monta tu garaje virtual y conecta con miles de aficionados.'
-        url={window.location.href}
       />
       <PageTransition>
         <div className='portada'>

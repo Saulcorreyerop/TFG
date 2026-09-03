@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import L from 'leaflet'
@@ -295,14 +294,9 @@ const MapPage = ({ session }) => {
       <SEO
         title='Mapa de Eventos en Vivo'
         description='Explora el mapa interactivo de CarMeet ESP. Descubre KDDs, rutas y trackdays de coches cerca de ti en tiempo real.'
-        url={window.location.href}
       />
       <PageTransition>
         <>
-          <Helmet>
-            <title>Mapa de Eventos en Vivo | CarMeetESP</title>
-          </Helmet>
-
           {/* 🚨 CORRECCIÓN: Un solo contenedor principal sin clases que rompan el scroll 🚨 */}
           <div ref={mainContainerRef} className='map-page-container'>
             <Toast ref={toast} position='top-center' className='mt-6 z-5' />

@@ -1,5 +1,12 @@
 User-agent: *
 Allow: /
+
+# Páginas que no aportan nada en una búsqueda y solo gastan presupuesto
+# de rastreo. Las mismas llevan noindex desde el componente SEO.
 Disallow: /admin
+Disallow: /login
+Disallow: /recuperar
+Disallow: /perfil
+Disallow: /garaje
 
 Sitemap: https://carmeet.es/sitemap.xml

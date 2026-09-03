@@ -441,7 +441,7 @@ const ProfilePage = ({ session }) => {
       <SEO
         title='Mi Perfil'
         description='Tu ficha en CarMeet: garaje, eventos organizados y quedadas a las que vas.'
-        url={window.location.href}
+        noindex
       />
 
       <PageTransition>

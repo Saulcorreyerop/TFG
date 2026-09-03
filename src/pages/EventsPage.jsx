@@ -396,7 +396,6 @@ const EventsPage = ({ session }) => {
             : 'Agenda de Eventos y KDDs'
         }
         description='Consulta la agenda completa de eventos de motor, trackdays, rutas y exposiciones en España. ¡Apunta tu coche y no te pierdas ninguna KDD!'
-        url={window.location.href}
       />
       <PageTransition>
         <div className='technical-page-wrapper'>

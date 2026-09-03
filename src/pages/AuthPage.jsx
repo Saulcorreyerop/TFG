@@ -190,7 +190,7 @@ const AuthPage = ({ session }) => {
       <SEO
         title={isLogin ? 'Iniciar Sesión' : 'Únete a la Comunidad'}
         description='Crea tu cuenta gratis en CarMeet ESP. Únete a miles de conductores, sube tu proyecto al garaje y encuentra KDDs.'
-        url={window.location.href}
+        noindex
       />
       <PageTransition>
         <Toast ref={toast} />

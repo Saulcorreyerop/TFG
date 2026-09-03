@@ -439,7 +439,7 @@ const GaragePage = ({ session }) => {
       <SEO
         title='Mi Garaje'
         description='Gestiona tus vehículos, añade especificaciones y guarda el historial de modificaciones de tus coches en CarMeet ESP.'
-        url={window.location.href}
+        noindex
       />
       <PageTransition>
         <div className='p-4 md:p-6 max-w-7xl mx-auto min-h-screen'>

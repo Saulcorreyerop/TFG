@@ -361,7 +361,7 @@ const CrewDetailPage = ({ session }) => {
           `Únete a ${crew.name} en CarMeet. Mira los coches de sus miembros y rueda con ellos.`
         }
         image={crew.banner_image_url || crew.profile_image_url}
-        url={window.location.href}
+        type='profile'
       />
 
       <PageTransition>
