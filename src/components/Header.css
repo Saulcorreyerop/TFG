@@ -54,7 +54,7 @@
 }
 
 .cabecera-logo .esp {
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 /* --- Navegación de escritorio --- */
@@ -140,7 +140,7 @@
 }
 
 .cabecera-icono.p-button.peligro:hover {
-  color: var(--librea);
+  color: var(--librea-texto);
   border-color: var(--librea);
 }
 
@@ -183,7 +183,7 @@
 
 .cabecera-avatar.p-avatar {
   background: var(--carbono-alto);
-  color: var(--librea);
+  color: var(--librea-texto);
   border: 1px solid var(--surface-border);
   border-radius: 50%;
 }
@@ -326,7 +326,7 @@
   font-size: 0.625rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--librea);
+  color: var(--librea-texto);
   margin-top: 3px;
   display: flex;
   align-items: center;
@@ -420,7 +420,7 @@
 }
 
 .menu-boton.peligro:hover {
-  color: var(--librea);
+  color: var(--librea-texto);
   border-color: var(--librea);
 }
 

@@ -352,7 +352,7 @@
   font-size: 5rem;
   font-weight: 700;
   line-height: 0.85;
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 .nf-ruta {
@@ -400,7 +400,7 @@
 
 .nf-destino > svg:first-child {
   grid-row: span 2;
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 .nf-destino-titulo {
@@ -424,7 +424,7 @@
 }
 
 .nf-destino:hover .nf-destino-flecha {
-  color: var(--librea);
+  color: var(--librea-texto);
   transform: translateX(3px);
 }
 
@@ -475,7 +475,7 @@
 }
 
 .chat-nombre:hover {
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 .chat-aviso {
@@ -484,7 +484,7 @@
   background: var(--librea-baja);
   border: 1px solid var(--librea);
   border-radius: var(--r);
-  color: var(--librea);
+  color: var(--librea-texto);
   font-size: 0.8125rem;
 }
 

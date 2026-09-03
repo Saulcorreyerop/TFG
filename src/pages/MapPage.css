@@ -62,10 +62,10 @@
 
 /* Clases de utilidad de color manuales para asegurar que se vean */
 .text-purple {
-  color: var(--librea) !important;
+  color: var(--librea-texto) !important;
 }
 .text-purple-dark {
-  color: var(--librea) !important;
+  color: var(--librea-texto) !important;
 }
 
 /* ESTILO PARA LA LÍNEA SEPARADORA */

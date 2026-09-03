@@ -19,16 +19,15 @@ import './ColaModeracion.css'
  * de verlas. Moderación que nadie lee es peor que no tenerla, porque el
  * usuario cree que ha servido de algo.
  *
- * Se leen dos sitios a la vez:
+ * Todo sale de la vista `cola_moderacion`, que además del texto del
+ * contenido denunciado y de quién lo escribió, trae las seis columnas de
+ * id: evento_id, comentario_id, mensaje_global_id, mensaje_crew_id,
+ * perfil_id y vehiculo_id. Cuál de ellas viene rellena es lo que dice de
+ * qué tabla hay que borrar.
  *
- *   cola_moderacion  la vista, que ya trae el texto del contenido
- *                    denunciado y quién lo escribió
- *   reports          la tabla cruda, para saber en qué columna está el
- *                    id y por tanto de qué tabla hay que borrar
- *
- * Se hace así en vez de fiarse del campo `tipo` de la vista porque el
- * borrado tiene que ser exacto: las columnas de `reports` las conozco,
- * el texto de la vista podría cambiar.
+ * Se mira la columna y no el campo `tipo` porque el borrado tiene que
+ * ser exacto: las columnas son el esquema, el `tipo` es una etiqueta
+ * para leer.
  */
 
 /* La tabla de la que hay que borrar, y cómo construir el enlace para ir
@@ -96,61 +95,50 @@ const ColaModeracion = ({ session, toast }) => {
   const cargar = useCallback(async () => {
     setCargando(true)
     try {
-      const [vista, crudas] = await Promise.all([
-        supabase
-          .from('cola_moderacion')
-          .select('id, tipo, motivo, detalle, estado, created_at, contenido, autor_id, denunciante')
-          .eq('estado', estado)
-          .order('created_at', { ascending: false })
-          .limit(200),
-        supabase
-          .from('reports')
-          .select(
-            'id, evento_id, comentario_id, mensaje_global_id, mensaje_crew_id, perfil_id, vehiculo_id, reporter_id',
-          )
-          .eq('estado', estado)
-          .limit(200),
-      ])
+      const { data, error } = await supabase
+        .from('cola_moderacion')
+        .select(
+          'id, tipo, motivo, detalle, estado, created_at, contenido, autor_id, ' +
+            'denunciante, reporter_id, evento_id, comentario_id, ' +
+            'mensaje_global_id, mensaje_crew_id, perfil_id, vehiculo_id',
+        )
+        .eq('estado', estado)
+        .order('created_at', { ascending: false })
+        .limit(200)
 
-      if (vista.error) throw vista.error
-      if (crudas.error) throw crudas.error
-
-      const porId = new Map((crudas.data || []).map((r) => [r.id, r]))
+      if (error) throw error
 
       /* Los nombres se resuelven en una sola consulta en vez de una por
          fila. Con veinte denuncias serían cuarenta viajes. */
       const ids = new Set()
-      for (const f of vista.data || []) {
-        if (ES_UUID.test(f.autor_id || '')) ids.add(f.autor_id)
-        if (ES_UUID.test(f.denunciante || '')) ids.add(f.denunciante)
-      }
-      for (const r of crudas.data || []) {
-        if (ES_UUID.test(r.reporter_id || '')) ids.add(r.reporter_id)
+      for (const f of data || []) {
+        for (const v of [f.autor_id, f.denunciante, f.reporter_id]) {
+          if (ES_UUID.test(v || '')) ids.add(v)
+        }
       }
 
       let nombres = new Map()
       if (ids.size > 0) {
-        const { data } = await supabase
+        const { data: perfiles } = await supabase
           .from('profiles')
           .select('id, username')
           .in('id', [...ids])
-        nombres = new Map((data || []).map((p) => [p.id, p.username]))
+        nombres = new Map((perfiles || []).map((p) => [p.id, p.username]))
       }
 
       const resolver = (v) =>
         ES_UUID.test(v || '') ? nombres.get(v) || 'Cuenta borrada' : v || '—'
 
       setFilas(
-        (vista.data || []).map((f) => {
-          const cruda = porId.get(f.id) || {}
-          const columna = Object.keys(TIPOS).find((c) => cruda[c] != null)
+        (data || []).map((f) => {
+          const columna = Object.keys(TIPOS).find((c) => f[c] != null)
 
           return {
             ...f,
             columna,
-            objetivoId: columna ? cruda[columna] : null,
+            objetivoId: columna ? f[columna] : null,
             autorNombre: resolver(f.autor_id),
-            denuncianteNombre: resolver(f.denunciante ?? cruda.reporter_id),
+            denuncianteNombre: resolver(f.denunciante ?? f.reporter_id),
           }
         }),
       )

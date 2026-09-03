@@ -270,6 +270,16 @@ const bloque = ({ titulo: t, descripcion, imagen, tipo }, url) => {
   const I = escapar(imagen)
   const U = escapar(url)
 
+  /* El tamaño solo se declara para nuestra tarjeta, que sabemos que mide
+     1200x630. Las fotos que suben los usuarios miden cualquier cosa, y
+     anunciar unas medidas que no son hace que Twitter recorte mal la
+     vista previa o directamente la descarte. */
+  const medidas =
+    imagen === IMAGEN_POR_DEFECTO
+      ? `\n    <meta property="og:image:width" content="1200" />` +
+        `\n    <meta property="og:image:height" content="630" />`
+      : ''
+
   return `<!--og-->
     <title>${T}</title>
     <meta name="description" content="${D}" />
@@ -281,9 +291,7 @@ const bloque = ({ titulo: t, descripcion, imagen, tipo }, url) => {
     <meta property="og:url" content="${U}" />
     <meta property="og:title" content="${T}" />
     <meta property="og:description" content="${D}" />
-    <meta property="og:image" content="${I}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image" content="${I}" />${medidas}
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${T}" />

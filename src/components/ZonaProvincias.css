@@ -162,7 +162,7 @@
 }
 
 .zona:hover .zona-total {
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 .zona-nombre {
@@ -212,7 +212,7 @@
 }
 
 .zona-flecha {
-  color: var(--librea);
+  color: var(--librea-texto);
   margin-top: var(--e2);
   transition: transform 160ms ease;
 }
@@ -246,7 +246,7 @@
   border: none;
   padding: 0;
   font: inherit;
-  color: var(--librea);
+  color: var(--librea-texto);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -270,7 +270,7 @@
 }
 
 .zonas-vacio-icono {
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 .zonas-vacio-titulo {

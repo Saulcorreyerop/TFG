@@ -82,17 +82,24 @@
   color-scheme: dark;
 
   /*
-   * Librea. El rojo baja de #E4322B a #D92E27: con el original, el texto
-   * blanco encima daba 4.38 de contraste y AA pide 4.5. La diferencia no
-   * se aprecia y afecta a todos los botones principales.
+   * Librea. El rojo ha bajado dos veces, y la primera se quedó corta.
    *
-   * --librea-texto es el rojo para TEXTO pequeño sobre fondo oscuro; el
-   * de los botones no llega por sí solo cuando va sin fondo detrás.
+   * De #E4322B se pasó a #D92E27 porque el texto blanco encima daba 4.38
+   * y AA pide 4.5. Pero #D92E27 da 4.37: prácticamente lo mismo. Medido
+   * en el despliegue, sobre la etiqueta de tipo de evento.
+   *
+   * Ahora #D02A24, que con #F4F4F3 encima da 4.69. La diferencia con el
+   * anterior no se aprecia a simple vista y arregla de una vez todo lo
+   * que lleva texto claro sobre rojo: botones principales, etiquetas y
+   * pines del mapa.
+   *
+   * --librea-texto es el rojo para TEXTO pequeño sobre fondo oscuro. Ese
+   * sigue siendo brillante, porque ahí el rojo es la tinta y no el fondo.
    */
-  --librea:       #D92E27;
+  --librea:       #D02A24;
   --librea-alta:  #FF5347;
   --librea-texto: #FF5347;
-  --librea-baja:  rgba(217, 46, 39, 0.14);
+  --librea-baja:  rgba(208, 42, 36, 0.14);
 
   /* Ambar para texto pequeno. El ambar de senal (#E0A93B) sobre carbono
      da 7:1 en oscuro, pero sobre blanco se queda en 2.1. */

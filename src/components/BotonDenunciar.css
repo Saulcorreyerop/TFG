@@ -24,7 +24,7 @@
 }
 
 .btn-denunciar:hover {
-  color: var(--librea);
+  color: var(--librea-texto);
   border-color: var(--librea);
 }
 
@@ -221,6 +221,6 @@
 }
 
 .denuncia-bloquear:hover {
-  color: var(--librea);
+  color: var(--librea-texto);
   border-color: var(--librea);
 }

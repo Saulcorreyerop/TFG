@@ -163,7 +163,7 @@
 
 .garage-btn.edit {
   background-color: var(--librea-baja) !important;
-  color: var(--librea) !important;
+  color: var(--librea-texto) !important;
 }
 
 .garage-btn.edit:hover {
@@ -173,7 +173,7 @@
 
 .garage-btn.delete {
   background-color: var(--librea-baja) !important;
-  color: var(--librea) !important;
+  color: var(--librea-texto) !important;
 }
 
 .garage-btn.delete:hover {

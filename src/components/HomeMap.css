@@ -117,7 +117,7 @@
 
 .radar-marco .leaflet-control-zoom a:hover {
   background: var(--carbono-alto) !important;
-  color: var(--librea) !important;
+  color: var(--librea-texto) !important;
 }
 
 .radar-marco .leaflet-control-attribution {
@@ -147,10 +147,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* El color va aquí y no solo en el icono. Antes el contenedor heredaba
+     --text-color, que en tema claro es casi negro, y cualquier texto que
+     cayera dentro salía oscuro sobre el rojo del pin: 3.16 de contraste.
+     El icono se salvaba porque tenía su propia regla. */
+  color: #f4f4f3;
 }
 
 .pin-cuerpo i {
-  color: #fff;
   font-size: 13px;
 }
 

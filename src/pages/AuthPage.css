@@ -158,14 +158,14 @@
   font-weight: 600;
 }
 .auth-switch-link {
-  color: var(--librea);
+  color: var(--librea-texto);
   font-weight: 800;
   cursor: pointer;
   transition: color 0.2s;
   margin-left: 0.5rem;
 }
 .auth-switch-link:hover {
-  color: var(--librea);
+  color: var(--librea-texto);
   text-decoration: underline;
 }
 
@@ -219,7 +219,7 @@
   font-size: 0.6875rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--librea);
+  color: var(--librea-texto);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -269,7 +269,7 @@
   background: var(--librea-baja);
   border: 1px solid var(--librea);
   border-radius: var(--r);
-  color: var(--librea);
+  color: var(--librea-texto);
   font-size: 0.875rem;
 }
 
@@ -306,7 +306,7 @@
   justify-content: center;
   border: 1px solid var(--librea);
   background: var(--librea-baja);
-  color: var(--librea);
+  color: var(--librea-texto);
   border-radius: var(--r);
 }
 

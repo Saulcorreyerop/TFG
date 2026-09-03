@@ -124,7 +124,7 @@
   background: var(--surface-hover);
   color: var(--text-color);
 }
-.p-button.p-button-text.p-button-danger { color: var(--librea); }
+.p-button.p-button-text.p-button-danger { color: var(--librea-texto); }
 .p-button.p-button-text.p-button-warning { color: var(--ambar); }
 .p-button.p-button-text.p-button-success { color: var(--verde); }
 .p-button.p-button-text.p-button-danger:not(:disabled):hover { background: var(--librea-baja); }
@@ -263,7 +263,7 @@
 .p-dropdown-item.p-highlight,
 .p-multiselect-item.p-highlight {
   background: var(--librea-baja);
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 
@@ -322,7 +322,7 @@
 
 .p-tag.p-tag-success { color: var(--verde); border-color: var(--verde); background: var(--verde-baja); }
 .p-tag.p-tag-warning { color: var(--ambar); border-color: var(--ambar); background: var(--ambar-baja); }
-.p-tag.p-tag-danger  { color: var(--librea); border-color: var(--librea); background: var(--librea-baja); }
+.p-tag.p-tag-danger  { color: var(--librea-texto); border-color: var(--librea); background: var(--librea-baja); }
 .p-tag.p-tag-info    { color: var(--texto-medio); }
 
 .p-avatar {
@@ -362,7 +362,7 @@
 
 .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
   background: var(--librea-baja);
-  color: var(--librea);
+  color: var(--librea-texto);
 }
 
 .p-progress-spinner-circle {
@@ -478,7 +478,15 @@
 .bg-blue-50, .bg-blue-100, .bg-purple-50, .bg-red-50 {
   background-color: var(--librea-baja) !important;
 }
-.bg-blue-600 { background-color: var(--librea) !important; }
+/* Fondo librea: el texto encima tiene que ser claro SIEMPRE, en los dos
+   temas. Sin la línea del color, una etiqueta con esta clase heredaba el
+   color de .p-tag, que es --text-color, y en tema claro eso es texto
+   oscuro sobre rojo: 3.16 de contraste. Se veía en el tipo de evento de
+   la ficha (`Stance`). */
+.bg-blue-600 {
+  background-color: var(--librea) !important;
+  color: #f4f4f3 !important;
+}
 
 .bg-green-50, .bg-green-100 { background-color: var(--verde-baja) !important; }
 .bg-green-500 { background-color: var(--verde) !important; }
