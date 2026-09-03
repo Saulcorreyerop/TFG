@@ -1,10 +1,10 @@
 -- =====================================================================
--- BLOQUE 08 — Sacar el correo de la tabla `profiles`
+-- BLOQUE 08 (v3) — Sacar el correo de la tabla `profiles`
 --
 -- QUÉ ARREGLA
 --
---   `profiles` es de lectura pública, y tiene una columna `email`. Ahora
---   mismo, sin cuenta ni nada, cualquiera puede pedir esto:
+--   `profiles` es de lectura pública, y tiene una columna `email`. Sin
+--   cuenta ni sesión, cualquiera puede pedir esto:
 --
 --     GET /rest/v1/profiles?select=email
 --
@@ -12,30 +12,41 @@
 --   brecha notificable. El correo seguirá existiendo en `auth.users`,
 --   que es donde tiene que estar y sí está protegida.
 --
--- ⚠️  ESTO VA DESPUÉS DE HACER MERGE A `main`. NO ANTES.
+-- POR QUÉ HAY UNA v3
 --
---   Las variables de entorno ya están puestas en Netlify, pero eso solo
---   sirve para el código que esté desplegado. Mientras carmeet.es siga
---   sirviendo la versión vieja, es el navegador quien resuelve el
---   usuario leyendo `profiles.email`. Si borras la columna antes del
---   merge, entrar con NOMBRE DE USUARIO deja de funcionar en el sitio
---   real. Entrar con el correo seguiría funcionando siempre.
+--   Las dos versiones anteriores fallaban con
 --
---   El despliegue de la rama `desarrollo` sí lleva el código nuevo, así
---   que allí no se nota. Es producción la que se queda atrás.
+--     ERROR: 42601: too many parameters specified for RAISE
 --
--- ES SEGURO: todo el bloque es una transacción. Si algo no cuadra,
--- aborta y no cambia nada.
+--   Aquí no queda ni un solo RAISE con cadena de formato. Los mensajes
+--   se guardan en una tabla temporal y salen como resultado de la
+--   consulta, y los abortos usan la forma RAISE ... USING MESSAGE, que
+--   no interpreta el texto. Así el error no puede volver a aparecer.
+--
+--   De paso se gana algo: el editor de Supabase no enseña los avisos de
+--   tipo NOTICE en ningún sitio visible, así que antes te habrías
+--   perdido lo que el script tenía que contarte. Ahora sale en la tabla
+--   de resultados, que es donde miras.
+--
+-- ⚠️  ESTO VA DESPUÉS DE HABER DESPLEGADO `main`. Si carmeet.es sirve
+--     todavía la versión vieja, entrar con NOMBRE DE USUARIO deja de
+--     funcionar. Con el correo funciona siempre.
+--
+-- ES SEGURO: todo es una transacción. Si algo no cuadra, aborta y no
+-- cambia nada.
 --
 -- Ejecuta TODO el bloque de una vez en el SQL Editor.
 -- =====================================================================
 
+create temp table if not exists _paso08 (n serial, mensaje text) on commit drop;
+truncate _paso08;
+
 do $$
 declare
-  v_def      text;
-  v_nuevo    text;
-  v_otras    text;
-  v_vistas   text;
+  v_def     text;
+  v_nuevo   text;
+  v_otras   text;
+  v_vistas  text;
 begin
   ------------------------------------------------------------------
   -- 1. ¿Sigue existiendo la columna?
@@ -45,7 +56,8 @@ begin
     where table_schema = 'public' and table_name = 'profiles'
       and column_name = 'email'
   ) then
-    raise notice 'La columna profiles.email ya no existe. Nada que hacer.';
+    insert into _paso08 (mensaje)
+    values ('La columna profiles.email ya no existe. No habia nada que hacer.');
     return;
   end if;
 
@@ -60,9 +72,9 @@ begin
     and p.prosrc ~* '\yprofiles\y[^;]*\yemail\y';
 
   if v_otras is not null then
-    raise exception
-      'Estas funciones tambien tocan profiles.email: %. Pasamelas antes de seguir.',
-      v_otras;
+    raise exception using message =
+      'ABORTADO. Estas funciones tambien tocan profiles.email: '
+      || v_otras || '. Pasamelas antes de seguir.';
   end if;
 
   ------------------------------------------------------------------
@@ -79,16 +91,16 @@ begin
     and c.relkind in ('v', 'm');
 
   if v_vistas is not null then
-    raise exception 'Estas vistas dependen de profiles.email: %', v_vistas;
+    raise exception using message =
+      'ABORTADO. Estas vistas dependen de profiles.email: ' || v_vistas;
   end if;
 
   ------------------------------------------------------------------
   -- 4. Quitar el correo de handle_new_user
   --
-  -- No se reescribe la función a mano porque no sabemos qué más hace.
-  -- Se coge su definición real, se le quitan las dos apariciones del
+  -- No se reescribe la función a mano porque no sabemos todo lo que
+  -- hace. Se coge su definición real, se le quitan las apariciones del
   -- correo, y solo se aplica si el resultado ya no menciona ninguno.
-  -- Si el cuerpo no es el esperado, esto aborta sin tocar nada.
   ------------------------------------------------------------------
   select pg_get_functiondef(p.oid) into v_def
   from pg_proc p
@@ -96,25 +108,24 @@ begin
   where n.nspname = 'public' and p.proname = 'handle_new_user';
 
   if v_def is null then
-    raise exception 'No existe public.handle_new_user';
+    raise exception using message = 'ABORTADO. No existe public.handle_new_user';
   end if;
 
-  /* Un solo % : es el hueco donde entra el argumento. Estaba escrito
-     %%, que en RAISE significa "un signo de porcentaje literal", asi que
-     no habia hueco para el argumento y Postgres abortaba la compilacion
-     entera con "too many parameters specified for RAISE". */
-  raise notice 'Definicion actual de handle_new_user:%', chr(10) || v_def;
+  insert into _paso08 (mensaje)
+  values ('--- handle_new_user ANTES ---' || chr(10) || v_def);
 
-  -- Primero new.email, que contiene la palabra email dentro
-  v_nuevo := regexp_replace(v_def, '\s*\ynew\.email\y\s*,', '', 'gi');
+  -- Primero new.email, que lleva la palabra email dentro
+  v_nuevo := regexp_replace(v_def,   '\s*\ynew\.email\y\s*,', '', 'gi');
   v_nuevo := regexp_replace(v_nuevo, ',\s*\ynew\.email\y\s*', '', 'gi');
   -- Después el nombre de columna suelto
   v_nuevo := regexp_replace(v_nuevo, '\s*\yemail\y\s*,', '', 'gi');
   v_nuevo := regexp_replace(v_nuevo, ',\s*\yemail\y\s*', '', 'gi');
 
   if v_nuevo ~* '\yemail\y' then
-    raise exception
-      'No he sabido quitar el correo de handle_new_user. Copiame la definicion que aparece arriba en Notices.';
+    raise exception using message =
+      'ABORTADO, y no he tocado nada. No se como quitar el correo de esta '
+      || 'funcion sin romperla. Copiame esto tal cual y te la reescribo: '
+      || chr(10) || v_def;
   end if;
 
   -- De paso, fijar el search_path si no lo tenía
@@ -128,39 +139,40 @@ begin
   end if;
 
   execute v_nuevo;
-  raise notice 'handle_new_user actualizada.';
+
+  insert into _paso08 (mensaje)
+  values ('--- handle_new_user DESPUES ---' || chr(10) || v_nuevo);
 
   ------------------------------------------------------------------
   -- 5. Fuera la columna
   ------------------------------------------------------------------
   alter table public.profiles drop column email;
-  raise notice 'Columna profiles.email eliminada.';
+
+  insert into _paso08 (mensaje) values ('Columna profiles.email ELIMINADA.');
 end $$;
 
--- Comprobación final: esto es lo único que verás en la tabla de resultados.
-select jsonb_build_object(
-  'columna_email_sigue',
-    exists (
-      select 1 from information_schema.columns
-      where table_schema = 'public' and table_name = 'profiles'
-        and column_name = 'email'
-    ),
-  'handle_new_user_menciona_email',
-    coalesce((
-      select p.prosrc ~* '\yemail\y'
-      from pg_proc p
-      join pg_namespace n on n.oid = p.pronamespace
-      where n.nspname = 'public' and p.proname = 'handle_new_user'
-    ), false),
-  'handle_new_user_con_search_path',
-    coalesce((
-      select p.proconfig::text like '%search_path%'
-      from pg_proc p
-      join pg_namespace n on n.oid = p.pronamespace
-      where n.nspname = 'public' and p.proname = 'handle_new_user'
-    ), false),
-  'columnas_de_profiles',
-    (select string_agg(column_name, ', ' order by ordinal_position)
-     from information_schema.columns
-     where table_schema = 'public' and table_name = 'profiles')
-) as resultado;
+-- --- Resultado: esto es lo que verás en la tabla de abajo ------------
+select
+  (select string_agg(mensaje, chr(10) || chr(10) order by n) from _paso08)
+    as lo_que_ha_pasado,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'profiles'
+      and column_name = 'email'
+  ) as sigue_la_columna_email,
+  coalesce((
+    select p.prosrc ~* '\yemail\y'
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'handle_new_user'
+  ), false) as handle_new_user_menciona_email,
+  coalesce((
+    select p.proconfig::text like '%search_path%'
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'handle_new_user'
+  ), false) as handle_new_user_con_search_path,
+  (select string_agg(column_name, ', ' order by ordinal_position)
+   from information_schema.columns
+   where table_schema = 'public' and table_name = 'profiles')
+    as columnas_de_profiles;
