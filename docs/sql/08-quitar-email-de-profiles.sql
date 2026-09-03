@@ -12,15 +12,17 @@
 --   brecha notificable. El correo seguirá existiendo en `auth.users`,
 --   que es donde tiene que estar y sí está protegida.
 --
--- ⚠️  ANTES DE EJECUTAR ESTO, HAZ LAS DOS COSAS:
+-- ⚠️  ESTO VA DESPUÉS DE HACER MERGE A `main`. NO ANTES.
 --
---   1. Despliega la rama con el commit del login por usuario.
---   2. En Netlify, Site settings → Environment variables, añade:
---        SUPABASE_ANON_KEY          (Supabase → API → publishable)
---        SUPABASE_SERVICE_ROLE_KEY  (Supabase → API → service_role)
+--   Las variables de entorno ya están puestas en Netlify, pero eso solo
+--   sirve para el código que esté desplegado. Mientras carmeet.es siga
+--   sirviendo la versión vieja, es el navegador quien resuelve el
+--   usuario leyendo `profiles.email`. Si borras la columna antes del
+--   merge, entrar con NOMBRE DE USUARIO deja de funcionar en el sitio
+--   real. Entrar con el correo seguiría funcionando siempre.
 --
---   Si ejecutas esto sin lo anterior, entrar con NOMBRE DE USUARIO deja
---   de funcionar. Entrar con el correo seguiría funcionando siempre.
+--   El despliegue de la rama `desarrollo` sí lleva el código nuevo, así
+--   que allí no se nota. Es producción la que se queda atrás.
 --
 -- ES SEGURO: todo el bloque es una transacción. Si algo no cuadra,
 -- aborta y no cambia nada.
@@ -97,7 +99,11 @@ begin
     raise exception 'No existe public.handle_new_user';
   end if;
 
-  raise notice 'Definicion actual de handle_new_user:%%', chr(10) || v_def;
+  /* Un solo % : es el hueco donde entra el argumento. Estaba escrito
+     %%, que en RAISE significa "un signo de porcentaje literal", asi que
+     no habia hueco para el argumento y Postgres abortaba la compilacion
+     entera con "too many parameters specified for RAISE". */
+  raise notice 'Definicion actual de handle_new_user:%', chr(10) || v_def;
 
   -- Primero new.email, que contiene la palabra email dentro
   v_nuevo := regexp_replace(v_def, '\s*\ynew\.email\y\s*,', '', 'gi');
