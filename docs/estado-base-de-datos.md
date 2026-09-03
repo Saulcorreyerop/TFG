@@ -3,7 +3,7 @@
 Bitácora del trabajo sobre Supabase. Se actualiza cada vez que se toca algo
 en el proyecto `stryumcmeavlvjaamcaw`.
 
-**Última revisión:** 2026-09-03
+**Última revisión:** 2026-09-03 (segunda vuelta)
 
 ---
 
@@ -12,10 +12,10 @@ en el proyecto `stryumcmeavlvjaamcaw`.
 | Área | Estado |
 |---|---|
 | RLS en tablas | ✅ Activo en las 15 tablas |
-| Políticas de escritura en Storage | ✅ 7 de 8 comprueban propietario |
+| Políticas de escritura en Storage | ⚠️ Código listo, falta ejecutar el bloque 9 |
 | Índices | ✅ 16 añadidos |
 | Funciones `SECURITY DEFINER` | ⚠️ 3 de 4 con `search_path` fijado |
-| Email en `profiles` | ❌ Legible por anónimos |
+| Email en `profiles` | ⚠️ Código listo, falta ejecutar el bloque 8 |
 | Clave de OneSignal | ✅ Rotada, en variables de Netlify |
 | Chat de crew | ✅ Solo miembros aprobados (bloque 7) |
 
@@ -98,73 +98,87 @@ de entorno de Netlify.
 
 ## Pendiente
 
+Los tres bloques de abajo están **en este orden a propósito**. Cada uno
+necesita que el código esté desplegado antes, o rompe algo en producción.
+
+### Orden de ejecución
+
+| Paso | Qué | Dónde |
+|---|---|---|
+| 1 | Desplegar la rama `desarrollo` | Netlify |
+| 2 | Añadir `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` | Netlify |
+| 3 | Bloque 5: limpiar `send_onesignal_notification` | SQL Editor |
+| 4 | Bloque 8: sacar el email de `profiles` | SQL Editor |
+| 5 | Bloque 9: cerrar el bucket `event-images` | SQL Editor |
+
 ### 1. `send_onesignal_notification` — bloque 5 sin ejecutar
 
-Sigue apareciendo en `pg_proc` sin `search_path`, y guarda la clave vieja
-en su definición. Con la clave rotada ya no es explotable, pero hay que
-limpiarlo.
+Sigue en `pg_proc` sin `search_path`, y guarda la clave vieja de
+OneSignal en su propia definición. Con la clave rotada ya no es
+explotable, pero hay que limpiarlo. El script comprueba si algún trigger
+u otra función la usa: si no, la borra; si sí, aborta y lo dice.
 
-El script comprueba solo si algún trigger la usa: si no, la borra; si sí,
-avisa para recrearla leyendo de Vault.
+### 2. Email en `profiles` — bloque 8
 
-### 2. Email en `profiles` — el que queda de verdad
+Confirmado en vivo: `GET /rest/v1/profiles?select=email` devuelve el
+correo de todos los registrados, sin sesión. Bajo RGPD es una brecha
+notificable.
 
-```
-profiles  SELECT  roles: public  using: true
-profiles  columnas: id, username, email, ...
-```
+Ya no hace falta la columna. `netlify/functions/loginUsuario.js`
+resuelve la entrada por nombre de usuario en el servidor y solo devuelve
+los tokens de sesión. Mientras falten las variables de entorno responde
+501 y el navegador usa el camino antiguo, así que se puede desplegar sin
+romper nada.
 
-Lectura anónima sobre una tabla que contiene `email`. Cualquiera puede
-volcar el correo de todos los usuarios con una llamada a la API REST. Bajo
-RGPD es una brecha notificable.
+**No sirve una función RPC** que devuelva el correo dado el usuario: los
+nombres de usuario son públicos, están en /comunidad, así que se pasaría
+de "descárgalos todos de golpe" a "descárgalos de uno en uno".
 
-Viene de `handle_new_user`, que copia el email al crear el perfil:
+El bloque 8 se transforma solo: coge la definición real de
+`handle_new_user`, le quita el correo, comprueba que el resultado ya no
+lo menciona, y solo entonces lo aplica. Si no reconoce el cuerpo, aborta
+sin tocar nada.
 
-```sql
-insert into public.profiles (id, email, username)
-values (new.id, new.email, new.raw_user_meta_data ->> 'username');
-```
+### 3. Bucket `event-images` — bloque 9
 
-Y lo consume `AuthPage`, que resuelve el login por nombre de usuario
-leyendo `profiles.email` desde el navegador.
+Último bucket con las políticas de escritura abiertas. El código ya sube
+a `${user_id}/${uuid}.webp`, así que la política de propietario por
+carpeta ya se puede aplicar.
 
-**Plan:** función RPC `SECURITY DEFINER` que reciba el nombre de usuario y
-devuelva solo el email al motor de login → cambiar `AuthPage` para usarla →
-quitar `email` de `handle_new_user` → eliminar la columna.
-
-La base está casi vacía (unos 10 perfiles de prueba), así que el cambio de
-esquema es gratis ahora y caro dentro de seis meses.
-
-### 3. Bucket `event-images` — necesita cambio de código primero
-
-Su política de subida sigue sin comprobar propietario, y no se puede
-arreglar igual que las demás porque el código sube a ruta plana:
-
-```js
-// AddEventDialog.jsx
-const fileName = `${Date.now()}.${fileExt}`
-```
-
-Tres problemas: sin carpeta de usuario no hay forma de comprobar propiedad,
-dos usuarios que suban en el mismo milisegundo se pisan el archivo, y
-conserva la extensión original.
-
-**Plan:** pasar a `${session.user.id}/${crypto.randomUUID()}.webp`,
-desplegar, y luego aplicar las políticas de propietario.
+Las fotos que ya están en la raíz seguirán viéndose, pero nadie podrá
+borrarlas desde la web. Son de pruebas: se limpian desde el panel.
 
 ### 4. Borrar el bucket `vehicle-images`
 
-Sin políticas ya es inerte, pero sigue existiendo. Se borra desde el panel:
-*Storage → vehicle-images → Delete bucket*. Supabase no permite hacerlo por
-SQL (`protect_delete()`).
+Sin políticas ya es inerte, pero sigue existiendo. Se borra desde el
+panel: *Storage → vehicle-images → Delete bucket*. Supabase no permite
+hacerlo por SQL (`protect_delete()`).
 
 ### 5. Archivos huérfanos al borrar una cuenta
 
-`delete_user_as_admin` limpia las tablas pero no los archivos del usuario
-en Storage: su avatar y las fotos de sus coches se quedan en los buckets.
-Para el derecho de supresión del RGPD hay que limpiarlos, y eso se hace
-desde la Storage API, no desde SQL.
+`delete_user_as_admin` limpia las tablas pero no los archivos del
+usuario en Storage: su avatar y las fotos de sus coches se quedan en los
+buckets. Para el derecho de supresión del RGPD hay que limpiarlos, y eso
+se hace desde la Storage API, no desde SQL.
 
+### 6. Miniaturas: no están disponibles en este plan
+
+Supabase puede redimensionar al vuelo cambiando `/object/public/` por
+`/render/image/public/`. Sería lo suyo para las tarjetas, que hoy
+descargan la imagen de 1920 píxeles para pintarla a 300. Comprobado
+contra el proyecto:
+
+```
+403 {"error":"FeatureNotEnabled","message":"feature not enabled for this tenant"}
+```
+
+Es de plan de pago. La vía gratis es generar la miniatura en el
+navegador al subir y guardar dos archivos.
+
+### 7. Sin copias de seguridad
+
+El plan gratuito no tiene recuperación a un punto en el tiempo. Un
+volcado semanal a un bucket es barato y evita un mal día.
 
 ---
 
