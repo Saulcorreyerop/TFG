@@ -59,9 +59,25 @@ const AnimatedRoutes = ({ session }) => {
     window.scrollTo(0, 0)
   }, [location.pathname])
 
+  /*
+   * OJO CON EL ORDEN DE ESTOS TRES.
+   *
+   * ErrorBoundary tiene que ir POR FUERA de AnimatePresence.
+   *
+   * Estuvo por dentro y con key={location.pathname}, y eso dejaba la web
+   * sin poder navegar: al pulsar en el menú cambiaba la URL pero la
+   * página no. AnimatePresence en modo 'wait' espera a que su hijo
+   * directo termine su animación de salida antes de montar el siguiente,
+   * y solo sabe hacerlo con componentes de framer-motion. ErrorBoundary
+   * es una clase normal: nunca avisaba de que había terminado, así que
+   * la siguiente ruta no se montaba jamás.
+   *
+   * La key se conserva aquí fuera, que es lo que hace que un fallo en una
+   * página no deje rota la siguiente.
+   */
   return (
-    <AnimatePresence mode='wait'>
-      <ErrorBoundary key={location.pathname}>
+    <ErrorBoundary key={location.pathname}>
+      <AnimatePresence mode='wait'>
       <Suspense fallback={<div className='flex align-items-center justify-content-center min-h-screen surface-ground'><ProgressSpinner strokeWidth='4' /></div>}>
         <Routes location={location} key={location.pathname}>
           <Route path='/' element={<HomePage session={session} />} />
@@ -87,8 +103,8 @@ const AnimatedRoutes = ({ session }) => {
           <Route path='*' element={<NotFoundPage />} />
         </Routes>
       </Suspense>
-      </ErrorBoundary>
-    </AnimatePresence>
+      </AnimatePresence>
+    </ErrorBoundary>
   )
 }
 
