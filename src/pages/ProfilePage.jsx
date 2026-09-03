@@ -217,7 +217,7 @@ const ProfilePage = ({ session }) => {
 
     const { data: profData } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, username, created_at, avatar_url, updated_at, bio, is_admin, instagram, twitter, tiktok, youtube')
       .eq('id', uid)
       .single()
 

@@ -50,7 +50,7 @@ const AdminPage = ({ session }) => {
       const [usersRes, eventsRes, vehiclesRes] = await Promise.all([
         supabase
           .from('profiles')
-          .select('*')
+          .select('id, username, created_at, avatar_url, updated_at, bio, is_admin, instagram, twitter, tiktok, youtube')
           .order('created_at', { ascending: false }),
         supabase
           .from('events')
@@ -401,7 +401,6 @@ const AdminPage = ({ session }) => {
                   className='p-datatable-sm'
                 >
                   <Column field='username' header='Usuario' sortable></Column>
-                  <Column field='email' header='Email' sortable></Column>
                   <Column
                     field='is_admin'
                     header='Rol'

@@ -87,7 +87,7 @@ const EventDetailPage = ({ session }) => {
         if (userIds.length > 0) {
           const { data: profilesData } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, username, avatar_url')
             .in('id', userIds)
           setComments(
             data.map((c) => ({
@@ -113,7 +113,7 @@ const EventDetailPage = ({ session }) => {
         if (userIds.length > 0) {
           const { data: profilesData } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, username, avatar_url')
             .in('id', userIds)
           setAttendees(
             data.map((att) => ({

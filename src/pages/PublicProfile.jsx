@@ -222,7 +222,7 @@ const PublicProfile = () => {
 
       const { data: prof, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, username, created_at, avatar_url, bio, instagram, twitter, tiktok, youtube')
         .eq(esUuid ? 'id' : 'username', identifier)
         .maybeSingle()
 

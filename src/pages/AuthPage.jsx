@@ -57,37 +57,86 @@ const AuthPage = ({ session }) => {
     }
   }, [location.state])
 
+  /*
+   * Entrada con nombre de usuario.
+   *
+   * Antes esto se resolvía aquí, en el navegador, leyendo la columna
+   * `email` de `profiles`. Esa columna hacía que el correo de todos los
+   * usuarios fuese descargable por cualquiera con una sola petición a la
+   * API. Ahora lo hace netlify/functions/loginUsuario.js, que busca el
+   * correo en el servidor y devuelve solo los tokens de sesión.
+   */
+  const entrarConUsuario = async (usuario, password) => {
+    const res = await fetch('/.netlify/functions/loginUsuario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, password }),
+    })
+
+    const tipo = res.headers.get('content-type') || ''
+    const datos = tipo.includes('application/json')
+      ? await res.json().catch(() => ({}))
+      : null
+
+    /* Dos casos en los que la función no está disponible: en `npm run
+       dev` no existe (responde el index.html de Vite), y en Netlify
+       responde 501 mientras falten las variables de entorno. En ambos se
+       usa el camino antiguo, que sigue funcionando hasta que se elimine
+       la columna. */
+    if (datos === null || (res.status === 501 && datos.sinConfigurar)) {
+      return entrarLeyendoPerfiles(usuario, password)
+    }
+
+    if (!res.ok || !datos.access_token) {
+      throw new Error(datos.error || 'Usuario o contraseña incorrectos.')
+    }
+
+    const { error } = await supabase.auth.setSession({
+      access_token: datos.access_token,
+      refresh_token: datos.refresh_token,
+    })
+    if (error) throw error
+  }
+
+  /* Camino antiguo. Se puede borrar en cuanto `profiles.email` deje de
+     existir y las variables estén puestas en Netlify. */
+  const entrarLeyendoPerfiles = async (usuario, password) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('username', usuario)
+      .maybeSingle()
+
+    if (error || !data?.email) {
+      throw new Error('Usuario o contraseña incorrectos.')
+    }
+
+    const { error: fallo } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password,
+    })
+    if (fallo) throw fallo
+  }
+
   // --- LOGIN ---
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // 🚀 LIMPIEZA: Quitamos espacios al correo/usuario
-      let inputLimpio = loginInput.trim()
-      let emailToUse = inputLimpio
+      const entrada = loginInput.trim()
 
-      if (!inputLimpio.includes('@')) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('username', inputLimpio)
-          .single()
-
-        if (error || !data) {
-          throw new Error('Usuario no encontrado. Intenta con tu correo.')
+      if (entrada.includes('@')) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: entrada,
+          password: loginPassword,
+        })
+        if (error) {
+          setLoading(false)
+          throw error
         }
-        emailToUse = data.email
-      }
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email: emailToUse,
-        password: loginPassword,
-      })
-
-      if (error) {
-        setLoading(false)
-        throw error
+      } else {
+        await entrarConUsuario(entrada, loginPassword)
       }
 
       toast.current.show({
