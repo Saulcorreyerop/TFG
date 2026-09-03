@@ -10,6 +10,7 @@ import { TabView, TabPanel } from 'primereact/tabview'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { ShieldAlert, Trash2, ExternalLink, Shield, UserX } from 'lucide-react'
 import PageTransition from '../components/PageTransition'
+import ColaModeracion from '../components/ColaModeracion'
 
 const AdminPage = ({ session }) => {
   const navigate = useNavigate()
@@ -331,6 +332,13 @@ const AdminPage = ({ session }) => {
 
           <div className='card surface-card p-4 border-round-2xl shadow-2'>
             <TabView>
+              {/* Primera a proposito: las denuncias son lo unico que
+                  caduca. Un evento mal puesto espera; un mensaje de odio
+                  en el chat, no. */}
+              <TabPanel header='Denuncias' leftIcon='pi pi-flag mr-2'>
+                <ColaModeracion session={session} toast={toast} />
+              </TabPanel>
+
               <TabPanel header='Eventos' leftIcon='pi pi-calendar mr-2'>
                 <DataTable
                   value={events}

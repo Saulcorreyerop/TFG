@@ -63,7 +63,7 @@ const fechaLarga = (f) =>
 
 /* --- Coche con respetos --- */
 
-const TarjetaCoche = ({ vehiculo, onAbrir, onRespeto }) => {
+const TarjetaCoche = ({ vehiculo, onAbrir, onRespeto, session, autor }) => {
   const [roto, setRoto] = useState(false)
   const fotos = 1 + (vehiculo.vehicle_images?.length || 0)
 
@@ -112,9 +112,30 @@ const TarjetaCoche = ({ vehiculo, onAbrir, onRespeto }) => {
       </div>
 
       <div className='pf-coche-cuerpo'>
-        <h3 className='pf-coche-titulo'>
-          {vehiculo.marca} {vehiculo.modelo}
-        </h3>
+        <div className='pf-coche-cabeza'>
+          <h3 className='pf-coche-titulo'>
+            {vehiculo.marca} {vehiculo.modelo}
+          </h3>
+          {/* Denunciar un coche: fotos robadas de otro perfil, matriculas
+              a la vista, publicidad de venta. El clic no debe abrir la
+              galeria, de ahi el stopPropagation. */}
+          {session && vehiculo.user_id !== session.user.id && (
+            <span
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role='presentation'
+            >
+              <BotonDenunciar
+                tipo='vehiculo'
+                id={vehiculo.id}
+                autorId={vehiculo.user_id}
+                autor={autor || 'este usuario'}
+                session={session}
+                compacto
+              />
+            </span>
+          )}
+        </div>
 
         <div className='pf-telemetria'>
           <div className='pf-dato'>
@@ -662,6 +683,8 @@ const PublicProfile = () => {
                     vehiculo={v}
                     onAbrir={abrirGaleria}
                     onRespeto={darRespeto}
+                    session={session}
+                    autor={profile.username}
                   />
                 ))}
               </div>

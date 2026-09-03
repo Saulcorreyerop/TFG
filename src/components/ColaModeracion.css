@@ -1,0 +1,89 @@
+/* =========================================================================
+   Cola de moderación — pestaña del panel de administración
+   ========================================================================= */
+
+.cmod {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+.cmod-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--e4);
+}
+
+.cmod-cargando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 16rem;
+}
+
+/* --- Celdas --- */
+
+.cmod-tipo {
+  display: inline-block;
+  padding: 0.15rem var(--e3);
+  border: 1px solid var(--linea-viva);
+  border-radius: var(--r);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+  white-space: nowrap;
+}
+
+.cmod-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-width: 14rem;
+}
+
+/* El texto denunciado. Se corta a tres líneas: la cola es para decidir
+   rápido, no para leer una novela. */
+.cmod-texto {
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Lo que escribió quien denuncia, que es distinto del contenido */
+.cmod-detalle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--texto-tenue);
+  border-left: 2px solid var(--librea);
+  padding-left: var(--e3);
+}
+
+.cmod-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+}
+
+/* El enlace envuelve un botón: sin esto hereda el subrayado y el color
+   de enlace del tema. */
+.cmod-acciones a {
+  display: inline-flex;
+  text-decoration: none;
+  color: inherit;
+}
+
+@media (max-width: 40rem) {
+  .cmod-barra {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -37,6 +37,7 @@ import './EventDetailPage.css'
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 import { subirImagen } from '../utils/subirImagen'
+import BotonDenunciar from '../components/BotonDenunciar'
 
 const MotionDiv = motion.div
 
@@ -635,12 +636,26 @@ const EventDetailPage = ({ session }) => {
               >
                 <ArrowLeft size={24} />
               </Button>
-              <Button
-                className='p-button-rounded surface-card text-color border-none shadow-3 hover:scale-110 transition-transform duration-300'
-                onClick={handleShare}
-              >
-                <Share2 size={20} />
-              </Button>
+              <div className='flex align-items-center gap-2'>
+                {/* Denunciar el evento en si: fotos que no son del
+                    evento, quedadas inventadas, publicidad encubierta. */}
+                {session && event.user_id !== session.user.id && (
+                  <BotonDenunciar
+                    tipo='evento'
+                    id={event.id}
+                    autorId={event.user_id}
+                    autor={event.profiles?.username || 'el organizador'}
+                    session={session}
+                    compacto
+                  />
+                )}
+                <Button
+                  className='p-button-rounded surface-card text-color border-none shadow-3 hover:scale-110 transition-transform duration-300'
+                  onClick={handleShare}
+                >
+                  <Share2 size={20} />
+                </Button>
+              </div>
             </div>
 
             <div className='absolute bottom-0 left-0 w-full p-5 md:p-8 z-3'>
@@ -850,9 +865,21 @@ const EventDetailPage = ({ session }) => {
                               >
                                 {c.profiles?.username}
                               </span>
-                              <span className='text-xs text-color-secondary font-bold surface-hover px-3 py-1 border-round-2xl'>
-                                {new Date(c.created_at).toLocaleDateString()}
-                              </span>
+                              <div className='flex align-items-center gap-2'>
+                                <span className='text-xs text-color-secondary font-bold surface-hover px-3 py-1 border-round-2xl'>
+                                  {new Date(c.created_at).toLocaleDateString()}
+                                </span>
+                                {session && c.user_id !== session.user.id && (
+                                  <BotonDenunciar
+                                    tipo='comentario'
+                                    id={c.id}
+                                    autorId={c.user_id}
+                                    autor={c.profiles?.username || 'este usuario'}
+                                    session={session}
+                                    compacto
+                                  />
+                                )}
+                              </div>
                             </div>
                             <p className='m-0 text-color-secondary line-height-4 text-md'>
                               {c.content}

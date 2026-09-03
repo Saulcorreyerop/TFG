@@ -429,6 +429,20 @@
   flex: 1;
 }
 
+/* Título del coche y, a su derecha, el botón de denunciar. Va aquí y no
+   sobre la foto porque ahí ya están el contador de fotos y el respeto, y
+   en móvil los tres se amontonaban en la misma esquina. */
+.pf-coche-cabeza {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e3);
+}
+
+.pf-coche-cabeza > span {
+  flex-shrink: 0;
+}
+
 .pf-coche-titulo {
   font-family: var(--display);
   font-weight: 700;
