@@ -34,6 +34,12 @@
 /robots.txt
   Cache-Control: public, max-age=3600
 
+# Descripción del sitio para modelos de lenguaje, en la ruta que se está
+# asentando como convención.
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600
+
 /manifest.json
   Cache-Control: public, max-age=3600
 

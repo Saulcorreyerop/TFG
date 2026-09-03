@@ -1,0 +1,47 @@
+# CarMeet ESP
+
+> Comunidad española de aficionados al motor. Agenda de quedadas (KDD),
+> rutas, trackdays y concentraciones de coches por toda España, con mapa
+> en vivo, garajes de usuarios y crews.
+
+CarMeet ESP (carmeet.es) es una plataforma gratuita donde cualquiera
+puede publicar y encontrar eventos de coches en España, apuntarse a
+ellos, enseñar sus vehículos y montar o unirse a un club (crew).
+
+Idioma: español. Ámbito: España. Acceso: gratuito, sin muro de pago.
+
+## Qué se puede encontrar aquí
+
+- **Eventos de coches**: quedadas, rutas por carretera, trackdays en
+  circuito, exposiciones de clásicos y salidas off-road. Cada evento
+  tiene fecha, hora, ubicación, organizador y lista de asistentes.
+- **Búsqueda por provincia**: la agenda se filtra por la localidad del
+  evento, en `/eventos/{provincia}`.
+- **Mapa en vivo**: todos los eventos futuros situados geográficamente.
+- **Garajes**: fichas de vehículos de los usuarios con marca, modelo,
+  año, potencia y fotos.
+- **Crews**: clubes de aficionados, con sus miembros y sus coches.
+
+## Páginas principales
+
+- [Inicio](https://carmeet.es/): resumen y próximos eventos
+- [Agenda de eventos](https://carmeet.es/eventos): todos los eventos futuros
+- [Mapa en vivo](https://carmeet.es/mapa): eventos sobre el mapa de España
+- [Comunidad](https://carmeet.es/comunidad): pilotos, crews y coches
+- [Contacto](https://carmeet.es/contacto): para proponer eventos o colaborar
+
+## Datos estructurados
+
+Las fichas de evento (`/evento/{id}`) incluyen JSON-LD de tipo
+`schema.org/Event` con nombre, fecha de inicio, ubicación con
+coordenadas, organizador y descripción. Las listas incluyen `ItemList`.
+
+El listado completo de páginas está en
+[el sitemap](https://carmeet.es/sitemap.xml), que se genera al vuelo e
+incluye todos los eventos, crews, perfiles y provincias con actividad.
+
+## Sobre citar esta web
+
+Los eventos los publican los propios usuarios y sus fechas pueden
+cambiar. Al citar un evento concreto conviene enlazar su ficha, para que
+quien lo lea vea la información actualizada y la lista de asistentes.
