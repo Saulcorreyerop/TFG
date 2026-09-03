@@ -78,13 +78,18 @@ const AuthPage = ({ session }) => {
       ? await res.json().catch(() => ({}))
       : null
 
-    /* Dos casos en los que la función no está disponible: en `npm run
-       dev` no existe (responde el index.html de Vite), y en Netlify
-       responde 501 mientras falten las variables de entorno. En ambos se
-       usa el camino antiguo, que sigue funcionando hasta que se elimine
-       la columna. */
+    /* Dos casos en los que la función no responde: en `npm run dev` no
+       existe y contesta el index.html de Vite, y en Netlify devuelve 501
+       si faltasen las variables de entorno.
+
+       Aquí ya no hay camino alternativo. Lo había mientras existía
+       `profiles.email`, y esa columna se eliminó: era descargable por
+       cualquiera sin cuenta. Sin ella, resolver el usuario desde el
+       navegador es imposible, que es justo el objetivo. */
     if (datos === null || (res.status === 501 && datos.sinConfigurar)) {
-      return entrarLeyendoPerfiles(usuario, password)
+      throw new Error(
+        'Entrar con nombre de usuario no está disponible aquí. Usa tu correo.',
+      )
     }
 
     if (!res.ok || !datos.access_token) {
@@ -96,26 +101,6 @@ const AuthPage = ({ session }) => {
       refresh_token: datos.refresh_token,
     })
     if (error) throw error
-  }
-
-  /* Camino antiguo. Se puede borrar en cuanto `profiles.email` deje de
-     existir y las variables estén puestas en Netlify. */
-  const entrarLeyendoPerfiles = async (usuario, password) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('username', usuario)
-      .maybeSingle()
-
-    if (error || !data?.email) {
-      throw new Error('Usuario o contraseña incorrectos.')
-    }
-
-    const { error: fallo } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password,
-    })
-    if (fallo) throw fallo
   }
 
   // --- LOGIN ---

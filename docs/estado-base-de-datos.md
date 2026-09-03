@@ -3,7 +3,7 @@
 Bitácora del trabajo sobre Supabase. Se actualiza cada vez que se toca algo
 en el proyecto `stryumcmeavlvjaamcaw`.
 
-**Última revisión:** 2026-09-04
+**Última revisión:** 2026-09-04 (bloque 8 ejecutado)
 
 ---
 
@@ -15,7 +15,7 @@ en el proyecto `stryumcmeavlvjaamcaw`.
 | Políticas de escritura en Storage | ✅ Los 4 buckets comprueban propietario (bloque 9) |
 | Índices | ✅ 16 añadidos |
 | Funciones `SECURITY DEFINER` | ✅ Las 3 que quedan, con `search_path` (bloque 5) |
-| Email en `profiles` | ❌ Falta el bloque 8, que va después del merge a `main` |
+| Email en `profiles` | ✅ Columna eliminada (bloque 8) |
 | Clave de OneSignal | ✅ Rotada, en variables de Netlify |
 | Chat de crew | ✅ Solo miembros aprobados (bloque 7) |
 
@@ -106,6 +106,38 @@ que carmeet.es está sirviendo todavía el código que sube a ruta plana
 evento nuevo falla en producción hasta que se despliegue el código nuevo.
 El despliegue de `desarrollo` no tiene el problema.
 
+### Bloque 8 ejecutado — el correo fuera de `profiles`
+
+Era la última brecha de datos. `GET /rest/v1/profiles?select=email`
+devolvía el correo de todos los registrados, sin sesión. Comprobado
+después: la API responde `column profiles.email does not exist`, y
+`select=*` ya no lo trae.
+
+`handle_new_user` quedó así, y el script lo transformó solo:
+
+```sql
+-- antes
+insert into public.profiles (id, email, username)
+values (new.id, new.email, new.raw_user_meta_data ->> 'username');
+
+-- después
+insert into public.profiles (id, username)
+values (new.id, new.raw_user_meta_data ->> 'username');
+```
+
+La entrada por nombre de usuario la resuelve ahora
+`netlify/functions/loginUsuario.js` en el servidor. Comprobado en
+producción: un usuario que no existe y un usuario real con contraseña
+incorrecta devuelven exactamente el mismo mensaje, así que el endpoint
+no sirve para averiguar qué cuentas hay.
+
+Al bloque le hicieron falta tres versiones. Las dos primeras morían con
+`too many parameters specified for RAISE` y no conseguí reproducirlo,
+así que la tercera quitó el mecanismo entero: los abortos usan
+`RAISE ... USING MESSAGE`, que no interpreta el texto, y los mensajes
+informativos salen en una tabla temporal. Que además es mejor, porque el
+editor de Supabase no enseña los avisos `NOTICE` en ningún sitio.
+
 ### OneSignal
 
 La clave REST estaba escrita en texto plano dentro del cuerpo de
@@ -116,45 +148,9 @@ de entorno de Netlify.
 
 ## Pendiente
 
-Los tres bloques de abajo están **en este orden a propósito**. Cada uno
-necesita que el código esté desplegado antes, o rompe algo en producción.
-
-### Orden de ejecución
-
-| Paso | Qué | Estado |
-|---|---|---|
-| 1 | Desplegar la rama `desarrollo` | ✅ |
-| 2 | `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` en Netlify | ✅ |
-| 3 | Bloque 5: limpiar `send_onesignal_notification` | ✅ |
-| 4 | Bloque 9: cerrar el bucket `event-images` | ✅ |
-| 5 | **Merge a `main`** | ⬅️ aquí estamos |
-| 6 | Bloque 8: sacar el email de `profiles` | pendiente |
-
-### Email en `profiles` — bloque 8, va después del merge
-
-Confirmado en vivo: `GET /rest/v1/profiles?select=email` devuelve el
-correo de todos los registrados, sin sesión. Bajo RGPD es una brecha
-notificable.
-
-`netlify/functions/loginUsuario.js` ya resuelve la entrada por nombre de
-usuario en el servidor, y las variables de entorno están puestas. Pero
-eso solo vale para el código desplegado: mientras carmeet.es sirva la
-versión vieja, es el navegador quien lee `profiles.email`. **Por eso el
-bloque 8 va después del merge a `main`, no antes.**
-
-**No sirve una función RPC** que devuelva el correo dado el usuario: los
-nombres de usuario son públicos, están en /comunidad, así que se pasaría
-de "descárgalos todos de golpe" a "descárgalos de uno en uno".
-
-El script se transforma solo: coge la definición real de
-`handle_new_user`, le quita el correo, comprueba que el resultado ya no
-lo menciona, y solo entonces lo aplica. Si no reconoce el cuerpo, aborta
-sin tocar nada.
-
-Falló en el primer intento por un error mío: `raise notice '...:%%'` con
-un argumento. En RAISE, `%%` es un porcentaje literal, no un hueco, así
-que sobraba el argumento y Postgres abortaba la compilación entera.
-Corregido.
+No queda ningún bloque SQL por ejecutar. Los seis (4, 5, 6, 7, 8, 9, 10)
+están aplicados y comprobados contra la base real. Lo que sigue son
+tareas de mantenimiento, ninguna urgente.
 
 ### Borrar el bucket `vehicle-images`
 
@@ -195,8 +191,9 @@ volcado semanal a un bucket es barato y evita un mal día.
 15 tablas en `public`:
 
 ```
-profiles          id uuid, username, email, avatar_url, bio, is_admin,
-                  instagram, twitter, tiktok, youtube
+profiles          id uuid, username, created_at, updated_at, avatar_url,
+                  bio, is_admin, instagram, twitter, tiktok, youtube
+                  (sin email: está en auth.users, que sí está protegida)
 events            id bigint, titulo, tipo, fecha, lat, lng, user_id,
                   description, image_url, tags[], ubicacion, crew_id,
                   is_private
