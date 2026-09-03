@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
+import { subirImagen } from '../utils/subirImagen'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -93,11 +94,27 @@ const AddEventDialog = ({
     }
   }, [visible, session])
 
-  useEffect(() => {
+  /*
+   * Coordenadas que llegan desde el mapa.
+   *
+   * Esto era un useEffect que llamaba a setNuevoEvento. Cambiar el estado
+   * dentro de un efecto por culpa de un cambio de props provoca un
+   * segundo render en cadena: React pinta el diálogo con las coordenadas
+   * viejas y acto seguido lo vuelve a pintar con las nuevas.
+   *
+   * El patrón correcto para sincronizar estado con props es hacerlo
+   * durante el render, comparando con lo último que se vio. React
+   * descarta el render a medias y rehace uno solo, sin parpadeo.
+   */
+  const [ultimasCoords, setUltimasCoords] = useState(null)
+  const coordsActuales = `${initialLat}|${initialLng}|${visible}`
+
+  if (ultimasCoords !== coordsActuales) {
+    setUltimasCoords(coordsActuales)
     if (initialLat && initialLng) {
       setNuevoEvento((prev) => ({ ...prev, lat: initialLat, lng: initialLng }))
     }
-  }, [initialLat, initialLng, visible])
+  }
 
   const tiposEvento = [
     { label: 'Stance / Expo', value: 'Stance' },
@@ -195,21 +212,22 @@ const AddEventDialog = ({
     }
   }
 
+  /* La ruta la decide subirImagen: carpeta del usuario y uuid, para que
+     la política de Storage pueda comprobar de quién es cada archivo.
+     Antes subía el original sin comprimir a una ruta plana. */
   const uploadImage = async (file) => {
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
-      const filePath = `${fileName}`
-      const { error: uploadError } = await supabase.storage
-        .from('event-images')
-        .upload(filePath, file)
-      if (uploadError) throw uploadError
-      const { data } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(filePath)
-      return data.publicUrl
+      return await subirImagen(file, {
+        bucket: 'event-images',
+        userId: session?.user?.id,
+      })
     } catch (error) {
       console.error(error)
+      toast.current?.show({
+        severity: 'error',
+        summary: 'No se pudo subir la imagen',
+        detail: error.message,
+      })
       return null
     }
   }

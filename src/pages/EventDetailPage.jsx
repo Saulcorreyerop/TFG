@@ -36,6 +36,7 @@ import {
 import './EventDetailPage.css'
 import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
+import { subirImagen } from '../utils/subirImagen'
 
 const MotionDiv = motion.div
 
@@ -390,18 +391,17 @@ const EventDetailPage = ({ session }) => {
     if (!file) return
     setUploadingExtra(true)
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${event.id}/${Math.random()}.${fileExt}`
-      const { error: uploadError } = await supabase.storage
-        .from('event-images')
-        .upload(fileName, file)
-      if (uploadError) throw uploadError
-      const { data } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(fileName)
+      /* Antes: `${event.id}/${Math.random()}.jpg`. La carpeta era el id
+         del evento, no el del usuario, así que ninguna política podía
+         comprobar la propiedad del archivo. */
+      const publicUrl = await subirImagen(file, {
+        bucket: 'event-images',
+        userId: session?.user?.id,
+        prefijo: `evento-${event.id}-`,
+      })
       await supabase
         .from('event_images')
-        .insert({ event_id: parseInt(id), image_url: data.publicUrl })
+        .insert({ event_id: parseInt(id), image_url: publicUrl })
       await fetchExtraImages()
       toast.current.show({
         severity: 'success',
@@ -413,7 +413,7 @@ const EventDetailPage = ({ session }) => {
       toast.current.show({
         severity: 'error',
         summary: 'Error',
-        detail: 'Fallo al subir la foto',
+        detail: error.message || 'Fallo al subir la foto',
       })
     } finally {
       setUploadingExtra(false)
