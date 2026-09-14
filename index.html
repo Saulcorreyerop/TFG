@@ -4,6 +4,37 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!--
+      Enlace de recuperación de contraseña.
+
+      Supabase solo respeta el redirectTo que pide la aplicación si esa
+      URL está dada de alta en las Redirect URLs del proyecto. Si no lo
+      está, manda al usuario a la Site URL, o sea a la portada. Como el
+      token de recuperación abre una sesión real, el correo de "he
+      olvidado mi contraseña" acababa metiendo al usuario en su cuenta
+      sin darle ocasión de cambiarla.
+
+      Esto se ejecuta antes que nada, incluso antes de que cargue el
+      cliente de Supabase, que es quien se come el fragmento de la URL.
+      Si ve un token de recuperación fuera de sitio, lo lleva a
+      /recuperar conservándolo tal cual.
+    -->
+    <script>
+      ;(function () {
+        try {
+          var resto = window.location.search + window.location.hash
+          if (
+            resto.indexOf('type=recovery') !== -1 &&
+            window.location.pathname !== '/recuperar'
+          ) {
+            window.location.replace('/recuperar' + resto)
+          }
+        } catch (e) {
+          /* Si algo falla aquí, mejor seguir cargando la web */
+        }
+      })()
+    </script>
+
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0E0E10" />
 

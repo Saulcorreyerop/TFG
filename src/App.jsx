@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { addLocale } from 'primereact/api'
 import { ProgressSpinner } from 'primereact/progressspinner'
@@ -54,10 +54,37 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 const AnimatedRoutes = ({ session }) => {
   const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [location.pathname])
+
+  /*
+   * El enlace de recuperación tiene que acabar en /recuperar.
+   *
+   * Supabase solo respeta el `redirectTo` que pide la aplicación si esa
+   * URL está en la lista de Redirect URLs del proyecto. Si no está, se
+   * ignora y manda al usuario a la Site URL, o sea a la portada. Y como
+   * el token de recuperación abre una sesión real, el efecto es que el
+   * correo de "he olvidado mi contraseña" te mete directamente en la
+   * cuenta y no te deja cambiarla: exactamente lo que pasaba.
+   *
+   * Lo correcto es tener bien la lista en Supabase, pero eso es
+   * configuración de panel y puede volver a torcerse. Aquí se escucha el
+   * evento y se lleva al usuario a la pantalla que toca, caiga donde
+   * caiga.
+   */
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (evento) => {
+        if (evento === 'PASSWORD_RECOVERY' && location.pathname !== '/recuperar') {
+          navigate('/recuperar', { replace: true })
+        }
+      },
+    )
+    return () => subscription.unsubscribe()
+  }, [navigate, location.pathname])
 
   /*
    * OJO CON EL ORDEN DE ESTOS TRES.
