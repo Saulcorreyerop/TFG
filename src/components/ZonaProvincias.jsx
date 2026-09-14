@@ -44,14 +44,41 @@ const ZonaProvincias = () => {
   useEffect(() => {
     let activo = true
 
+    /*
+     * Se piden las columnas nuevas y, si no existen todavía, las viejas.
+     *
+     * Sin esa reserva, desplegar antes de ejecutar el SQL deja esto
+     * pidiendo una columna inexistente: PostgREST responde 400, la lista
+     * se queda vacía y el bloque anuncia "aún no hay nada en el
+     * calendario" habiendo eventos. Un error de datos disfrazado de
+     * mensaje tranquilizador, que es la peor clase.
+     *
+     * Se filtra por fecha_hasta y no por fecha para que un evento de
+     * varios días siga contando en su zona mientras dure.
+     */
     const cargar = async () => {
-      const { data, error } = await supabase
+      const ahora = new Date().toISOString()
+
+      const nuevo = await supabase
         .from('events')
         .select('provincia, ubicacion')
-        .gte('fecha', new Date().toISOString())
+        .gte('fecha_hasta', ahora)
 
       if (!activo) return
-      setUbicaciones(error ? [] : data)
+
+      if (!nuevo.error) {
+        setUbicaciones(nuevo.data)
+        return
+      }
+
+      const viejo = await supabase
+        .from('events')
+        .select('ubicacion')
+        .gte('fecha', ahora)
+        .not('ubicacion', 'is', null)
+
+      if (!activo) return
+      setUbicaciones(viejo.error ? [] : viejo.data)
     }
 
     cargar()

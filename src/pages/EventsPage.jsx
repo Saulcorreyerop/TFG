@@ -425,12 +425,21 @@ const EventsPage = ({ session }) => {
   return (
     <>
       <SEO
+        /* Mismo texto que sirve netlify/edge-functions/og.js a los
+           rastreadores. Si difieren, Google ve un titulo en el primer
+           pase y otro al renderizar, y eso es exactamente lo que no
+           conviene hacer. Ademas estas son las palabras que se buscan:
+           "quedadas coches Madrid", no "eventos de motor". */
         title={
-          activeLocation
-            ? `Eventos de Motor en ${activeLocation}`
-            : 'Agenda de Eventos y KDDs'
+          zona
+            ? `Quedadas y KDDs de coches en ${zona.nombre}`
+            : 'Eventos y quedadas de coches en España'
         }
-        description='Consulta la agenda completa de eventos de motor, trackdays, rutas y exposiciones en España. ¡Apunta tu coche y no te pierdas ninguna KDD!'
+        description={
+          zona
+            ? `Todas las quedadas de coches, KDDs, rutas y trackdays en ${zona.nombre}. Agenda actualizada por la comunidad de CarMeet: fecha, sitio y cómo apuntarse.`
+            : 'Agenda completa de KDDs, rutas, trackdays y concentraciones de coches en España. Filtra por provincia, fecha y tipo de evento.'
+        }
       />
       <PageTransition>
         <div className='technical-page-wrapper'>
@@ -440,13 +449,18 @@ const EventsPage = ({ session }) => {
               <div className='col-12 lg:col-3 lg:pr-5 relative'>
                 <div className='sticky-sidebar py-6 px-4 lg:px-0'>
                   <div className='mb-6'>
-                    <h1 className='text-4xl font-black m-0 tracking-tight text-color capitalize'>
-                      {activeLocation
-                        ? `Eventos en ${activeLocation}`
-                        : 'Agenda de Eventos'}
+                    {/* Sin 'capitalize': destrozaba nombres como
+                        "A Coruña" y ya no hace falta, porque el nombre
+                        viene bien escrito de la lista de provincias. */}
+                    <h1 className='text-4xl font-black m-0 tracking-tight text-color'>
+                      {zona
+                        ? `Quedadas de coches en ${zona.nombre}`
+                        : 'Quedadas y KDDs de coches'}
                     </h1>
                     <p className='text-color-secondary font-medium mt-2'>
-                      Explora las KDDs y rutas de la comunidad.
+                      {zona
+                        ? `Rutas, trackdays y concentraciones en la provincia de ${zona.nombre}.`
+                        : 'Explora las KDDs y rutas de la comunidad.'}
                     </p>
 
                     <Button
