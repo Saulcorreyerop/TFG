@@ -144,6 +144,46 @@ const fechaLarga = (valor) => {
   return Number.isNaN(d.getTime()) ? '' : FECHA_LARGA.format(d)
 }
 
+const SOLO_DIA = new Intl.DateTimeFormat('es-ES', {
+  day: 'numeric',
+  timeZone: 'Europe/Madrid',
+})
+
+const mismoDiaEs = (a, b) => {
+  const k = (d) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Madrid',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d)
+  return k(a) === k(b)
+}
+
+/*
+ * "7 y 8 nov 2026" en vez de "7 nov 2026".
+ *
+ * Un gran premio o el EMF de Jerez duran un fin de semana. Anunciarlos
+ * con un solo dia en el titulo que se comparte por WhatsApp es dar mal
+ * la informacion que mas importa.
+ */
+const rangoCorto = (inicio, fin) => {
+  const a = inicio ? new Date(inicio) : null
+  if (!a || Number.isNaN(a.getTime())) return ''
+  const b = fin ? new Date(fin) : null
+
+  if (!b || Number.isNaN(b.getTime()) || mismoDiaEs(a, b)) {
+    return fechaLegible(a)
+  }
+
+  const mismoMes =
+    a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth()
+
+  return mismoMes
+    ? `${SOLO_DIA.format(a)} y ${fechaLegible(b)}`
+    : `${fechaLegible(a)} - ${fechaLegible(b)}`
+}
+
 const TIPOS = {
   Stance: 'Stance / Expo',
   Ruta: 'Ruta / Tramo',
@@ -161,7 +201,9 @@ const listaEventos = (eventos, encabezado) => {
 
   const filas = eventos
     .map((e) => {
-      const cuando = fechaLarga(e.fecha)
+      const cuando = e.fecha_fin
+        ? rangoCorto(e.fecha, e.fecha_fin)
+        : fechaLarga(e.fecha)
       const donde = e.ubicacion ? ` en ${escapar(e.ubicacion)}` : ''
       const tipo = TIPOS[e.tipo] || e.tipo || 'Evento'
       return (
@@ -201,6 +243,9 @@ const eventoJsonLd = (evento, organizador) => {
   }
 
   if (evento.fecha) datos.startDate = evento.fecha
+  /* Google lo pide como recomendado y sin el no da por bueno un evento
+     de varios dias: lo trataria como si acabara el mismo dia. */
+  if (evento.fecha_fin) datos.endDate = evento.fecha_fin
   if (evento.description) datos.description = recortar(evento.description, 500)
   if (evento.image_url) datos.image = [evento.image_url]
 
@@ -349,11 +394,31 @@ const PROVINCIA = (segmento) => {
   return crudo.replace(/\b\p{L}/gu, (c) => c.toUpperCase())
 }
 
-const proximos = (limite = 12, filtro = '') =>
-  consultarLista(
-    `events?is_private=eq.false&fecha=gte.${new Date().toISOString()}${filtro}` +
-      `&select=id,titulo,fecha,ubicacion,tipo&order=fecha.asc&limit=${limite}`,
+/*
+ * Se filtra por fecha_hasta y no por fecha: un evento de varios días
+ * sigue siendo próximo mientras no haya terminado.
+ *
+ * La segunda consulta es la reserva para cuando esas columnas todavía no
+ * existan, o sea si se despliega este código antes de ejecutar el bloque
+ * 14. Sin ella, PostgREST responde 400 por la columna desconocida, la
+ * consulta se queda vacía y los rastreadores verían una web sin eventos.
+ * Ya nos ha mordido dos veces el orden entre desplegar y ejecutar SQL.
+ */
+const proximos = async (limite = 12, filtro = '') => {
+  const ahora = new Date().toISOString()
+  const cola = `${filtro}&order=fecha.asc&limit=${limite}`
+
+  const conFin = await consultarLista(
+    `events?is_private=eq.false&fecha_hasta=gte.${ahora}` +
+      `&select=id,titulo,fecha,fecha_fin,ubicacion,tipo${cola}`,
   )
+  if (conFin.length) return conFin
+
+  return consultarLista(
+    `events?is_private=eq.false&fecha=gte.${ahora}` +
+      `&select=id,titulo,fecha,ubicacion,tipo${cola}`,
+  )
+}
 
 const metadatos = async (ruta) => {
   const limpia = ruta.replace(/\/+$/, '') || '/'
@@ -434,9 +499,15 @@ const metadatos = async (ruta) => {
     const id = partes[1].replace(/[^0-9]/g, '')
     if (!id) return POR_DEFECTO
 
-    const evento = await consultar(
-      `events?id=eq.${id}&select=id,titulo,description,image_url,fecha,ubicacion,tipo,lat,lng,is_private,profiles(username)&limit=1`,
-    )
+    const base = 'id,titulo,description,image_url,fecha,ubicacion,tipo,lat,lng,is_private,profiles(username)'
+
+    /* Igual que en proximos: si el bloque 14 aún no se ha ejecutado, las
+       columnas nuevas no existen y la consulta entera falla. */
+    const evento =
+      (await consultar(
+        `events?id=eq.${id}&select=${base},fecha_fin,ruta&limit=1`,
+      )) || (await consultar(`events?id=eq.${id}&select=${base}&limit=1`))
+
     if (!evento) return POR_DEFECTO
 
     /* Un evento privado no filtra ni su nombre ni su sitio */
@@ -452,7 +523,7 @@ const metadatos = async (ruta) => {
     }
 
     const organizador = evento.profiles?.username || ''
-    const cuando = fechaLegible(evento.fecha)
+    const cuando = rangoCorto(evento.fecha, evento.fecha_fin)
     const donde = evento.ubicacion ? ` · ${evento.ubicacion}` : ''
     const contexto = [cuando, evento.ubicacion].filter(Boolean).join(' · ')
     const tipo = TIPOS[evento.tipo] || evento.tipo || 'Evento'
@@ -477,7 +548,16 @@ const metadatos = async (ruta) => {
         `<dl>` +
         `<dt>Tipo</dt><dd>${escapar(tipo)}</dd>` +
         (evento.fecha
-          ? `<dt>Fecha</dt><dd>${escapar(fechaLarga(evento.fecha))}</dd>`
+          ? `<dt>Fecha</dt><dd>${escapar(
+              evento.fecha_fin
+                ? `de ${fechaLarga(evento.fecha)} a ${fechaLarga(evento.fecha_fin)}`
+                : fechaLarga(evento.fecha),
+            )}</dd>`
+          : '') +
+        (Array.isArray(evento.ruta?.puntos) && evento.ruta.puntos.length > 1
+          ? `<dt>Recorrido</dt><dd>${escapar(
+              `${(Number(evento.ruta.distancia || 0) / 1000).toFixed(1).replace('.', ',')} km`,
+            )}</dd>`
           : '') +
         (evento.ubicacion
           ? `<dt>Ubicación</dt><dd>${escapar(evento.ubicacion)}</dd>`

@@ -11,7 +11,7 @@ import { Skeleton } from 'primereact/skeleton'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { useFavorites } from '../hooks/useFavorites'
 import PageTransition from '../components/PageTransition'
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarDays,
@@ -31,6 +31,7 @@ import {
   Trash2,
   Camera,
   X,
+  Route as RouteIcon,
 } from 'lucide-react'
 
 import './EventDetailPage.css'
@@ -38,6 +39,8 @@ import SEO from '../components/SEO'
 import { sendPushNotification } from '../utils/onesignal' // 🚀 IMPORTANTE
 import { subirImagen } from '../utils/subirImagen'
 import BotonDenunciar from '../components/BotonDenunciar'
+import { rangoLargo, hora, yaHaPasado, estaEnMarcha, esDeVariosDias } from '../utils/fechas'
+import { leerRuta, enKm } from '../utils/ruta'
 
 const MotionDiv = motion.div
 
@@ -202,6 +205,8 @@ const EventDetailPage = ({ session }) => {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
         return
       }
+      /* La cuenta atras es hasta el inicio; que el evento siga vigente
+         despues lo dice yaHaPasado, mirando la fecha de fin. */
       setTimeLeft({
         days: Math.floor(distance / (1000 * 60 * 60 * 24)),
         hours: Math.floor(
@@ -467,7 +472,11 @@ const EventDetailPage = ({ session }) => {
 
   const handleAddToCalendar = () => {
     const startDate = new Date(event.fecha)
-    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000)
+    /* Si el organizador dijo cuando acaba, se respeta. Las dos horas
+       solo son el apano para los eventos que no lo dicen. */
+    const endDate = event.fecha_fin
+      ? new Date(event.fecha_fin)
+      : new Date(startDate.getTime() + 2 * 60 * 60 * 1000)
     const formatICSDate = (date) => date.toISOString().replace(/-|:|\.\d+/g, '')
     const icsContent = [
       'BEGIN:VCALENDAR',
@@ -527,18 +536,16 @@ const EventDetailPage = ({ session }) => {
       </div>
     )
 
-  const dateObj = new Date(event.fecha)
-  const fullDate = dateObj.toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-  const time = dateObj.toLocaleTimeString('es-ES', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  const isPast = dateObj < new Date()
+  /* Un evento puede durar un rato o un fin de semana. rangoLargo
+     escribe "7 y 8 de noviembre" o "del 7 al 9", segun toque. */
+  const variosDias = esDeVariosDias(event.fecha, event.fecha_fin)
+  const fullDate = rangoLargo(event.fecha, event.fecha_fin, { conHora: false })
+  const time = hora(event.fecha)
+  /* Uno de varios dias sigue estando vigente durante el primero: se mira
+     cuando acaba, no cuando empieza. */
+  const isPast = yaHaPasado(event)
+  const enMarcha = estaEnMarcha(event)
+  const ruta = leerRuta(event.ruta)
   const isCreator = session?.user?.id === event.user_id
   const queryParam =
     event.lat && event.lng
@@ -687,7 +694,25 @@ const EventDetailPage = ({ session }) => {
                   </span>
                   <span className='flex align-items-center gap-2 bg-black-alpha-40 px-5 py-3 border-round-3xl backdrop-blur-md border-1 border-white-alpha-20'>
                     <Clock size={22} className='text-blue-400' /> {time} h
+                    {variosDias && <span className='text-white-alpha-60'>· inicio</span>}
                   </span>
+
+                  {/* Un evento de varios dias no ha pasado por haber
+                      empezado: durante el primer dia esta ocurriendo, y
+                      es cuando mas gente lo busca. */}
+                  {enMarcha && (
+                    <span className='flex align-items-center gap-2 px-5 py-3 border-round-3xl backdrop-blur-md border-1 border-white-alpha-20 font-black'
+                      style={{ background: 'var(--librea)', color: '#F4F4F3' }}>
+                      EN MARCHA AHORA
+                    </span>
+                  )}
+
+                  {ruta && (
+                    <span className='flex align-items-center gap-2 bg-black-alpha-40 px-5 py-3 border-round-3xl backdrop-blur-md border-1 border-white-alpha-20'>
+                      <RouteIcon size={22} className='text-blue-400' />{' '}
+                      {enKm(ruta.distancia)} de recorrido
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -752,10 +777,22 @@ const EventDetailPage = ({ session }) => {
                     <div className='mb-5 shadow-3 border-round-3xl overflow-hidden border-2 border-gray-100'>
                       <MapContainer
                         center={[event.lat, event.lng]}
-                        zoom={15}
+                        zoom={ruta ? 12 : 15}
+                        bounds={ruta ? ruta.puntos : undefined}
                         style={{ height: '350px', width: '100%', zIndex: 1 }}
                       >
-                        <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
+                        <TileLayer url='https://tile.openstreetmap.org/{z}/{x}/{y}.png' />
+
+                        {/* El trazado de la ruta, si el organizador lo
+                            dibujo. Una ruta es un recorrido, no una
+                            chincheta. */}
+                        {ruta && (
+                          <Polyline
+                            positions={ruta.puntos}
+                            pathOptions={{ color: '#D02A24', weight: 5, opacity: 0.9 }}
+                          />
+                        )}
+
                         <Marker position={[event.lat, event.lng]}>
                           <Popup className='font-bold text-sm'>
                             {event.titulo}

@@ -1,0 +1,77 @@
+/* =========================================================================
+   Dibujar el trazado de una ruta
+   ========================================================================= */
+
+.ruta {
+  display: flex;
+  flex-direction: column;
+}
+
+.ruta-mapa {
+  height: 26rem;
+  width: 100%;
+  background: var(--carbono-alto);
+}
+
+/* El cursor de cruz avisa de que aquí se pincha para marcar, no para
+   arrastrar. */
+.ruta-mapa .leaflet-container {
+  cursor: crosshair;
+}
+
+.ruta-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  padding: var(--e4) var(--e5);
+  background: var(--carbono);
+  border-top: 1px solid var(--surface-border);
+}
+
+.ruta-datos {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  color: var(--texto-medio);
+  font-size: 0.875rem;
+}
+
+.ruta-distancia {
+  padding: 0.1rem var(--e3);
+  border: 1px solid var(--linea-viva);
+  border-radius: var(--r);
+  color: var(--text-color);
+  font-weight: 700;
+}
+
+.ruta-botones {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.ruta-ayuda {
+  margin: 0;
+  padding: var(--e3) var(--e5) var(--e4);
+  background: var(--carbono);
+  color: var(--texto-tenue);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 40rem) {
+  .ruta-mapa {
+    height: 20rem;
+  }
+
+  .ruta-barra {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ruta-botones {
+    justify-content: flex-end;
+  }
+}

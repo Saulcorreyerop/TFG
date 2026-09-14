@@ -30,6 +30,7 @@ import {
 
 import './EventsPage.css'
 import SEO from '../components/SEO'
+import { rangoCorto, yaHaPasado, esDeVariosDias } from '../utils/fechas'
 
 const MotionDiv = motion.div
 
@@ -92,6 +93,10 @@ const formatEventData = (ev) => {
   return {
     ...ev,
     dateObj: date,
+    /* Cuando deja de ser proximo: si dura varios dias, cuando acaba. */
+    finObj: new Date(ev.fecha_hasta || ev.fecha_fin || ev.fecha),
+    variosDias: esDeVariosDias(ev.fecha, ev.fecha_fin),
+    rango: rangoCorto(ev.fecha, ev.fecha_fin),
     monthShort: date
       .toLocaleDateString('es-ES', { month: 'short' })
       .toUpperCase(),
@@ -195,6 +200,11 @@ const TimelineEventCard = React.memo(({ event, isPast = false, session }) => {
       <div className='timeline-date'>
         <span className='day'>{event.dayNumber}</span>
         <span className='month'>{event.monthShort}</span>
+        {/* "7-8 nov": sin esto, un evento de fin de semana se anuncia
+            como si fuera solo del viernes. */}
+        {event.variosDias && (
+          <span className='rango-dias datos'>{event.rango}</span>
+        )}
       </div>
       <div className='timeline-image-wrapper'>
         <img src={event.image} alt={event.titulo} loading='lazy' />
@@ -305,17 +315,20 @@ const EventsPage = ({ session }) => {
     }
 
     const { data, error } = await query
-    const now = new Date()
 
     if (!error && data) {
       const processed = data.map((ev) => formatEventData(ev))
+      /* Se mira cuando ACABA, no cuando empieza. Un evento de dos dias
+         tiene que seguir en la agenda durante el primero, que es
+         justo cuando mas gente lo busca. Antes desaparecia a la hora
+         de arrancar. */
       const future = processed
-        .filter((ev) => ev.dateObj >= now)
+        .filter((ev) => !yaHaPasado(ev))
         .sort((a, b) => a.dateObj - b.dateObj)
       setEvents({
         upcoming: future,
         past: processed
-          .filter((ev) => ev.dateObj < now)
+          .filter((ev) => yaHaPasado(ev))
           .sort((a, b) => b.dateObj - a.dateObj),
         featured: future.slice(0, 1),
       })
@@ -333,7 +346,7 @@ const EventsPage = ({ session }) => {
             .map((item) => item.events)
             .filter((ev) => ev !== null)
             .map((ev) => formatEventData(ev))
-            .filter((ev) => ev.dateObj >= now),
+            .filter((ev) => !yaHaPasado(ev)),
         )
       }
     } else setFavorites([])

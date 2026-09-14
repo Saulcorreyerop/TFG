@@ -216,6 +216,20 @@
   margin-top: 0.25rem;
 }
 
+/* "7-8 NOV" en los eventos que duran más de un día. Solo aparece en
+   esos: en el resto, el día grande ya lo dice todo. */
+.timeline-date .rango-dias {
+  margin-top: var(--e2);
+  padding: 0.1rem var(--e2);
+  border: 1px solid var(--linea-viva);
+  border-radius: var(--r);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-medio);
+  white-space: nowrap;
+}
+
 .timeline-image-wrapper {
   width: 220px;
   position: relative;

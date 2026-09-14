@@ -174,9 +174,28 @@ punto de limpieza de Storage que sigue pendiente.
 
 ## Pendiente
 
-Ejecutados y comprobados contra la base real: 4, 5, 6, 7, 8, 9, 10, 11
-y 12. Queda el **13**, que borra la cuenta `admin`. Lo demás son tareas
-de mantenimiento, ninguna urgente.
+Ejecutados: del 4 al 13. Queda el **14**, que añade los eventos de
+varios días y el trazado de las rutas.
+
+⚠️ El 14 va **antes** de desplegar el código que lo usa, no después. El
+código trae consultas de reserva por si se hace al revés, pero el orden
+bueno es ese. Lo demás son tareas de mantenimiento, ninguna urgente.
+
+### Bloque 14 — eventos de varios días y rutas
+
+Añade a `events`:
+
+- `fecha_fin`, opcional. Hasta ahora un evento era un instante, y eso
+  dejaba fuera justo los grandes: un gran premio, el EMF de Jerez del 7
+  y 8 de noviembre, un fin de semana de EuroCrew.
+- `fecha_hasta`, columna generada, `coalesce(fecha_fin, fecha)`. Existe
+  para responder a la pregunta que hace la agenda todo el rato: ¿ya ha
+  pasado? Un evento de dos días tiene que seguir apareciendo durante el
+  primero; antes desaparecía a la hora de empezar.
+- `ruta`, jsonb con `{ puntos: [[lat, lng], ...], distancia }`. Pares
+  [lat, lng] y no GeoJSON porque es lo que espera Leaflet, que es quien
+  los pinta; GeoJSON usa el orden contrario y esa inversión es la fuente
+  clásica de rutas dibujadas en el mar.
 
 ### Borrar el bucket `vehicle-images`
 

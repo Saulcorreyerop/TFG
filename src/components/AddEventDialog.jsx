@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { subirImagen } from '../utils/subirImagen'
+import DibujarRuta from './DibujarRuta'
+import { longitudDe, enKm } from '../utils/ruta'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -21,6 +23,7 @@ import {
   Map as MapIcon,
   Tag as TagIcon,
   Shield,
+  Route as RouteIcon,
 } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -55,6 +58,7 @@ const AddEventDialog = ({
   const toast = useRef(null)
   const [loading, setLoading] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
+  const [showRutaModal, setShowRutaModal] = useState(false)
   const [suggestions, setSuggestions] = useState([])
   const fileInputRef = useRef(null)
 
@@ -64,6 +68,8 @@ const AddEventDialog = ({
     titulo: '',
     tipo: '',
     fecha: null,
+    fecha_fin: null,
+    ruta: [],
     descripcion: '',
     imagen: null,
     lat: null,
@@ -287,6 +293,17 @@ const AddEventDialog = ({
       }
     }
 
+    if (
+      nuevoEvento.fecha_fin &&
+      new Date(nuevoEvento.fecha_fin) < new Date(nuevoEvento.fecha)
+    ) {
+      return toast.current.show({
+        severity: 'warn',
+        summary: 'Revisa las fechas',
+        detail: 'El evento no puede terminar antes de empezar.',
+      })
+    }
+
     const finalTipo =
       typeof nuevoEvento.tipo === 'object'
         ? nuevoEvento.tipo.value
@@ -335,6 +352,17 @@ const AddEventDialog = ({
           titulo: nuevoEvento.titulo,
           tipo: finalTipo,
           fecha: nuevoEvento.fecha,
+          fecha_fin: nuevoEvento.fecha_fin || null,
+          /* Solo se guarda si tiene al menos dos puntos: una linea de
+             un punto no es un trazado. Se guarda tambien la distancia
+             ya calculada para no recalcularla en cada tarjeta. */
+          ruta:
+            nuevoEvento.ruta && nuevoEvento.ruta.length > 1
+              ? {
+                  puntos: nuevoEvento.ruta,
+                  distancia: longitudDe(nuevoEvento.ruta),
+                }
+              : null,
           description: nuevoEvento.descripcion,
           image_url: imageUrl,
           lat: nuevoEvento.lat,
@@ -407,6 +435,8 @@ const AddEventDialog = ({
       titulo: '',
       tipo: '',
       fecha: null,
+      fecha_fin: null,
+      ruta: [],
       descripcion: '',
       imagen: null,
       lat: null,
@@ -644,6 +674,43 @@ const AddEventDialog = ({
             </div>
           </div>
 
+          {/* Fin del evento.
+              Opcional a proposito: la mayoria de quedadas son de una
+              tarde y pedir dos fechas para todas seria un estorbo. Pero
+              sin esto no se pueden publicar los eventos que mas gente
+              mueven: un gran premio, el EMF de Jerez, un fin de semana
+              entero. Ademas es lo que Google pide como endDate para
+              meter el evento en su carrusel. */}
+          <div className='grid m-0 p-0'>
+            <div className='col-12 p-0 field m-0'>
+              <label className='premium-label'>
+                <CalendarPlus size={18} className='text-emerald-500' /> Fin del
+                evento
+                <span
+                  className='ml-2 text-xs font-normal'
+                  style={{ color: 'var(--texto-tenue)' }}
+                >
+                  opcional, solo si dura más de un día
+                </span>
+              </label>
+              <Calendar
+                value={nuevoEvento.fecha_fin}
+                onChange={(e) =>
+                  setNuevoEvento({ ...nuevoEvento, fecha_fin: e.value })
+                }
+                showTime
+                locale='es'
+                dateFormat='dd/mm/yy'
+                hourFormat='24'
+                minDate={nuevoEvento.fecha || undefined}
+                showButtonBar
+                className='w-full'
+                inputClassName='premium-input w-full'
+                placeholder='Dejalo vacio si es de un solo dia'
+              />
+            </div>
+          </div>
+
           <div className='field m-0 surface-50 p-4 md:p-5 border-round-3xl border-1 border-gray-100 relative overflow-hidden'>
             <div
               className='absolute top-0 right-0 p-4 opacity-10'
@@ -690,6 +757,23 @@ const AddEventDialog = ({
               className='w-full mb-4 border-round-2xl font-bold surface-card text-color border-none shadow-1 hover:shadow-2 hover:text-blue-600 transition-all p-3 relative z-1'
               onClick={() => setShowMapModal(true)}
             />
+
+            {/* El trazado solo se ofrece en rutas y tramos. En una
+                exposicion o un trackday el recorrido no significa nada,
+                y un boton que no viene a cuento en un formulario ya
+                largo solo estorba. */}
+            {nuevoEvento.tipo === 'Ruta' && (
+              <Button
+                label={
+                  nuevoEvento.ruta.length > 1
+                    ? `Recorrido: ${enKm(longitudDe(nuevoEvento.ruta))} en ${nuevoEvento.ruta.length} puntos`
+                    : 'Dibujar el recorrido en el mapa'
+                }
+                icon={<RouteIcon size={20} className='mr-2' />}
+                className='w-full mb-4 border-round-2xl font-bold surface-card text-color border-none shadow-1 hover:shadow-2 transition-all p-3 relative z-1'
+                onClick={() => setShowRutaModal(true)}
+              />
+            )}
 
             <div className='grid m-0 gap-3 relative z-1'>
               <div className='col p-0 surface-card border-round-xl shadow-1 p-3'>
@@ -839,6 +923,27 @@ const AddEventDialog = ({
             )}
           </MapContainer>
         </div>
+      </Dialog>
+
+      <Dialog
+        header={<span className='font-black text-2xl'>Dibuja el recorrido</span>}
+        visible={showRutaModal}
+        draggable={false}
+        style={{ width: '92vw', maxWidth: '900px' }}
+        onHide={() => setShowRutaModal(false)}
+        contentClassName='p-0'
+        className='border-round-3xl overflow-hidden shadow-8'
+        headerClassName='border-none p-4 pb-3'
+      >
+        <DibujarRuta
+          puntos={nuevoEvento.ruta}
+          onCambio={(puntos) =>
+            setNuevoEvento((prev) => ({ ...prev, ruta: puntos }))
+          }
+          centro={
+            nuevoEvento.lat ? [nuevoEvento.lat, nuevoEvento.lng] : undefined
+          }
+        />
       </Dialog>
     </>
   )
