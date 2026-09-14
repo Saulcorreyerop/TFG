@@ -47,6 +47,8 @@
 const RASTREADORES =
   /facebookexternalhit|facebookcatalog|Facebot|Twitterbot|WhatsApp|Slackbot|LinkedInBot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|Google-Extended|bingbot|DuckDuckBot|Applebot|SkypeUriPreview|vkShare|embedly|Iframely|SnapchatAds|Bluesky|Mastodon|GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-Web|anthropic-ai|PerplexityBot|Perplexity-User|Amazonbot|Bytespider|CCBot|cohere-ai|YouBot|Diffbot|meta-externalagent/i
 
+import { PROVINCIAS, buscarProvincia } from '../../src/utils/provincias.js'
+
 const SITIO = 'https://carmeet.es'
 const IMAGEN_POR_DEFECTO = `${SITIO}/og-carmeet.png`
 const MAX_DESC = 200
@@ -367,42 +369,13 @@ const ESTATICAS = {
   },
 }
 
-/* Las provincias con tilde llegan a veces sin ella, porque el enlace se
-   arma desde la ubicación que escribió el organizador. */
-const TILDES = {
-  alava: 'Álava',
-  almeria: 'Almería',
-  avila: 'Ávila',
-  caceres: 'Cáceres',
-  cadiz: 'Cádiz',
-  cordoba: 'Córdoba',
-  coruna: 'A Coruña',
-  'a coruna': 'A Coruña',
-  gijon: 'Gijón',
-  jaen: 'Jaén',
-  leon: 'León',
-  malaga: 'Málaga',
-  'alcala de henares': 'Alcalá de Henares',
-  logrono: 'Logroño',
-  merida: 'Mérida',
-}
-
-const PROVINCIA = (segmento) => {
-  const crudo = decodeURIComponent(segmento).replace(/-/g, ' ').trim()
-  const conTilde = TILDES[crudo.toLowerCase()]
-  if (conTilde) return conTilde
-  return crudo.replace(/\b\p{L}/gu, (c) => c.toUpperCase())
-}
-
 /*
- * Se filtra por fecha_hasta y no por fecha: un evento de varios días
- * sigue siendo próximo mientras no haya terminado.
+ * Eventos próximos, opcionalmente de una provincia.
  *
- * La segunda consulta es la reserva para cuando esas columnas todavía no
- * existan, o sea si se despliega este código antes de ejecutar el bloque
- * 14. Sin ella, PostgREST responde 400 por la columna desconocida, la
- * consulta se queda vacía y los rastreadores verían una web sin eventos.
- * Ya nos ha mordido dos veces el orden entre desplegar y ejecutar SQL.
+ * El filtro es por la columna `provincia`, que guarda el slug de una de
+ * las 50 españolas. Antes se hacía con un ilike sobre el texto libre de
+ * `ubicacion`, y eso daba una página por municipio: /eventos/Casar de
+ * Cáceres, Extremadura con un solo evento dentro. Nadie busca eso.
  */
 const proximos = async (limite = 12, filtro = '') => {
   const ahora = new Date().toISOString()
@@ -468,29 +441,71 @@ const metadatos = async (ruta) => {
 
   /* --- /eventos/:provincia --- */
   if (partes[0] === 'eventos' && partes[1]) {
-    const nombre = PROVINCIA(partes[1])
-    const eventos = await proximos(
-      20,
-      `&ubicacion=ilike.*${encodeURIComponent(nombre)}*`,
-    )
+    const prov = buscarProvincia(decodeURIComponent(partes[1]))
+
+    /*
+     * Zona que no es una provincia española.
+     *
+     * No se inventa una página: se sirve la agenda general y se apunta
+     * la canónica a /eventos. Sin eso, cualquier cadena inventada en la
+     * URL daría una página indexable, con contenido flojo y compitiendo
+     * consigo misma. Es la trampa clásica de las rutas con parámetro
+     * libre.
+     */
+    if (!prov) {
+      return {
+        ...(await metadatos('/eventos')),
+        canonica: `${SITIO}/eventos`,
+      }
+    }
+
+    const eventos = await proximos(20, `&provincia=eq.${prov.slug}`)
+
+    /* El título lleva las palabras con las que se busca de verdad:
+       "quedadas de coches en Cáceres", "KDD". Antes decía solo "Eventos
+       de coches en...", que nadie escribe en Google. */
+    const titulo = `Quedadas y KDDs de coches en ${prov.nombre}`
+
+    /* Provincias vecinas, para que el rastreador tenga por dónde seguir
+       y las zonas nuevas no queden aisladas. */
+    const vecinas = PROVINCIAS.filter(
+      (p) => p.comunidad === prov.comunidad && p.slug !== prov.slug,
+    ).slice(0, 6)
 
     return {
       ...POR_DEFECTO,
-      titulo: `Eventos de coches en ${nombre}`,
-      descripcion: `Quedadas, rutas y concentraciones de coches en ${nombre}. Consulta la agenda de CarMeet y apúntate.`,
+      titulo,
+      descripcion:
+        `Todas las quedadas de coches, KDDs, rutas y trackdays en ${prov.nombre}. ` +
+        `Agenda actualizada por la comunidad de CarMeet: fecha, sitio y cómo apuntarse.`,
       jsonld: [
-        listaJsonLd(eventos, `Eventos de coches en ${nombre}`),
+        listaJsonLd(eventos, titulo),
         migas([
           { nombre: 'Inicio', ruta: '/' },
           { nombre: 'Eventos', ruta: '/eventos' },
-          { nombre: nombre, ruta: `/eventos/${partes[1]}` },
+          { nombre: prov.nombre, ruta: `/eventos/${prov.slug}` },
         ]),
       ],
       contenido:
-        `<h1>Eventos de coches en ${escapar(nombre)}</h1>` +
-        `<p>Quedadas, rutas y concentraciones de coches en ${escapar(nombre)}, ` +
-        `organizadas por la comunidad de CarMeet.</p>` +
-        listaEventos(eventos, `Próximos eventos en ${nombre}`),
+        `<h1>Quedadas y KDDs de coches en ${escapar(prov.nombre)}</h1>` +
+        `<p>Agenda de quedadas de coches, KDDs, rutas, trackdays y ` +
+        `concentraciones en la provincia de ${escapar(prov.nombre)} ` +
+        `(${escapar(prov.comunidad)}), publicadas por la propia comunidad ` +
+        `de aficionados. Cada evento indica fecha, hora, sitio exacto y ` +
+        `quién lo organiza.</p>` +
+        listaEventos(eventos, `Próximas quedadas en ${prov.nombre}`) +
+        (vecinas.length
+          ? `<h2>Otras provincias de ${escapar(prov.comunidad)}</h2><ul>` +
+            vecinas
+              .map(
+                (p) =>
+                  `<li><a href="${SITIO}/eventos/${p.slug}">Quedadas de coches en ${escapar(p.nombre)}</a></li>`,
+              )
+              .join('') +
+            `</ul>`
+          : '') +
+        `<p><a href="${SITIO}/eventos">Ver la agenda completa de España</a> · ` +
+        `<a href="${SITIO}/mapa">Verlo en el mapa</a></p>`,
     }
   }
 
@@ -746,7 +761,12 @@ export default async (request, context) => {
 
   const url = new URL(request.url)
   const datos = await metadatos(url.pathname)
-  const canonica = `${SITIO}${url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/, '')}`
+  /* Normalmente la canónica es la propia dirección. Algunas páginas la
+     mandan explícitamente para no competir consigo mismas: es el caso de
+     una zona inventada en la URL, que se canoniza a /eventos. */
+  const canonica =
+    datos.canonica ||
+    `${SITIO}${url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/, '')}`
 
   let salida = html.replace(
     /<!--og-->[\s\S]*?<!--\/og-->/,

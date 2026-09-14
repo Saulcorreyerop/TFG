@@ -4,6 +4,7 @@ import { subirImagen } from '../utils/subirImagen'
 import DibujarRuta from './DibujarRuta'
 import { longitudDe, enKm } from '../utils/ruta'
 import { sendPushNotification } from '../utils/onesignal'
+import { provinciaDeNominatim, buscarProvincia } from '../utils/provincias'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -83,6 +84,7 @@ const AddEventDialog = ({
     lng: null,
     direccion: '',
     ubicacion: '',
+    provincia: null,
     is_private: false,
     crew_id: null,
   })
@@ -141,6 +143,7 @@ const AddEventDialog = ({
         lng: evento.lng ?? null,
         direccion: '',
         ubicacion: evento.ubicacion || '',
+        provincia: evento.provincia ?? null,
         is_private: Boolean(evento.is_private),
         crew_id: evento.crew_id ?? null,
       })
@@ -217,13 +220,21 @@ const AddEventDialog = ({
     const dir = datos.address || {}
     const ciudad =
       dir.city || dir.town || dir.village || dir.municipality || dir.county || ''
-    const provincia = dir.state || dir.province || ''
+    const zona = dir.state || dir.province || ''
+
+    /* La provincia es lo que agrupa los eventos en /eventos/:provincia.
+       Se saca aqui, donde tenemos la respuesta completa de Nominatim con
+       county y state; a partir del texto ya montado no siempre se puede,
+       porque "Casar de Caceres, Extremadura" no dice de que provincia
+       es. */
+    const provincia = provinciaDeNominatim(dir)
 
     return {
       ubicacion: ciudad
-        ? [ciudad, provincia].filter(Boolean).join(', ')
+        ? [ciudad, zona].filter(Boolean).join(', ')
         : datos.display_name || '',
       direccion: datos.display_name || '',
+      provincia: provincia ? provincia.slug : null,
     }
   }
 
@@ -239,15 +250,17 @@ const AddEventDialog = ({
     })
 
     try {
-      const { ubicacion: ubicacionFormat, direccion } = await resolverUbicacion(
-        latlng.lat,
-        latlng.lng,
-      )
+      const {
+        ubicacion: ubicacionFormat,
+        direccion,
+        provincia,
+      } = await resolverUbicacion(latlng.lat, latlng.lng)
 
       setNuevoEvento((prev) => ({
         ...prev,
         direccion,
         ubicacion: ubicacionFormat,
+        provincia,
       }))
 
       toast.current.show({
@@ -357,14 +370,16 @@ const AddEventDialog = ({
      * puestas y nadie pulsa para elegir sitio.
      */
     let ubicacionFinal = (nuevoEvento.ubicacion || '').trim()
+    let provinciaFinal = nuevoEvento.provincia || null
 
-    if (!ubicacionFinal && nuevoEvento.lat && nuevoEvento.lng) {
+    if ((!ubicacionFinal || !provinciaFinal) && nuevoEvento.lat && nuevoEvento.lng) {
       try {
         const resuelta = await resolverUbicacion(
           nuevoEvento.lat,
           nuevoEvento.lng,
         )
-        ubicacionFinal = resuelta.ubicacion
+        ubicacionFinal = ubicacionFinal || resuelta.ubicacion
+        provinciaFinal = provinciaFinal || resuelta.provincia
       } catch (error) {
         /* Si el servicio no responde, se guarda igual: mejor un evento
            sin ubicación que perder lo que ha escrito el usuario. */
@@ -391,6 +406,12 @@ const AddEventDialog = ({
       lat: nuevoEvento.lat,
       lng: nuevoEvento.lng,
       ubicacion: ubicacionFinal || null,
+      /* Ultimo recurso: si Nominatim no respondio, se intenta sacar del
+         propio texto. "Zafra, Badajoz" si se puede resolver; "Casar de
+         Caceres, Extremadura" no, y entonces se queda sin provincia y el
+         evento sale en la agenda general pero no en la de zona. */
+      provincia:
+        provinciaFinal || buscarProvincia(ubicacionFinal)?.slug || null,
       crew_id: nuevoEvento.is_private ? nuevoEvento.crew_id : null,
       is_private: nuevoEvento.is_private,
     }

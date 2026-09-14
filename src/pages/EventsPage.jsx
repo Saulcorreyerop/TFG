@@ -31,6 +31,7 @@ import {
 import './EventsPage.css'
 import SEO from '../components/SEO'
 import { rangoCorto, yaHaPasado, esDeVariosDias } from '../utils/fechas'
+import { buscarProvincia } from '../utils/provincias'
 
 const MotionDiv = motion.div
 
@@ -271,10 +272,24 @@ const EventsPage = ({ session }) => {
   const navigate = useNavigate()
   const { provincia } = useParams()
 
+  /*
+   * La zona de la URL.
+   *
+   * Se resuelve contra la lista de las 50 provincias, asi que valen
+   * tanto /eventos/caceres como los enlaces antiguos del tipo
+   * /eventos/Zafra,%20Badajoz, que buscarProvincia sabe interpretar.
+   *
+   * Si no es una provincia reconocible se conserva el texto y se filtra
+   * como antes, por coincidencia. Asi un enlace viejo raro sigue
+   * enseñando algo en vez de una pagina vacia.
+   */
+  const zona = provincia ? buscarProvincia(decodeURIComponent(provincia)) : null
+
   let activeLocation = null
   if (provincia) {
     try {
-      activeLocation = decodeURIComponent(provincia).replace(/-/g, ' ').trim()
+      activeLocation =
+        zona?.nombre || decodeURIComponent(provincia).replace(/-/g, ' ').trim()
     } catch (err) {
       console.error('Error decoding location:', err)
       activeLocation = provincia.replace(/-/g, ' ').trim()
@@ -353,7 +368,7 @@ const EventsPage = ({ session }) => {
   }, [session])
 
   useEffect(() => {
-    //eslint-disable-next-line
+
     fetchAllEvents()
   }, [fetchAllEvents])
 
@@ -371,12 +386,19 @@ const EventsPage = ({ session }) => {
               .split(',')
               .some((val) => normalizeText(e.tipo).includes(normalizeText(val)))
           : true
-        const matchLocation =
-          locToSearch === '' || textoCompleto.includes(locToSearch)
+        /* Con provincia reconocida se filtra por la columna, que es
+           exacta. El texto solo se usa cuando el evento aun no tiene
+           provincia asignada, o cuando la zona de la URL no es una
+           provincia espanola. */
+        const matchLocation = zona
+          ? e.provincia === zona.slug ||
+            (!e.provincia && textoCompleto.includes(normalizeText(zona.nombre)))
+          : locToSearch === '' || textoCompleto.includes(locToSearch)
+
         return matchText && matchType && matchLocation
       })
     },
-    [filters, activeLocation],
+    [filters, activeLocation, zona],
   )
 
   const filteredUpcoming = useMemo(

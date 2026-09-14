@@ -12,6 +12,8 @@
  * que sigue existiendo justo para eso.
  */
 
+import { buscarProvincia } from '../../src/utils/provincias.js'
+
 const SITIO = 'https://carmeet.es'
 
 const SUPABASE_URL =
@@ -71,7 +73,7 @@ const FIJAS = [
 export default async (request, context) => {
   const [eventos, crews, perfiles] = await Promise.all([
     consultar(
-      `events?is_private=eq.false&select=id,fecha,ubicacion&order=fecha.desc&limit=${TOPE}`,
+      `events?is_private=eq.false&select=id,fecha,ubicacion,provincia&order=fecha.desc&limit=${TOPE}`,
     ),
     consultar('crews?select=name&limit=1000'),
     consultar('profiles?select=username&limit=2000'),
@@ -86,14 +88,24 @@ export default async (request, context) => {
 
   const lineas = FIJAS.map(([ruta, p, f]) => url(ruta, p, f))
 
-  /* Una página por provincia, sacada de las ubicaciones reales. Son las
-     que compiten por búsquedas del tipo "quedadas coches Málaga". */
+  /*
+   * Una página por provincia. Son las que compiten por las búsquedas
+   * que de verdad hace la gente: "quedadas coches Málaga", "kdd Cádiz".
+   *
+   * Antes esto publicaba la cadena `ubicacion` entera y salían cosas
+   * como /eventos/Casar%20de%20C%C3%A1ceres%2C%20Extremadura: una
+   * página por municipio, ilegible, y con un solo evento dentro.
+   *
+   * Se acepta que un evento no tenga provincia todavía; simplemente no
+   * aporta página de zona.
+   */
   const provincias = new Set()
   for (const e of eventos) {
-    if (e.ubicacion) provincias.add(String(e.ubicacion).trim())
+    const p = e.provincia || buscarProvincia(e.ubicacion)?.slug
+    if (p) provincias.add(p)
   }
   for (const p of provincias) {
-    lineas.push(url(`/eventos/${encodeURIComponent(p)}`, '0.8', 'weekly'))
+    lineas.push(url(`/eventos/${p}`, '0.8', 'weekly'))
   }
 
   for (const e of eventos) {

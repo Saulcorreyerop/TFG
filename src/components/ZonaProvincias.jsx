@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { buscarProvincia } from '../utils/provincias'
 import { motion } from 'framer-motion'
 import { Search, MapPin, ArrowRight, CalendarPlus } from 'lucide-react'
 import { supabase } from '../supabaseClient'
@@ -46,12 +47,11 @@ const ZonaProvincias = () => {
     const cargar = async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('ubicacion')
+        .select('provincia, ubicacion')
         .gte('fecha', new Date().toISOString())
-        .not('ubicacion', 'is', null)
 
       if (!activo) return
-      setUbicaciones(error ? [] : data.map((e) => e.ubicacion))
+      setUbicaciones(error ? [] : data)
     }
 
     cargar()
@@ -60,18 +60,29 @@ const ZonaProvincias = () => {
     }
   }, [])
 
+  /*
+   * Se agrupa por PROVINCIA, no por el último trozo del texto.
+   *
+   * Antes se cogía lo que hubiera detrás de la última coma, y eso daba
+   * "Extremadura" o "Comunidad de Madrid": comunidades autónomas, no
+   * provincias. Los enlaces salían /eventos/extremadura, que no es
+   * ninguna de las 50 zonas reales y juntaba Cáceres con Badajoz.
+   */
   const zonas = useMemo(() => {
     if (!ubicaciones) return null
 
     const cuenta = new Map()
-    for (const u of ubicaciones) {
-      if (!u) continue
-      const partes = u.split(',').map((p) => p.trim()).filter(Boolean)
-      const zona = partes.length > 1 ? partes[partes.length - 1] : partes[0]
-      if (!zona) continue
-      const clave = quitarTildes(zona)
-      const previo = cuenta.get(clave)
-      cuenta.set(clave, { nombre: previo?.nombre || zona, total: (previo?.total || 0) + 1 })
+    for (const e of ubicaciones) {
+      const prov =
+        (e.provincia && buscarProvincia(e.provincia)) ||
+        buscarProvincia(e.ubicacion)
+      if (!prov) continue
+      const previo = cuenta.get(prov.slug)
+      cuenta.set(prov.slug, {
+        nombre: prov.nombre,
+        slug: prov.slug,
+        total: (previo?.total || 0) + 1,
+      })
     }
 
     return [...cuenta.values()].sort((a, b) => b.total - a.total)
@@ -80,7 +91,12 @@ const ZonaProvincias = () => {
   const buscar = (e) => {
     e.preventDefault()
     const limpio = busqueda.trim()
-    navigate(limpio ? `/eventos/${aSlug(limpio)}` : '/eventos')
+    /* Si lo que escribe es una provincia, se va a su página limpia.
+       Si no, se pasa tal cual y la agenda filtra por coincidencia. */
+    const prov = buscarProvincia(limpio)
+    navigate(
+      limpio ? `/eventos/${prov ? prov.slug : aSlug(limpio)}` : '/eventos',
+    )
   }
 
   const cargando = zonas === null
@@ -129,7 +145,7 @@ const ZonaProvincias = () => {
                   key={z.nombre}
                   type='button'
                   className='zona'
-                  onClick={() => navigate(`/eventos/${aSlug(z.nombre)}`)}
+                  onClick={() => navigate(`/eventos/${z.slug}`)}
                   initial={{ opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-40px' }}
