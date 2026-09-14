@@ -3,7 +3,7 @@
 Bitácora del trabajo sobre Supabase. Se actualiza cada vez que se toca algo
 en el proyecto `stryumcmeavlvjaamcaw`.
 
-**Última revisión:** 2026-09-04 (bloque 8 ejecutado)
+**Última revisión:** 2026-09-14
 
 ---
 
@@ -143,6 +143,32 @@ editor de Supabase no enseña los avisos `NOTICE` en ningún sitio.
 La clave REST estaba escrita en texto plano dentro del cuerpo de
 `send_onesignal_notification`. **Rotada** y guardada solo en las variables
 de entorno de Netlify.
+
+---
+
+### Bloques 11 y 12 ejecutados — borrado en cascada y ubicaciones
+
+**11.** Borrar un evento fallaba con `notifications_evento_id_fkey`. Las
+claves foráneas se crearon sin regla de borrado, y PostgreSQL asume
+NO ACTION: no borres la fila si alguien la apunta. Como cada evento
+genera notificaciones, cualquier evento con una era imborrable. El
+script recorrió todas las claves del esquema y arregló cinco. Dejó una,
+`crews.created_by`, porque la columna no admitía nulo.
+
+**12.** `AddEventDialog` detectaba la ubicación, la enseñaba y no la
+guardaba: la columna no estaba en el insert. Siete de quince eventos
+sin ubicación teniendo coordenadas, incluido el primero de un usuario
+de fuera. Rellenados traduciendo sus coordenadas. El código ya la
+guarda, y la resuelve si llega vacía.
+
+### Bloque 13 — borrar la cuenta `admin`
+
+Hace `crews.created_by` nulable con ON DELETE SET NULL, traspasa a
+`saul` las crews fundadas por `admin` dejándolo como administrador de
+ellas, y borra la cuenta. El resto se va en cascada.
+
+Queda huérfano el avatar de esa cuenta en el bucket `avatars`. Es el
+punto de limpieza de Storage que sigue pendiente.
 
 ---
 
