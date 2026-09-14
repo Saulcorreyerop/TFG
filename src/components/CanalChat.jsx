@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from 'primereact/avatar'
-import { Radio, Send, ArrowDown, MessageSquare } from 'lucide-react'
+import { Radio, Send, ArrowDown, MessageSquare, Trash2 } from 'lucide-react'
+import { confirmDialog } from 'primereact/confirmdialog'
 import { supabase } from '../supabaseClient'
 import { useBloqueo } from '../hooks/useModeracion'
 import BotonDenunciar from './BotonDenunciar'
@@ -76,6 +77,29 @@ const CanalChat = ({
   const { filtrar } = useBloqueo(session)
 
   const miId = session?.user?.id
+  const [soyAdmin, setSoyAdmin] = useState(false)
+
+  /* Se consulta una vez por montaje. No se fía del valor para nada
+     sensible: quien manda de verdad es la política de la base, que
+     comprueba is_admin en cada borrado. Esto solo decide si se pinta el
+     botón. */
+  useEffect(() => {
+    if (!miId) return
+    let activo = true
+
+    supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', miId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (activo) setSoyAdmin(Boolean(data?.is_admin))
+      })
+
+    return () => {
+      activo = false
+    }
+  }, [miId])
   const miNombre = session?.user?.user_metadata?.username
 
   /* --- Carga y tiempo real --- */
@@ -121,6 +145,18 @@ const CanalChat = ({
 
     const canal = supabase
       .channel(nombreCanal)
+      /* Los borrados. Realtime solo manda la fila entera si la tabla
+         tiene replica identity full (bloque 16); si no, llega solo el
+         id, que para quitarlo de la lista es suficiente. */
+      .on(
+        'postgres_changes',
+        { ...suscripcion, event: 'DELETE' },
+        (payload) => {
+          const id = payload.old?.id
+          if (!activo || !id) return
+          setMensajes((previos) => (previos || []).filter((m) => m.id !== id))
+        },
+      )
       .on('postgres_changes', suscripcion, async (payload) => {
         const { data: perfil } = await supabase
           .from('profiles')
@@ -242,6 +278,52 @@ const CanalChat = ({
           : m,
       ),
     )
+  }
+
+  /* --- Borrado --- */
+
+  /*
+   * Quién ve el botón. Quién PUEDE borrar de verdad lo decide la base:
+   * las políticas del bloque 16 dejan borrar lo propio, y cualquier
+   * cosa si eres administrador. Esto es solo la interfaz; si alguien se
+   * saltara la pantalla, la consulta seguiría siendo rechazada.
+   */
+  const puedoBorrar = (m) =>
+    !m.pendiente && (m.user_id === miId || soyAdmin)
+
+  const borrar = (m) => {
+    const esMio = m.user_id === miId
+
+    confirmDialog({
+      message: esMio
+        ? 'Se borra para todos y no se puede recuperar.'
+        : `Se borra el mensaje de ${m.profiles?.username || 'este piloto'} para todos. No se puede recuperar.`,
+      header: 'Borrar mensaje',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Borrar',
+      rejectLabel: 'Cancelar',
+      acceptClassName: 'p-button-danger',
+      accept: async () => {
+        /* Se quita ya de la pantalla y se repone si la base dice que
+           no. Esperar a la respuesta para un borrado se nota mucho. */
+        const antes = mensajes
+        setMensajes((prev) => (prev || []).filter((x) => x.id !== m.id))
+
+        const { error: fallo } = await supabase
+          .from(tabla)
+          .delete()
+          .eq('id', m.id)
+
+        if (fallo) {
+          setMensajes(antes)
+          setAviso(
+            fallo.code === '42501'
+              ? 'No tienes permiso para borrar este mensaje.'
+              : 'No se ha podido borrar. Inténtalo otra vez.',
+          )
+        }
+      },
+    })
   }
 
   /* --- Registro --- */
@@ -384,7 +466,28 @@ const CanalChat = ({
                     )}
                   </div>
                 )}
-                <p className='canal-texto'>{f.m.mensaje}</p>
+                <div className='canal-linea'>
+                  <p className='canal-texto'>{f.m.mensaje}</p>
+                  {puedoBorrar(f.m) && (
+                    <button
+                      type='button'
+                      className='canal-borrar'
+                      onClick={() => borrar(f.m)}
+                      aria-label={
+                        f.m.user_id === miId
+                          ? 'Borrar mi mensaje'
+                          : 'Borrar este mensaje'
+                      }
+                      title={
+                        f.m.user_id === miId
+                          ? 'Borrar mi mensaje'
+                          : 'Borrar como administrador'
+                      }
+                    >
+                      <Trash2 size={14} aria-hidden='true' />
+                    </button>
+                  )}
+                </div>
               </div>
             </article>
           ),

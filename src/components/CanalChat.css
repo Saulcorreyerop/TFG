@@ -241,13 +241,70 @@
   opacity: 1;
 }
 
+/* El texto y, a su derecha, la papelera. Va en cada mensaje y no solo
+   en la cabecera del grupo, porque los mensajes seguidos del mismo autor
+   no pintan cabecera y también hay que poder borrarlos. */
+.canal-linea {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+}
+
 .canal-texto {
   margin: 0;
+  flex: 1;
+  min-width: 0;
   color: var(--text-color);
   font-size: 1rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+/*
+ * Discreta hasta que la buscas. Un icono de borrar visible en cada línea
+ * convierte el chat en un campo de minas, y además distrae de lo que se
+ * está leyendo.
+ *
+ * En pantallas táctiles no hay hover, así que ahí se deja siempre a la
+ * vista: valdría de poco un botón que no se puede descubrir.
+ */
+.canal-borrar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 0.1rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--r);
+  color: var(--texto-tenue);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.canal-msg:hover .canal-borrar,
+.canal-borrar:focus-visible {
+  opacity: 1;
+}
+
+.canal-borrar:hover,
+.canal-borrar:focus-visible {
+  color: var(--librea-texto);
+  background: var(--librea-baja);
+}
+
+@media (hover: none) {
+  .canal-borrar {
+    opacity: 0.55;
+  }
 }
 
 /* --- Huecos y vacío --- */
