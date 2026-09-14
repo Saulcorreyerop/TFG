@@ -668,7 +668,11 @@ const EventDetailPage = ({ session }) => {
             />
             <div className='hero-overlay'></div>
 
-            <div className='absolute top-0 left-0 w-full p-4 flex justify-content-between z-3 max-w-7xl mx-auto right-0'>
+            {/* z-5 y no z-3: el bloque del titulo es 'absolute
+                bottom-0' pero crece hacia arriba con su contenido, y con
+                el mismo z-index gana el que va despues en el DOM. Estos
+                dos botones quedaban debajo y no recibian el clic. */}
+            <div className='absolute top-0 left-0 w-full p-4 flex justify-content-between z-5 max-w-7xl mx-auto right-0'>
               <Button
                 className='p-button-rounded p-button-text text-white hover:surface-card-alpha-20 transition-colors backdrop-blur-md'
                 onClick={() => navigate(-1)}
@@ -697,7 +701,13 @@ const EventDetailPage = ({ session }) => {
               </div>
             </div>
 
-            <div className='absolute bottom-0 left-0 w-full p-5 md:p-8 z-3'>
+            {/* Solo lleva texto, asi que no tiene por que interceptar
+                nada. Su caja es mucho mas alta de lo que parece porque el
+                titulo va a cuerpo enorme. */}
+            <div
+              className='absolute bottom-0 left-0 w-full p-5 md:p-8 z-3'
+              style={{ pointerEvents: 'none' }}
+            >
               <div className='max-w-7xl mx-auto w-full text-white'>
                 <div className='flex flex-wrap gap-2 mb-4'>
                   <Tag
