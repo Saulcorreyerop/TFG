@@ -11,7 +11,7 @@ import { Skeleton } from 'primereact/skeleton'
 import { InputTextarea } from 'primereact/inputtextarea'
 import { useFavorites } from '../hooks/useFavorites'
 import PageTransition from '../components/PageTransition'
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarDays,
@@ -41,8 +41,54 @@ import { subirImagen } from '../utils/subirImagen'
 import BotonDenunciar from '../components/BotonDenunciar'
 import { rangoLargo, hora, yaHaPasado, estaEnMarcha, esDeVariosDias } from '../utils/fechas'
 import { leerRuta, enKm } from '../utils/ruta'
+import LightboxFotos from '../components/LightboxFotos'
+import AddEventDialog from '../components/AddEventDialog'
 
 const MotionDiv = motion.div
+
+/*
+ * Encuadra el mapa sobre el trazado de la ruta.
+ *
+ * Esto no se puede hacer con la prop `bounds` de MapContainer: se aplica
+ * en el momento de crear el mapa, y aquí el contenedor está dentro de un
+ * bloque que framer-motion anima, así que en ese instante todavía mide
+ * cero. fitBounds sobre una caja de cero píxeles no falla, hace algo
+ * peor: se va al zoom máximo. El mapa salía en negro, a zoom 18, sobre
+ * un punto cualquiera.
+ *
+ * Haciéndolo en un efecto, el contenedor ya tiene su tamaño real.
+ * invalidateSize es por si el navegador aún no había recalculado.
+ */
+const EncuadrarRuta = ({ puntos }) => {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!puntos || puntos.length < 2) return
+
+    const encuadrar = () => {
+      const caja = map.getContainer()
+      /* Mientras el contenedor mida cero no se puede encuadrar nada:
+         fitBounds no falla, hace algo peor, se va al zoom máximo. */
+      if (!caja.clientWidth || !caja.clientHeight) return false
+      map.invalidateSize()
+      map.fitBounds(puntos, { padding: [30, 30] })
+      return true
+    }
+
+    if (encuadrar()) return
+
+    /* Todavía no tiene tamaño. Se espera a que lo tenga en vez de
+       adivinar cuánto tarda la animación de entrada. */
+    const observador = new ResizeObserver(() => {
+      if (encuadrar()) observador.disconnect()
+    })
+    observador.observe(map.getContainer())
+
+    return () => observador.disconnect()
+  }, [map, puntos])
+
+  return null
+}
 
 const EventDetailPage = ({ session }) => {
   const { id } = useParams()
@@ -70,8 +116,10 @@ const EventDetailPage = ({ session }) => {
   const [extraImages, setExtraImages] = useState([])
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [editDescription, setEditDescription] = useState('')
   const [uploadingExtra, setUploadingExtra] = useState(false)
+  /* Indice de la foto abierta a pantalla completa, o null. */
+  const [fotoAbierta, setFotoAbierta] = useState(null)
+  const [editandoEvento, setEditandoEvento] = useState(false)
 
   const {
     isFavorite,
@@ -368,30 +416,6 @@ const EventDetailPage = ({ session }) => {
     }
   }
 
-  const handleSaveDescription = async () => {
-    try {
-      const { error } = await supabase
-        .from('events')
-        .update({ description: editDescription })
-        .eq('id', parseInt(id))
-      if (error) throw error
-      setEvent((prev) => ({ ...prev, description: editDescription }))
-      setShowEditModal(false)
-      toast.current.show({
-        severity: 'success',
-        summary: 'Guardado',
-        detail: 'Descripción actualizada correctamente',
-      })
-    } catch (error) {
-      console.error('Error saving description:', error)
-      toast.current.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo guardar la descripción',
-      })
-    }
-  }
-
   const handleUploadExtraImage = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -571,12 +595,20 @@ const EventDetailPage = ({ session }) => {
     return (
       <div className='mt-4 pt-4 border-top-1 surface-border flex gap-3 creator-controls'>
         <Button
-          label='Editar Detalles'
+          label='Editar evento'
           icon={<Edit3 size={18} className='mr-2' />}
           className='p-button-outlined flex-1 border-round-xl font-bold'
           onClick={(e) => {
             e.stopPropagation()
-            setEditDescription(event.description || '')
+            setEditandoEvento(true)
+          }}
+        />
+        <Button
+          label='Fotos'
+          icon={<Camera size={18} className='mr-2' />}
+          className='p-button-outlined flex-1 border-round-xl font-bold'
+          onClick={(e) => {
+            e.stopPropagation()
             setShowEditModal(true)
           }}
         />
@@ -740,15 +772,25 @@ const EventDetailPage = ({ session }) => {
 
                   {extraImages.length > 0 && (
                     <div className='mt-5 grid'>
-                      {extraImages.map((img) => (
+                      {extraImages.map((img, i) => (
                         <div key={img.id} className='col-12 md:col-6'>
+                          {/* Las fotos de un evento son carteles con
+                              horarios, precios y direcciones. A 240px de
+                              alto no se lee nada, asi que se abren a
+                              pantalla completa. */}
                           <img
                             src={img.image_url}
-                            alt='Extra'
-                            className='w-full border-round-2xl shadow-2 object-cover'
+                            alt={`Foto ${i + 1} de ${event.titulo}`}
+                            className='w-full border-round-2xl shadow-2 object-cover cursor-pointer'
                             style={{ height: '240px' }}
-                                                      loading='lazy'
+                            loading='lazy'
                             decoding='async'
+                            role='button'
+                            tabIndex={0}
+                            onClick={() => setFotoAbierta(i)}
+                            onKeyDown={(e) =>
+                              e.key === 'Enter' && setFotoAbierta(i)
+                            }
                           />
                         </div>
                       ))}
@@ -777,8 +819,7 @@ const EventDetailPage = ({ session }) => {
                     <div className='mb-5 shadow-3 border-round-3xl overflow-hidden border-2 border-gray-100'>
                       <MapContainer
                         center={[event.lat, event.lng]}
-                        zoom={ruta ? 12 : 15}
-                        bounds={ruta ? ruta.puntos : undefined}
+                        zoom={15}
                         style={{ height: '350px', width: '100%', zIndex: 1 }}
                       >
                         <TileLayer url='https://tile.openstreetmap.org/{z}/{x}/{y}.png' />
@@ -787,10 +828,13 @@ const EventDetailPage = ({ session }) => {
                             dibujo. Una ruta es un recorrido, no una
                             chincheta. */}
                         {ruta && (
-                          <Polyline
-                            positions={ruta.puntos}
-                            pathOptions={{ color: '#D02A24', weight: 5, opacity: 0.9 }}
-                          />
+                          <>
+                            <Polyline
+                              positions={ruta.puntos}
+                              pathOptions={{ color: '#D02A24', weight: 5, opacity: 0.9 }}
+                            />
+                            <EncuadrarRuta puntos={ruta.puntos} />
+                          </>
                         )}
 
                         <Marker position={[event.lat, event.lng]}>
@@ -1216,7 +1260,7 @@ const EventDetailPage = ({ session }) => {
             <Dialog
               header={
                 <span className='text-2xl font-black text-color'>
-                  Editar Descripción y Fotos
+                  Fotos del evento
                 </span>
               }
               visible={showEditModal}
@@ -1228,19 +1272,6 @@ const EventDetailPage = ({ session }) => {
               headerClassName='px-5 pt-5 pb-2 border-none'
             >
               <div className='flex flex-column gap-4 pt-2'>
-                <div>
-                  <label className='block text-sm font-bold text-color-secondary mb-2'>
-                    Descripción del evento
-                  </label>
-                  <InputTextarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    rows={5}
-                    autoResize
-                    className='w-full border-round-xl p-3'
-                  />
-                </div>
-
                 <div>
                   <label className='block text-sm font-bold text-color-secondary mb-2'>
                     Fotos Adicionales
@@ -1287,13 +1318,39 @@ const EventDetailPage = ({ session }) => {
                     </div>
                   </div>
                 </div>
-                <Button
-                  label='Guardar Cambios'
-                  className='btn-fichar-primary w-full mt-3'
-                  onClick={handleSaveDescription}
-                />
               </div>
             </Dialog>
+
+            {/* Visor a pantalla completa de las fotos del evento */}
+            {fotoAbierta !== null && extraImages.length > 0 && (
+              <LightboxFotos
+                fotos={extraImages.map((img) => img.image_url)}
+                titulo={event.titulo}
+                subtitulo={fullDate}
+                inicial={fotoAbierta}
+                onCerrar={() => setFotoAbierta(null)}
+              />
+            )}
+
+            {/* Editar el evento entero: fechas, titulo, tipo, sitio,
+                descripcion, portada y el trazado de la ruta. Es el mismo
+                formulario de crear, en modo edicion. */}
+            {isCreator && (
+              <AddEventDialog
+                visible={editandoEvento}
+                onHide={() => setEditandoEvento(false)}
+                session={session}
+                evento={event}
+                onEventAdded={async () => {
+                  const { data } = await supabase
+                    .from('events')
+                    .select('*, profiles(*)')
+                    .eq('id', parseInt(id))
+                    .single()
+                  if (data) setEvent(data)
+                }}
+              />
+            )}
 
             <Dialog
               header='¿Eliminar Evento?'

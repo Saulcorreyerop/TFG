@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { subirImagen } from '../utils/subirImagen'
 import DibujarRuta from './DibujarRuta'
 import { longitudDe, enKm } from '../utils/ruta'
+import { sendPushNotification } from '../utils/onesignal'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
@@ -54,7 +55,13 @@ const AddEventDialog = ({
   session,
   initialLat = null,
   initialLng = null,
+  /* Si llega un evento, el dialogo edita en vez de crear. Se reutiliza
+     el mismo formulario a proposito: tiene el mapa, el dibujo de la
+     ruta, las dos fechas y la subida de foto. Mantener dos copias de
+     esto en sincronia seria una fuente de fallos garantizada. */
+  evento = null,
 }) => {
+  const editando = Boolean(evento)
   const toast = useRef(null)
   const [loading, setLoading] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
@@ -113,11 +120,31 @@ const AddEventDialog = ({
    * descarta el render a medias y rehace uno solo, sin parpadeo.
    */
   const [ultimasCoords, setUltimasCoords] = useState(null)
-  const coordsActuales = `${initialLat}|${initialLng}|${visible}`
+  const coordsActuales = `${initialLat}|${initialLng}|${visible}|${evento?.id ?? ''}`
 
   if (ultimasCoords !== coordsActuales) {
     setUltimasCoords(coordsActuales)
-    if (initialLat && initialLng) {
+
+    if (evento && visible) {
+      /* Al abrir en modo edicion se vuelca lo que ya hay. La foto se
+         deja a null: solo se sube una nueva si el usuario elige otra,
+         y si no, se conserva la que tuviera. */
+      setNuevoEvento({
+        titulo: evento.titulo || '',
+        tipo: evento.tipo || '',
+        fecha: evento.fecha ? new Date(evento.fecha) : null,
+        fecha_fin: evento.fecha_fin ? new Date(evento.fecha_fin) : null,
+        ruta: Array.isArray(evento.ruta?.puntos) ? evento.ruta.puntos : [],
+        descripcion: evento.description || '',
+        imagen: null,
+        lat: evento.lat ?? null,
+        lng: evento.lng ?? null,
+        direccion: '',
+        ubicacion: evento.ubicacion || '',
+        is_private: Boolean(evento.is_private),
+        crew_id: evento.crew_id ?? null,
+      })
+    } else if (initialLat && initialLng) {
       setNuevoEvento((prev) => ({ ...prev, lat: initialLat, lng: initialLng }))
     }
   }
@@ -345,35 +372,44 @@ const AddEventDialog = ({
       }
     }
 
-    const { data: newEventData, error } = await supabase
-      .from('events')
-      .insert([
-        {
-          titulo: nuevoEvento.titulo,
-          tipo: finalTipo,
-          fecha: nuevoEvento.fecha,
-          fecha_fin: nuevoEvento.fecha_fin || null,
-          /* Solo se guarda si tiene al menos dos puntos: una linea de
-             un punto no es un trazado. Se guarda tambien la distancia
-             ya calculada para no recalcularla en cada tarjeta. */
-          ruta:
-            nuevoEvento.ruta && nuevoEvento.ruta.length > 1
-              ? {
-                  puntos: nuevoEvento.ruta,
-                  distancia: longitudDe(nuevoEvento.ruta),
-                }
-              : null,
-          description: nuevoEvento.descripcion,
-          image_url: imageUrl,
-          lat: nuevoEvento.lat,
-          lng: nuevoEvento.lng,
-          ubicacion: ubicacionFinal || null,
-          user_id: session.user.id,
-          crew_id: nuevoEvento.is_private ? nuevoEvento.crew_id : null,
-          is_private: nuevoEvento.is_private,
-        },
-      ])
-      .select()
+    const campos = {
+      titulo: nuevoEvento.titulo,
+      tipo: finalTipo,
+      fecha: nuevoEvento.fecha,
+      fecha_fin: nuevoEvento.fecha_fin || null,
+      /* Solo se guarda si tiene al menos dos puntos: una linea de
+         un punto no es un trazado. Se guarda tambien la distancia
+         ya calculada para no recalcularla en cada tarjeta. */
+      ruta:
+        nuevoEvento.ruta && nuevoEvento.ruta.length > 1
+          ? {
+              puntos: nuevoEvento.ruta,
+              distancia: longitudDe(nuevoEvento.ruta),
+            }
+          : null,
+      description: nuevoEvento.descripcion,
+      lat: nuevoEvento.lat,
+      lng: nuevoEvento.lng,
+      ubicacion: ubicacionFinal || null,
+      crew_id: nuevoEvento.is_private ? nuevoEvento.crew_id : null,
+      is_private: nuevoEvento.is_private,
+    }
+
+    /* Editando sin foto nueva: no se toca image_url. Si se enviara null
+       se borraria la portada que ya tenia solo por no haber elegido
+       otra. */
+    if (imageUrl) campos.image_url = imageUrl
+
+    const { data: newEventData, error } = editando
+      ? await supabase
+          .from('events')
+          .update(campos)
+          .eq('id', evento.id)
+          .select()
+      : await supabase
+          .from('events')
+          .insert([{ ...campos, image_url: imageUrl, user_id: session.user.id }])
+          .select()
 
     if (error) {
       setLoading(false)
@@ -384,7 +420,43 @@ const AddEventDialog = ({
       })
     }
 
-    if (newEventData && newEventData.length > 0) {
+    if (editando) {
+      /*
+       * Si se ha movido la fecha, hay que avisar a quien ya se apunto.
+       * Cambiar el dia de un evento sin decirselo a nadie es la forma
+       * mas rapida de que la gente se plante alli cuando no es.
+       */
+      const fechaVieja = evento.fecha ? new Date(evento.fecha).getTime() : null
+      const fechaNueva = nuevoEvento.fecha
+        ? new Date(nuevoEvento.fecha).getTime()
+        : null
+
+      if (fechaVieja !== fechaNueva) {
+        const { data: apuntados } = await supabase
+          .from('event_attendees')
+          .select('user_id')
+          .eq('event_id', evento.id)
+          .neq('user_id', session.user.id)
+
+        if (apuntados && apuntados.length > 0) {
+          await supabase.from('notifications').insert(
+            apuntados.map((a) => ({
+              user_id: a.user_id,
+              actor_id: session.user.id,
+              tipo: 'evento_cambiado',
+              evento_id: evento.id,
+            })),
+          )
+
+          sendPushNotification(
+            apuntados.map((a) => a.user_id),
+            'Cambio de fecha',
+            `${nuevoEvento.titulo} ha cambiado de fecha. Compruebala.`,
+            `/evento/${evento.id}`,
+          )
+        }
+      }
+    } else if (newEventData && newEventData.length > 0) {
       const newEventId = newEventData[0].id
 
       if (nuevoEvento.is_private) {
@@ -426,9 +498,11 @@ const AddEventDialog = ({
     toast.current.show({
       severity: 'success',
       summary: 'Éxito',
-      detail: nuevoEvento.is_private
-        ? 'Evento privado de Crew creado.'
-        : 'Evento publicado para todos.',
+      detail: editando
+        ? 'Cambios guardados.'
+        : nuevoEvento.is_private
+          ? 'Evento privado de Crew creado.'
+          : 'Evento publicado para todos.',
     })
 
     setNuevoEvento({
@@ -551,10 +625,12 @@ const AddEventDialog = ({
             </div>
             <div>
               <h2 className='font-black text-3xl text-color m-0 tracking-tight'>
-                Publicar Evento
+                {editando ? 'Editar evento' : 'Publicar Evento'}
               </h2>
               <p className='text-color-secondary font-medium m-0 mt-1'>
-                Comparte tu KDD o ruta con la comunidad.
+                {editando
+                  ? 'Si cambias la fecha, avisamos a quien se haya apuntado.'
+                  : 'Comparte tu KDD o ruta con la comunidad.'}
               </p>
             </div>
           </div>
@@ -875,7 +951,7 @@ const AddEventDialog = ({
               className='text-color-secondary hover:text-color-secondary hover:surface-100 font-bold px-4 border-round-3xl transition-colors'
             />
             <Button
-              label='Publicar Evento'
+              label={editando ? 'Guardar cambios' : 'Publicar Evento'}
               icon={<Send size={20} className='mr-2' />}
               onClick={handleSave}
               loading={loading}
