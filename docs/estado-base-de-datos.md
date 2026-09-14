@@ -174,9 +174,9 @@ punto de limpieza de Storage que sigue pendiente.
 
 ## Pendiente
 
-No queda ningún bloque SQL por ejecutar. Los seis (4, 5, 6, 7, 8, 9, 10)
-están aplicados y comprobados contra la base real. Lo que sigue son
-tareas de mantenimiento, ninguna urgente.
+Ejecutados y comprobados contra la base real: 4, 5, 6, 7, 8, 9, 10, 11
+y 12. Queda el **13**, que borra la cuenta `admin`. Lo demás son tareas
+de mantenimiento, ninguna urgente.
 
 ### Borrar el bucket `vehicle-images`
 
