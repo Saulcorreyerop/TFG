@@ -167,6 +167,33 @@ const AddEventDialog = ({
     })
   }
 
+  /*
+   * Coordenadas -> nombre del sitio.
+   *
+   * La ubicación en texto no es un adorno: es lo que agrupa los eventos
+   * por provincia en /eventos/:provincia, lo que sale en el título al
+   * compartir por WhatsApp, y lo que Google necesita en los datos
+   * estructurados para meter la quedada en su carrusel de eventos. Un
+   * evento sin ella existe pero no lo encuentra nadie.
+   */
+  const resolverUbicacion = async (lat, lng) => {
+    const respuesta = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=es`,
+    )
+    const datos = await respuesta.json()
+    const dir = datos.address || {}
+    const ciudad =
+      dir.city || dir.town || dir.village || dir.municipality || dir.county || ''
+    const provincia = dir.state || dir.province || ''
+
+    return {
+      ubicacion: ciudad
+        ? [ciudad, provincia].filter(Boolean).join(', ')
+        : datos.display_name || '',
+      direccion: datos.display_name || '',
+    }
+  }
+
   const handleLocationSelect = async (latlng) => {
     setShowMapModal(false)
     setNuevoEvento((prev) => ({ ...prev, lat: latlng.lat, lng: latlng.lng }))
@@ -179,21 +206,14 @@ const AddEventDialog = ({
     })
 
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1`,
+      const { ubicacion: ubicacionFormat, direccion } = await resolverUbicacion(
+        latlng.lat,
+        latlng.lng,
       )
-      const data = await response.json()
-
-      const address = data.address || {}
-      const city =
-        address.city || address.town || address.village || address.county || ''
-      const state = address.state || ''
-
-      const ubicacionFormat = city ? `${city}, ${state}` : data.display_name
 
       setNuevoEvento((prev) => ({
         ...prev,
-        direccion: data.display_name,
+        direccion,
         ubicacion: ubicacionFormat,
       }))
 
@@ -272,6 +292,42 @@ const AddEventDialog = ({
         ? nuevoEvento.tipo.value
         : nuevoEvento.tipo
 
+    /*
+     * Red de seguridad para la ubicación.
+     *
+     * El insert no la guardaba. Ni siquiera estaba en la lista de
+     * columnas, así que TODO evento creado desde aquí se guardaba sin
+     * ella, por mucho que el diálogo la hubiera detectado y la enseñara
+     * en pantalla. De los quince eventos que había en la base, siete
+     * estaban sin ubicación teniendo coordenadas, incluido el primero
+     * que publicó un usuario de fuera.
+     *
+     * Duele porque la ubicación es lo que agrupa los eventos por
+     * provincia, lo que sale al compartir por WhatsApp y lo que Google
+     * necesita para el carrusel de eventos. Sin ella el evento existe
+     * pero no lo encuentra nadie.
+     *
+     * Además de guardarla, se resuelve aquí si viniera vacía: se puede
+     * llegar a este punto con coordenadas y sin texto, por ejemplo
+     * abriendo el diálogo desde el mapa, donde las coordenadas llegan
+     * puestas y nadie pulsa para elegir sitio.
+     */
+    let ubicacionFinal = (nuevoEvento.ubicacion || '').trim()
+
+    if (!ubicacionFinal && nuevoEvento.lat && nuevoEvento.lng) {
+      try {
+        const resuelta = await resolverUbicacion(
+          nuevoEvento.lat,
+          nuevoEvento.lng,
+        )
+        ubicacionFinal = resuelta.ubicacion
+      } catch (error) {
+        /* Si el servicio no responde, se guarda igual: mejor un evento
+           sin ubicación que perder lo que ha escrito el usuario. */
+        console.warn('No se pudo resolver la ubicación:', error.message)
+      }
+    }
+
     const { data: newEventData, error } = await supabase
       .from('events')
       .insert([
@@ -283,6 +339,7 @@ const AddEventDialog = ({
           image_url: imageUrl,
           lat: nuevoEvento.lat,
           lng: nuevoEvento.lng,
+          ubicacion: ubicacionFinal || null,
           user_id: session.user.id,
           crew_id: nuevoEvento.is_private ? nuevoEvento.crew_id : null,
           is_private: nuevoEvento.is_private,
